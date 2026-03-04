@@ -1,0 +1,44 @@
+# IDE and local development
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+xfrizon-ui/node_modules/
+xfrizon-be/target/
+xfrizon-be/.mvn/wrapper/
+
+# Build outputs
+dist/
+build/
+*.jar
+*.war
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+.gitkeep
+
+# Stripe keys and secrets (NEVER commit)
+stripe_keys.txt
+
+# Database backups
+*.sql
+*.dump
+
+# Temporary files
+tmp/
+temp/
