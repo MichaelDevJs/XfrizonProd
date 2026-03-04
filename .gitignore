@@ -12,6 +12,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Application properties with credentials (use .template instead)
+**/application.properties
+
 # Dependencies
 node_modules/
 xfrizon-ui/node_modules/
@@ -42,3 +45,10 @@ stripe_keys.txt
 # Temporary files
 tmp/
 temp/
+
+# Large media files (use external storage/CDN)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv

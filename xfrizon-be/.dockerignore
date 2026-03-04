@@ -1,0 +1,12 @@
+target/
+.mvn/
+*.class
+*.jar
+*.log
+.DS_Store
+.env.local
+node_modules/
+dist/
+.git/
+.gitignore
+README.md
