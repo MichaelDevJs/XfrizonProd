@@ -9,5 +9,5 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8081
-ENV JAVA_OPTS="-Xmx512m"
-ENTRYPOINT ["java", $JAVA_OPTS, "-jar", "app.jar"]
+ENV JAVA_OPTS="-Xmx512m -Dspring.profiles.active=prod"
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
