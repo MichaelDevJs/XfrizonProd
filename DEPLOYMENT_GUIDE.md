@@ -1,6 +1,7 @@
 # Xfrizon Deployment Guide - Railway
 
 ## Prerequisites
+
 - GitHub account (to host repo)
 - Railway.app account (free tier available)
 - Domain name (you said you have one)
@@ -29,6 +30,7 @@ git push -u origin main
 3. Connect GitHub and select your **xfrizon** repo
 4. Select **Spring Boot** service
 5. Add these environment variables:
+
    ```
    SPRING_DATASOURCE_URL=jdbc:mysql://{RAILWAY_MYSQL_HOST}:3306/xfrizon_ts
    SPRING_DATASOURCE_USERNAME={DB_USER}
@@ -50,6 +52,7 @@ git push -u origin main
 ### Frontend Setup on Railway:
 
 **Option A: Railway (Recommended for full-stack together)**
+
 1. Create a new Railway project in same workspace
 2. Add your **xfrizon-ui** as service
 3. Set build command: `npm install && npm run build`
@@ -60,6 +63,7 @@ git push -u origin main
    ```
 
 **Option B: Vercel (Simpler for frontend only)**
+
 1. Go to **vercel.com** → Import project
 2. Select xfrizon-ui repo
 3. Set **VITE_API_BASE_URL** to your Railway backend URL
@@ -76,10 +80,12 @@ git push -u origin main
 ## Step 4: Database Migration
 
 ### Option 1: Auto-create via Spring Boot
+
 - Set `spring.jpa.hibernate.ddl-auto=create-drop` in `application-prod.properties`
 - App will create schema on first startup
 
 ### Option 2: Manual Migration
+
 1. Export local MySQL schema:
    ```bash
    mysqldump -u root -p xfrizon_ts --no-data > schema.sql
@@ -100,6 +106,7 @@ git push -u origin main
    - Look for "Tomcat started on port 8081"
 
 2. Test endpoints:
+
    ```bash
    curl https://your-backend-domain/api/v1/health
    ```
@@ -140,34 +147,40 @@ Push `target/*.jar` and `xfrizon-ui/dist` to GitHub, Railway picks them up.
 ## Troubleshooting
 
 **App crashes on startup:**
+
 ```bash
 # Check logs in Railway Dashboard
 # Common: Missing env vars, DB connection failed
 ```
 
 **API calls getting 404:**
+
 - Verify `VITE_API_BASE_URL` matches backend domain
 - Check CORS settings in backend
 
 **Database connection refused:**
+
 - Verify DB_HOST, DB_USER, DB_PASSWORD in Railway
 - Ensure MySQL is started in Railway
 
 **Cold start timeout:**
+
 - Railway free tier may take 30s to start
 - Upgrade to paid tier for faster boots
 
 ## Costs
 
 **Free tier includes:**
+
 - 5GB disk storage
 - 160 hours/month per service
 - MySQL database
 - 100MB bandwidth/month
 
 **Typical production costs:**
+
 - Backend: ~$5-7/month
-- Database: ~$5-10/month  
+- Database: ~$5-10/month
 - CDN/Domain: $10-15/year
 
 ## Next Steps

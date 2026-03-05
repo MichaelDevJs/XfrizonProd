@@ -216,11 +216,17 @@ const OrganizerFinance = () => {
       const response = await organizerApi.getPayoutReport(fromDate, toDate);
       if (response.success) {
         // If we have actual data, use it directly with filled gaps
-        if (response.data.payoutSummary && response.data.payoutSummary.length > 0) {
+        if (
+          response.data.payoutSummary &&
+          response.data.payoutSummary.length > 0
+        ) {
           const cadence = response.data.payoutSummary[0].cadence || "WEEKLY";
           const allPeriods = generateAllPeriods(fromDate, toDate, cadence);
-          const mergedSummary = mergePayoutData(allPeriods, response.data.payoutSummary);
-          
+          const mergedSummary = mergePayoutData(
+            allPeriods,
+            response.data.payoutSummary,
+          );
+
           setPayoutReport({
             ...response.data,
             payoutSummary: mergedSummary,
@@ -501,7 +507,10 @@ const OrganizerFinance = () => {
                           Tickets
                           <div className="group relative">
                             <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl" style={{zIndex: 9999}}>
+                            <div
+                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                              style={{ zIndex: 9999 }}
+                            >
                               Total individual tickets sold in this period
                             </div>
                           </div>
@@ -512,8 +521,12 @@ const OrganizerFinance = () => {
                           Gross Revenue
                           <div className="group relative">
                             <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl" style={{zIndex: 9999}}>
-                              Total amount paid by customers (ticket price + service fee)
+                            <div
+                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                              style={{ zIndex: 9999 }}
+                            >
+                              Total amount paid by customers (ticket price +
+                              service fee)
                             </div>
                           </div>
                         </div>
@@ -523,8 +536,12 @@ const OrganizerFinance = () => {
                           Service Fee
                           <div className="group relative">
                             <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-52 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl" style={{zIndex: 9999}}>
-                              Platform's 10% commission deducted from ticket price
+                            <div
+                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-52 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                              style={{ zIndex: 9999 }}
+                            >
+                              Platform's 10% commission deducted from ticket
+                              price
                             </div>
                           </div>
                         </div>
@@ -534,8 +551,12 @@ const OrganizerFinance = () => {
                           Net Earnings
                           <div className="group relative">
                             <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl" style={{zIndex: 9999}}>
-                              Amount you'll receive in your account (Gross - Service Fee)
+                            <div
+                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                              style={{ zIndex: 9999 }}
+                            >
+                              Amount you'll receive in your account (Gross -
+                              Service Fee)
                             </div>
                           </div>
                         </div>

@@ -2,8 +2,8 @@ package com.xfrizon.service;
 
 import com.xfrizon.dto.UserTicketResponse;
 import com.xfrizon.entity.User;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -14,16 +14,28 @@ import jakarta.mail.internet.MimeMessage;
 import java.time.format.DateTimeFormatter;
 
 @Service
-@AllArgsConstructor
 @Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    @Autowired(required = false)
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+        if (mailSender == null) {
+            log.warn("JavaMailSender not configured - email functionality will be disabled");
+        }
+    }
+
     /**
      * Send ticket confirmation email
      */
     public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
+        if (mailSender == null) {
+            log.debug("Email sending skipped - mail sender not configured");
+            return;
+        }
+        
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -52,6 +64,11 @@ public class EmailService {
      * Send payment confirmation email
      */
     public void sendPaymentConfirmationEmail(User user, double amount, String eventTitle) {
+        if (mailSender == null) {
+            log.debug("Email sending skipped - mail sender not configured");
+            return;
+        }
+        
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(user.getEmail());
@@ -163,6 +180,11 @@ public class EmailService {
      * Send order confirmation email
      */
     public void sendOrderConfirmationEmail(User user, String eventTitle, int ticketCount, double totalAmount) {
+        if (mailSender == null) {
+            log.debug("Email sending skipped - mail sender not configured");
+            return;
+        }
+        
         try {
             if (user == null || user.getEmail() == null) {
                 log.warn("Cannot send order confirmation email: user is null");
