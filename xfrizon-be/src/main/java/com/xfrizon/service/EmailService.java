@@ -3,7 +3,7 @@ package com.xfrizon.service;
 import com.xfrizon.dto.UserTicketResponse;
 import com.xfrizon.entity.User;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -19,8 +19,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Autowired(required = false)
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(@Nullable JavaMailSender mailSender) {
         this.mailSender = mailSender;
         if (mailSender == null) {
             log.warn("JavaMailSender not configured - email functionality will be disabled");
