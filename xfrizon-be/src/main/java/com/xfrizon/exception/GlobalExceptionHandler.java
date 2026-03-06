@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -74,6 +75,17 @@ public class GlobalExceptionHandler {
 
         log.error("Illegal state exception: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public @Nullable ResponseEntity<Map<String, Object>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Resource not found");
+        response.put("path", ex.getResourcePath());
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(RuntimeException.class)

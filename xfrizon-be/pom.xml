@@ -178,17 +178,7 @@
 						</goals>
 						<phase>generate-resources</phase>
 						<configuration>
-							<arguments>install --legacy-peer-deps --no-audit --no-fund</arguments>
-						</configuration>
-					</execution>
-					<execution>
-						<id>npm-install-rollup-native</id>
-						<goals>
-							<goal>npm</goal>
-						</goals>
-						<phase>generate-resources</phase>
-						<configuration>
-							<arguments>install @rollup/rollup-linux-x64-gnu --no-save --legacy-peer-deps</arguments>
+							<arguments>install --legacy-peer-deps --include=optional --no-audit --no-fund</arguments>
 						</configuration>
 					</execution>
 					<execution>
