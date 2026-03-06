@@ -178,7 +178,7 @@
 						</goals>
 						<phase>generate-resources</phase>
 						<configuration>
-							<arguments>install</arguments>
+							<arguments>install --legacy-peer-deps --no-audit --no-fund</arguments>
 						</configuration>
 					</execution>
 					<execution>
