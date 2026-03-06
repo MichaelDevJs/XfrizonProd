@@ -182,6 +182,16 @@
 						</configuration>
 					</execution>
 					<execution>
+						<id>npm-install-rollup-native</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<arguments>install @rollup/rollup-linux-x64-gnu --no-save --legacy-peer-deps</arguments>
+						</configuration>
+					</execution>
+					<execution>
 						<id>npm-build</id>
 						<goals>
 							<goal>npm</goal>
