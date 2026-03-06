@@ -1,9 +1,9 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import React from "react";
 import { FaUpload, FaCheckCircle } from "react-icons/fa";
 import { toast } from "react-toastify";
+import api from "../../api/axios";
 
 const OrganizerRegister = () => {
   const navigate = useNavigate();
@@ -49,15 +49,11 @@ const OrganizerRegister = () => {
       const formData = new FormData();
       formData.append("file", logoFile);
 
-      const response = await axios.post(
-        "http://localhost:8080/api/v1/uploads/organizer-logo",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      const response = await api.post("/uploads/organizer-logo", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
       return response.data.url;
     } catch (err) {
@@ -93,10 +89,7 @@ const OrganizerRegister = () => {
         role: "ORGANIZER",
       };
 
-      const res = await axios.post(
-        "http://localhost:8081/api/v1/auth/register",
-        registerData,
-      );
+      const res = await api.post("/auth/register", registerData);
 
       toast.success("Registration successful! Redirecting to login...");
       setTimeout(() => {
