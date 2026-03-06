@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
-  },
+    "preview": "vite preview",
+    "copy-build": "node -e \"const fs = require('fs'); const path = require('path'); const src = path.join(__dirname, 'dist'); const dst = path.resolve(__dirname, '../xfrizon-be/src/main/resources/static'); if (fs.existsSync(dst)) { fs.rmSync(dst, { recursive: true, force: true }); } fs.mkdirSync(dst, { recursive: true }); fs.cpSync(src, dst, { recursive: true, force: true }); console.log('Frontend assets copied to backend');\""
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
