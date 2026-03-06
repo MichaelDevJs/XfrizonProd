@@ -47,7 +47,9 @@ public class SecurityConfig {
             "http://localhost:3000",
             "http://localhost:8080",
             "http://127.0.0.1:5173",
-            "http://127.0.0.1:5177"
+            "http://127.0.0.1:5177",
+            "https://xfrizon.up.railway.app",
+            "https://xfrizonprod-production.up.railway.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
