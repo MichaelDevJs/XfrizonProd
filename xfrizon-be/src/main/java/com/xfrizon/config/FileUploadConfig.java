@@ -43,10 +43,16 @@ public class FileUploadConfig implements WebMvcConfigurer {
             ? absoluteUploadDir
             : absoluteUploadDir + File.separator);
 
+        // Add custom handlers for uploaded files
         registry.addResourceHandler("/uploads/**")
             .addResourceLocations(location);
         registry.addResourceHandler("/api/v1/uploads/**")
             .addResourceLocations(location);
+
+        // Explicitly enable default static resource locations (classpath:/static/, etc)
+        // This ensures vite.svg and other static files are served
+        registry.addResourceHandler("/**")
+            .addResourceLocations("classpath:/static/", "classpath:/public/", "classpath:/resources/", "classpath:/META-INF/resources/");
 
         log.info("Upload directory configured at: {}", absoluteUploadDir);
     }
