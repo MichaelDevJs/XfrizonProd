@@ -3,8 +3,9 @@ WORKDIR /app
 COPY xfrizon-be /app
 COPY xfrizon-ui /xfrizon-ui
 
-# Clean artifacts to ensure fresh build  
-RUN rm -rf /xfrizon-ui/node_modules /xfrizon-ui/dist
+# Clean ALL npm artifacts and locks to force fresh npm install
+# This fixes optional dependency issues with Rollup
+RUN rm -rf /xfrizon-ui/node_modules /xfrizon-ui/dist /xfrizon-ui/package-lock.json
 
 RUN mvn -f /app/pom.xml clean package -DskipTests
 
