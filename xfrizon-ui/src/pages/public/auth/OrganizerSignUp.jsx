@@ -4,6 +4,56 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import authService from "../../../api/authService";
 
+const getDisplayErrorMessage = (
+  payload,
+  fallback = "Registration failed. Please try again.",
+) => {
+  const isValidString = (value) => {
+    if (typeof value !== "string") {
+      return false;
+    }
+
+    const normalized = value.trim();
+    if (!normalized) {
+      return false;
+    }
+
+    const lowered = normalized.toLowerCase();
+    return !["false", "null", "undefined"].includes(lowered);
+  };
+
+  if (isValidString(payload)) {
+    return payload.trim();
+  }
+
+  if (Array.isArray(payload)) {
+    for (const item of payload) {
+      const message = getDisplayErrorMessage(item, "");
+      if (message) {
+        return message;
+      }
+    }
+    return fallback;
+  }
+
+  if (payload && typeof payload === "object") {
+    const messageCandidates = [
+      payload.message,
+      payload.error,
+      payload.details,
+    ];
+
+    for (const candidate of messageCandidates) {
+      const message = getDisplayErrorMessage(candidate, "");
+      if (message) {
+        return message;
+      }
+    }
+  }
+
+  return fallback;
+};
+
 export default function OrganizerSignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -102,15 +152,15 @@ export default function OrganizerSignUp() {
         }, 500);
       } else {
         setLoading(false);
-        toast.error(response?.message || "Registration failed");
+        toast.error(
+          getDisplayErrorMessage(response, "Registration failed"),
+        );
       }
     } catch (error) {
       if (error?.errors) {
         setErrors(error.errors);
-      } else if (error?.message) {
-        toast.error(error.message);
       } else {
-        toast.error("Registration failed. Please try again.");
+        toast.error(getDisplayErrorMessage(error));
       }
       setLoading(false);
     }
