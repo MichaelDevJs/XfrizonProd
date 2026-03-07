@@ -1,8 +1,15 @@
 package com.xfrizon.service;
 
+import com.xfrizon.dto.AdminOrganizerManagementRow;
 import com.xfrizon.dto.OrganizerProfileUpdateRequest;
 import com.xfrizon.dto.UserResponse;
+import com.xfrizon.entity.Event;
+import com.xfrizon.entity.PaymentRecord;
+import com.xfrizon.entity.TicketTier;
 import com.xfrizon.entity.User;
+import com.xfrizon.repository.EventRepository;
+import com.xfrizon.repository.PaymentRecordRepository;
+import com.xfrizon.repository.TicketTierRepository;
 import com.xfrizon.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -14,12 +21,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -27,14 +37,78 @@ import java.util.UUID;
 public class OrganizerService {
 
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
+    private final TicketTierRepository ticketTierRepository;
+    private final PaymentRecordRepository paymentRecordRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${upload.directory:uploads/}")
     private String uploadDir;
 
-    public OrganizerService(UserRepository userRepository, ObjectMapper objectMapper) {
+    public OrganizerService(
+            UserRepository userRepository,
+            EventRepository eventRepository,
+            TicketTierRepository ticketTierRepository,
+            PaymentRecordRepository paymentRecordRepository,
+            ObjectMapper objectMapper) {
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
+        this.ticketTierRepository = ticketTierRepository;
+        this.paymentRecordRepository = paymentRecordRepository;
         this.objectMapper = objectMapper;
+    }
+
+    public List<AdminOrganizerManagementRow> getAdminOrganizerManagementRows() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() == User.UserRole.ORGANIZER)
+                .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::mapToAdminManagementRow)
+                .collect(Collectors.toList());
+    }
+
+    private AdminOrganizerManagementRow mapToAdminManagementRow(User organizer) {
+        List<Event> organizerEvents = eventRepository.findByOrganizerId(organizer.getId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
+
+        int ticketsListed = 0;
+        int ticketsSold = 0;
+
+        for (Event event : organizerEvents) {
+            List<TicketTier> tiers = ticketTierRepository.findByEventIdOrderByDisplayOrder(event.getId());
+            for (TicketTier tier : tiers) {
+                ticketsListed += tier.getQuantity() != null ? tier.getQuantity() : 0;
+                ticketsSold += tier.getQuantitySold() != null ? tier.getQuantitySold() : 0;
+            }
+        }
+
+        List<PaymentRecord> successfulPayments = paymentRecordRepository.findAllPaymentsByOrganizer(organizer.getId());
+        BigDecimal payout = successfulPayments.stream()
+                .map(payment -> payment.getOrganizerAmount() != null ? payment.getOrganizerAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        String organizerName = (organizer.getName() != null && !organizer.getName().isBlank())
+                ? organizer.getName()
+                : String.format("%s %s", safeText(organizer.getFirstName()), safeText(organizer.getLastName())).trim();
+
+        String payoutMethod = (organizer.getStripeAccountId() != null && !organizer.getStripeAccountId().isBlank())
+                ? "Stripe Connect"
+                : "Manual";
+
+        return AdminOrganizerManagementRow.builder()
+                .organizerId(organizer.getId())
+                .name(organizerName.isBlank() ? "N/A" : organizerName)
+                .phoneNumber(safeText(organizer.getPhoneNumber()))
+                .location(safeText(organizer.getLocation()))
+                .email(safeText(organizer.getEmail()))
+                .ticketsListed(ticketsListed)
+                .ticketsSold(ticketsSold)
+                .payout(payout)
+                .payoutMethod(payoutMethod)
+                .dateJoined(organizer.getCreatedAt())
+                .build();
+    }
+
+    private String safeText(String value) {
+        return value == null || value.isBlank() ? "N/A" : value;
     }
 
     /**
