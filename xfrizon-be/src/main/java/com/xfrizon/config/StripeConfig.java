@@ -24,11 +24,13 @@ public class StripeConfig {
                 || lowered.startsWith("replace-")
                 || lowered.startsWith("your_")
                 || lowered.contains("placeholder")) {
-            throw new IllegalStateException("Stripe is not configured. Set STRIPE_API_KEY in environment variables.");
+            log.error("Stripe is not configured. Set STRIPE_API_KEY in environment variables.");
+            return;
         }
 
         if (!(key.startsWith("sk_test_") || key.startsWith("sk_live_"))) {
-            throw new IllegalStateException("Invalid Stripe secret key format. Expected key starting with sk_test_ or sk_live_.");
+            log.error("Invalid Stripe secret key format. Expected key starting with sk_test_ or sk_live_.");
+            return;
         }
 
         Stripe.apiKey = key;

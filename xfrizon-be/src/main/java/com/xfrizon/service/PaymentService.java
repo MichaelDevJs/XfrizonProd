@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Locale;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,6 +92,10 @@ public class PaymentService {
         try {
             log.info("Creating payment intent for user: {}, event: {}, amount: {}", 
                     userId, request.getEventId(), request.getAmount());
+
+            if (!isStripeConfigured()) {
+                throw new IllegalStateException("Payment service is not configured. Missing STRIPE_API_KEY.");
+            }
 
             // Validate inputs
             if (request.getEventId() == null || request.getEventId() <= 0) {
@@ -257,6 +262,18 @@ public class PaymentService {
             log.error("Error creating payment intent", e);
             throw new RuntimeException("Error creating payment intent: " + e.getMessage(), e);
         }
+    }
+
+    private boolean isStripeConfigured() {
+        String key = stripeApiKey == null ? "" : stripeApiKey.trim();
+        if (key.isEmpty()) {
+            return false;
+        }
+        String lowered = key.toLowerCase(Locale.ROOT);
+        if (lowered.startsWith("replace-") || lowered.startsWith("your_") || lowered.contains("placeholder")) {
+            return false;
+        }
+        return key.startsWith("sk_test_") || key.startsWith("sk_live_");
     }
 
     /**
