@@ -69,7 +69,7 @@ public class Event {
 
     private String flyerBucket;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "event_genres", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "genre")
     private List<String> genres = new ArrayList<>();
