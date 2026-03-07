@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 // Minimal CenteredBanner, one text at a time, fade/slide effect
 const CenteredBanner = () => {
   const items = [
-    "Promoting Afrocentric Events Globally",
+    "Promoting Afrocentric Events",
     "Discover Events Near You",
     "Celebrate Culture Together",
   ];
