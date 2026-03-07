@@ -3,12 +3,9 @@ WORKDIR /app
 COPY xfrizon-be /app
 COPY xfrizon-ui /xfrizon-ui
 
-# Clean frontend artifacts and backend static folder to force fresh build
-# This prevents serving cached old bundles from previous builds
-RUN rm -rf /xfrizon-ui/node_modules \
-    /xfrizon-ui/dist \
-    /xfrizon-ui/package-lock.json \
-    /app/src/main/resources/static
+# Clean ALL npm artifacts and locks to force fresh npm install
+# This fixes optional dependency issues with Rollup
+RUN rm -rf /xfrizon-ui/node_modules /xfrizon-ui/dist /xfrizon-ui/package-lock.json
 
 RUN mvn -f /app/pom.xml clean package -DskipTests
 
