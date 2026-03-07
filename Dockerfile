@@ -7,6 +7,10 @@ COPY xfrizon-ui /xfrizon-ui
 # This fixes optional dependency issues with Rollup
 RUN rm -rf /xfrizon-ui/node_modules /xfrizon-ui/dist /xfrizon-ui/package-lock.json
 
+# Cache-busting argument to force rebuild of frontend assets
+ARG CACHEBUST=2
+RUN echo "Build timestamp: $CACHEBUST"
+
 RUN mvn -f /app/pom.xml clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
