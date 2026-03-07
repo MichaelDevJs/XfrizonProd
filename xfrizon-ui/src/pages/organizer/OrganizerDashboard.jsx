@@ -155,7 +155,9 @@ const OrganizerDashboard = () => {
       <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-900">
         <div className="p-3 border-b border-zinc-800">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-sm font-medium text-gray-200">Ticket History</h2>
+            <h2 className="text-sm font-medium text-gray-200">
+              Ticket History
+            </h2>
             <button
               onClick={fetchRecentTickets}
               className="w-full sm:w-auto text-xs font-light text-gray-400 border border-zinc-700 rounded px-3 py-1.5 hover:border-zinc-600 transition-colors"

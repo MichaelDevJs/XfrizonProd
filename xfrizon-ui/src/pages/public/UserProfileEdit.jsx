@@ -267,7 +267,9 @@ export default function UserProfileEdit() {
             <FaArrowLeft size={18} />
             <span className="hidden md:inline">Back</span>
           </button>
-          <h1 className="text-xl font-semibold hidden md:block">Edit Profile</h1>
+          <h1 className="text-xl font-semibold hidden md:block">
+            Edit Profile
+          </h1>
         </div>
       </div>
 

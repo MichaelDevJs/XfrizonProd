@@ -37,11 +37,7 @@ const getDisplayErrorMessage = (
   }
 
   if (payload && typeof payload === "object") {
-    const messageCandidates = [
-      payload.message,
-      payload.error,
-      payload.details,
-    ];
+    const messageCandidates = [payload.message, payload.error, payload.details];
 
     for (const candidate of messageCandidates) {
       const message = getDisplayErrorMessage(candidate, "");
@@ -152,9 +148,7 @@ export default function OrganizerSignUp() {
         }, 500);
       } else {
         setLoading(false);
-        toast.error(
-          getDisplayErrorMessage(response, "Registration failed"),
-        );
+        toast.error(getDisplayErrorMessage(response, "Registration failed"));
       }
     } catch (error) {
       if (error?.errors) {

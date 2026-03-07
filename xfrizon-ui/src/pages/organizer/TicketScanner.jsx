@@ -1,6 +1,11 @@
 import { useState, useRef, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaQrcode, FaArrowLeft, FaCheckCircle, FaKeyboard } from "react-icons/fa";
+import {
+  FaQrcode,
+  FaArrowLeft,
+  FaCheckCircle,
+  FaKeyboard,
+} from "react-icons/fa";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
@@ -76,13 +81,7 @@ const TicketScanner = () => {
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      context.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -92,7 +91,10 @@ const TicketScanner = () => {
       if (code && code.data) {
         // Prevent duplicate scans within 3 seconds
         const now = Date.now();
-        if (lastScannedRef.current !== code.data || (now - (lastScannedRef.lastTime || 0)) > 3000) {
+        if (
+          lastScannedRef.current !== code.data ||
+          now - (lastScannedRef.lastTime || 0) > 3000
+        ) {
           lastScannedRef.current = code.data;
           lastScannedRef.lastTime = now;
           handleCodeDetected(code.data);
@@ -154,7 +156,10 @@ const TicketScanner = () => {
       };
 
       setScanHistory((prev) => [errorEntry, ...prev.slice(0, 9)]);
-      toast.error(error.response?.data?.message || "Failed to validate ticket. Please try again.");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to validate ticket. Please try again.",
+      );
       setScanResult(null);
       setManualCode("");
     } finally {
@@ -246,7 +251,9 @@ const TicketScanner = () => {
                       <input
                         type="text"
                         value={manualCode}
-                        onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                        onChange={(e) =>
+                          setManualCode(e.target.value.toUpperCase())
+                        }
                         placeholder="Enter ticket validation code"
                         className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded-lg font-mono text-sm focus:border-indigo-500 focus:outline-none"
                         autoFocus
@@ -281,9 +288,7 @@ const TicketScanner = () => {
         {/* Scan History */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
           <div className="p-3 border-b border-zinc-800">
-            <h2 className="text-sm font-medium text-gray-200">
-              Scan History
-            </h2>
+            <h2 className="text-sm font-medium text-gray-200">Scan History</h2>
           </div>
           <div className="max-h-80 overflow-y-auto hide-scrollbar p-3">
             {scanHistory.length === 0 ? (
@@ -323,7 +328,9 @@ const TicketScanner = () => {
 
       {/* Quick Stats */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-        <h2 className="text-sm font-medium text-gray-200 mb-2">Session Stats</h2>
+        <h2 className="text-sm font-medium text-gray-200 mb-2">
+          Session Stats
+        </h2>
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-zinc-800/50 rounded p-2">
             <p className="text-gray-500 font-light text-xs mb-1">Total Scans</p>

@@ -112,7 +112,8 @@ const TicketsTable = ({ tickets, onDownload, isLoading }) => {
                 </span>
               </td>
               <td className="py-3 px-3 sm:px-4 text-lime-400 font-light text-xs sm:text-sm whitespace-nowrap">
-                {getCurrencySymbol(ticket.currency)}{Number(ticket.price ?? 0).toFixed(2)}
+                {getCurrencySymbol(ticket.currency)}
+                {Number(ticket.price ?? 0).toFixed(2)}
               </td>
               <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
                 <span

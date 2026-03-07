@@ -411,7 +411,10 @@ const OrganizerFinance = () => {
                   Service Fee (10%)
                 </p>
                 <p className="text-xl sm:text-2xl font-light text-amber-400 wrap-break-word">
-                  {formatCurrency(totals.totalServiceFee, payoutReport?.currency)}
+                  {formatCurrency(
+                    totals.totalServiceFee,
+                    payoutReport?.currency,
+                  )}
                 </p>
               </div>
               <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
@@ -436,10 +439,9 @@ const OrganizerFinance = () => {
               </h2>
               <div className="group relative">
                 <FaInfoCircle className="w-4 h-4 text-gray-500 cursor-help" />
-                <div
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-64 p-3 bg-zinc-900 border border-zinc-600 rounded-lg text-xs text-gray-300 font-normal shadow-xl z-50"
-                >
-                  Configure how you receive earnings from ticket sales. Choose between automatic Stripe transfers or manual bank payouts.
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-64 p-3 bg-zinc-900 border border-zinc-600 rounded-lg text-xs text-gray-300 font-normal shadow-xl z-50">
+                  Configure how you receive earnings from ticket sales. Choose
+                  between automatic Stripe transfers or manual bank payouts.
                 </div>
               </div>
             </div>
@@ -485,12 +487,14 @@ const OrganizerFinance = () => {
                 <option value="3months">Last 3 Months</option>
                 <option value="custom">Custom Range</option>
               </select>
-              
+
               {dateRange === "custom" && (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">From</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        From
+                      </label>
                       <input
                         type="date"
                         value={customFrom}
@@ -500,7 +504,9 @@ const OrganizerFinance = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">To</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        To
+                      </label>
                       <input
                         type="date"
                         value={customTo}
@@ -513,7 +519,9 @@ const OrganizerFinance = () => {
                   {customFrom && customTo && (
                     <div className="flex items-center justify-between text-xs">
                       {new Date(customTo) < new Date(customFrom) ? (
-                        <p className="text-red-400">End date must be after start date</p>
+                        <p className="text-red-400">
+                          End date must be after start date
+                        </p>
                       ) : (
                         <p className="text-green-400 flex items-center gap-1">
                           <FaInfoCircle className="w-3 h-3" />
@@ -626,7 +634,7 @@ const OrganizerFinance = () => {
                         </th>
                       </tr>
                     </thead>
-                  <tbody>
+                    <tbody>
                       {payoutReport.payoutSummary.map((window, idx) => (
                         <tr
                           key={idx}

@@ -132,10 +132,16 @@ function RootApp() {
             {/* Organizer Auth Routes */}
             <Route path="/organizer/login" element={<OrganizerLogin />} />
             <Route path="/organizer/register" element={<OrganizerRegister />} />
-            
+
             {/* Stripe Connect Callback Routes */}
-            <Route path="/organizer/stripe/success" element={<StripeSuccessPage />} />
-            <Route path="/organizer/stripe/refresh" element={<StripeRefreshPage />} />
+            <Route
+              path="/organizer/stripe/success"
+              element={<StripeSuccessPage />}
+            />
+            <Route
+              path="/organizer/stripe/refresh"
+              element={<StripeRefreshPage />}
+            />
 
             {/* Organizer Protected Routes */}
             <Route
