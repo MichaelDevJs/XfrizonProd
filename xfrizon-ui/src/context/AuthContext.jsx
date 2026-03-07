@@ -36,6 +36,13 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const validateToken = async () => {
       try {
+        // Skip validation for admin routes - admin uses separate adminToken
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        if (isAdminRoute) {
+          setLoading(false);
+          return;
+        }
+
         const token = localStorage.getItem("userToken");
         const storedUser = safeJsonParse(localStorage.getItem("user"));
 

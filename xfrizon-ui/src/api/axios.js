@@ -30,9 +30,16 @@ const isRetryableNetworkError = (error) => {
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("userToken");
   const adminToken = localStorage.getItem("adminToken");
+  const isAdminRequest = String(config?.url || "").includes("/admin/");
 
-  // Use userToken if available, otherwise use adminToken
-  if (token) {
+  // Prioritize admin token for admin routes to avoid mixing auth contexts.
+  if (isAdminRequest) {
+    if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
+    } else if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } else if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   } else if (adminToken) {
     config.headers.Authorization = `Bearer ${adminToken}`;

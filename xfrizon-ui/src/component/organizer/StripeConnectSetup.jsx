@@ -28,7 +28,10 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
     console.log("StripeConnectSetup - Organizer data received:", organizer);
     console.log("StripeConnectSetup - Has location:", !!organizer?.location);
     console.log("StripeConnectSetup - Location value:", organizer?.location);
-    console.log("StripeConnectSetup - Location is empty?", !organizer?.location || organizer?.location?.trim() === "");
+    console.log(
+      "StripeConnectSetup - Location is empty?",
+      !organizer?.location || organizer?.location?.trim() === "",
+    );
   }, [organizer]);
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
     if (!organizer?.location || organizer.location.trim() === "") {
       toast.error(
         "Please set your location in your profile before setting up Stripe Connect. This is required for payment processing.",
-        { autoClose: 5000 }
+        { autoClose: 5000 },
       );
       return;
     }
@@ -216,7 +219,8 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
                 </button>
                 {status?.chargesEnabled && (
                   <p className="text-xs text-blue-300 mt-2">
-                    <strong>Almost there!</strong> Click "Refresh Status" below to check for updates.
+                    <strong>Almost there!</strong> Click "Refresh Status" below
+                    to check for updates.
                   </p>
                 )}
               </div>
@@ -228,7 +232,8 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
         {notStarted && (
           <div className="space-y-3">
             <p className="text-xs text-gray-400">
-              Choose how you receive earnings. Required before publishing events.
+              Choose how you receive earnings. Required before publishing
+              events.
             </p>
 
             {/* Location Warning */}
@@ -341,7 +346,7 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
           </div>
         )}
       </div>
-      
+
       {/* Footer with Refresh */}
       <div className="border-t border-zinc-800 p-3 flex justify-end">
         <button

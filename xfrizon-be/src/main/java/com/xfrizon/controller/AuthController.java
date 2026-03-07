@@ -42,6 +42,17 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @PostMapping("/register-admin")
+    public ResponseEntity<AuthResponse> registerAdmin(
+            @Valid @RequestBody RegisterRequest request,
+            @RequestHeader(value = "X-Admin-Secret-Key", required = false) String adminSecretKey) {
+        AuthResponse response = authService.registerAdmin(request, adminSecretKey);
+        if (response.getSuccess()) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);

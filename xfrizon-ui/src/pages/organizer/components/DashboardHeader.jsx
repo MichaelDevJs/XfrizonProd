@@ -5,7 +5,9 @@ const DashboardHeader = ({ onScanClick }) => {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
       <div className="min-w-0">
-        <h1 className="text-2xl sm:text-4xl font-light text-gray-200 mb-1 sm:mb-2">Dashboard</h1>
+        <h1 className="text-2xl sm:text-4xl font-light text-gray-200 mb-1 sm:mb-2">
+          Dashboard
+        </h1>
         <p className="text-gray-500 font-light">
           Welcome back! Here's your event overview.
         </p>

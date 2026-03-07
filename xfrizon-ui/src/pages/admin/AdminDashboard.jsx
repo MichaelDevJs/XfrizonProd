@@ -34,35 +34,35 @@ export default function AdminDashboard() {
   return (
     <div className="bg-[#1e1e1e] text-white min-h-screen">
       {/* Header */}
-      <div className="bg-zinc-950 border border-zinc-800 p-6">
-        <h1 className="text-2xl font-semibold uppercase tracking-[0.16em] text-zinc-100">
+      <div className="bg-zinc-950 border-b border-zinc-800 p-4">
+        <h1 className="text-xl sm:text-2xl font-semibold uppercase tracking-wider text-zinc-100">
           Admin Dashboard
         </h1>
-        <p className="text-zinc-500 text-xs uppercase mt-2 tracking-wider">
+        <p className="text-zinc-500 text-xs uppercase mt-1 tracking-wider">
           System Overview
         </p>
       </div>
 
       {/* Main Content */}
-      <div className="p-6 space-y-6">
+      <div className="p-3 sm:p-4 space-y-4">
         {/* Stats Grid */}
-        <div className="border border-zinc-800 bg-zinc-950">
-          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-4 py-2">
+        <div className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-3 py-2">
             <h2 className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
               Key Metrics
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-x divide-y divide-zinc-800">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-0">
             {stats.map((stat, idx) => (
               <Link
                 key={idx}
                 to={stat.link}
-                className="p-4 hover:bg-zinc-900/70 transition border-r border-b border-zinc-800 last:border-r-0 cursor-pointer group"
+                className="p-3 hover:bg-zinc-900/70 transition border-r border-b border-zinc-800 last:border-r-0 cursor-pointer group"
               >
-                <p className="text-xs uppercase text-zinc-500 font-bold mb-2">
+                <p className="text-[10px] sm:text-xs uppercase text-zinc-500 font-bold mb-1">
                   {stat.label}
                 </p>
-                <p className="text-3xl font-mono font-semibold text-[#403838] group-hover:text-zinc-200">
+                <p className="text-xl sm:text-2xl font-mono font-semibold text-[#403838] group-hover:text-zinc-200">
                   {stat.value}
                 </p>
               </Link>
@@ -71,102 +71,130 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="border border-zinc-800 bg-zinc-950">
-          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-4 py-2">
+        <div className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-3 py-2">
             <h2 className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
               Quick Actions
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
             <Link
               to="/admin/blogs"
-              className="p-4 border-r border-b border-zinc-800 hover:bg-zinc-900/70 transition text-xs"
+              className="p-3 border-r border-b sm:border-b-0 border-zinc-800 hover:bg-zinc-900/70 transition text-xs"
             >
-              <p className="font-bold uppercase text-[#403838] mb-1 tracking-wide">
+              <p className="font-bold uppercase text-[#403838] mb-0.5 tracking-wide text-[10px] sm:text-xs">
                 → Write New Blog
               </p>
-              <p className="text-zinc-500">Create and publish new content</p>
+              <p className="text-zinc-500 text-[10px]">
+                Create and publish new content
+              </p>
             </Link>
             <Link
               to="/admin/verify-organizers"
-              className="p-4 border-b border-zinc-800 hover:bg-zinc-900/70 transition text-xs"
+              className="p-3 border-b sm:border-b-0 border-zinc-800 hover:bg-zinc-900/70 transition text-xs"
             >
-              <p className="font-bold uppercase text-[#403838] mb-1 tracking-wide">
+              <p className="font-bold uppercase text-[#403838] mb-0.5 tracking-wide text-[10px] sm:text-xs">
                 → Verify Organizers
               </p>
-              <p className="text-zinc-500">Review pending organizer accounts</p>
+              <p className="text-zinc-500 text-[10px]">
+                Review pending organizer accounts
+              </p>
             </Link>
             <Link
               to="/admin/messages"
-              className="p-4 border-r border-zinc-800 hover:bg-zinc-900/70 transition text-xs"
+              className="p-3 border-r border-b sm:border-b-0 border-zinc-800 hover:bg-zinc-900/70 transition text-xs"
             >
-              <p className="font-bold uppercase text-[#403838] mb-1 tracking-wide">
+              <p className="font-bold uppercase text-[#403838] mb-0.5 tracking-wide text-[10px] sm:text-xs">
                 → View Messages (12)
               </p>
-              <p className="text-zinc-500">Read messages from platform users</p>
+              <p className="text-zinc-500 text-[10px]">
+                Read messages from platform users
+              </p>
             </Link>
             <Link
               to="/admin/users"
-              className="p-4 hover:bg-zinc-900/70 transition text-xs"
+              className="p-3 hover:bg-zinc-900/70 transition text-xs"
             >
-              <p className="font-bold uppercase text-[#403838] mb-1 tracking-wide">
+              <p className="font-bold uppercase text-[#403838] mb-0.5 tracking-wide text-[10px] sm:text-xs">
                 → Manage Users
               </p>
-              <p className="text-zinc-500">View and manage user accounts</p>
+              <p className="text-zinc-500 text-[10px]">
+                View and manage user accounts
+              </p>
             </Link>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="border border-zinc-800 bg-zinc-950">
-          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-4 py-2">
+        <div className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-3 py-2">
             <h2 className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
               Recent Activity
             </h2>
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              {recentActivity.map((activity, idx) => (
-                <tr
-                  key={idx}
-                  className="border-b border-zinc-800 hover:bg-zinc-900/70"
-                >
-                  <td className="px-4 py-3 border-r border-zinc-800 font-semibold text-zinc-100">
-                    {activity.action}
-                  </td>
-                  <td className="px-4 py-3 border-r border-zinc-800 text-zinc-400">
-                    {activity.user}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-500">{activity.time}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="max-h-80 overflow-y-auto hide-scrollbar">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                {recentActivity.map((activity, idx) => (
+                  <tr
+                    key={idx}
+                    className="border-b border-zinc-800 hover:bg-zinc-900/70"
+                  >
+                    <td className="px-3 py-2 border-r border-zinc-800 font-semibold text-zinc-100 text-[10px] sm:text-xs">
+                      {activity.action}
+                    </td>
+                    <td className="px-3 py-2 border-r border-zinc-800 text-zinc-400 text-[10px] sm:text-xs">
+                      {activity.user}
+                    </td>
+                    <td className="px-3 py-2 text-zinc-500 text-[10px] sm:text-xs">
+                      {activity.time}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* System Status */}
-        <div className="border border-zinc-800 bg-zinc-950">
-          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-4 py-2">
+        <div className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+          <div className="border-b border-zinc-800 bg-[#1e1e1e] px-3 py-2">
             <h2 className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
               System Status
             </h2>
           </div>
-          <div className="p-4 text-xs space-y-2">
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-              <span className="text-zinc-400">API Status:</span>
-              <span className="font-mono text-zinc-200">◉ ONLINE</span>
+          <div className="p-3 text-xs space-y-2">
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-1.5">
+              <span className="text-zinc-400 text-[10px] sm:text-xs">
+                API Status:
+              </span>
+              <span className="font-mono text-zinc-200 text-[10px] sm:text-xs">
+                ◉ ONLINE
+              </span>
             </div>
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-              <span className="text-zinc-400">Database:</span>
-              <span className="font-mono text-zinc-200">◉ CONNECTED</span>
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-1.5">
+              <span className="text-zinc-400 text-[10px] sm:text-xs">
+                Database:
+              </span>
+              <span className="font-mono text-zinc-200 text-[10px] sm:text-xs">
+                ◉ CONNECTED
+              </span>
             </div>
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-              <span className="text-zinc-400">Payment Gateway:</span>
-              <span className="font-mono text-zinc-200">◉ ACTIVE</span>
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-1.5">
+              <span className="text-zinc-400 text-[10px] sm:text-xs">
+                Payment Gateway:
+              </span>
+              <span className="font-mono text-zinc-200 text-[10px] sm:text-xs">
+                ◉ ACTIVE
+              </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-zinc-400">Last Sync:</span>
-              <span className="font-mono text-zinc-300">2 mins ago</span>
+              <span className="text-zinc-400 text-[10px] sm:text-xs">
+                Last Sync:
+              </span>
+              <span className="font-mono text-zinc-300 text-[10px] sm:text-xs">
+                2 mins ago
+              </span>
             </div>
           </div>
         </div>

@@ -238,7 +238,8 @@ const BankDetailsForm = () => {
               htmlFor="prefersManualPayout"
               className="text-xs text-gray-300"
             >
-              I prefer manual payout (admin-processed) instead of automatic Stripe
+              I prefer manual payout (admin-processed) instead of automatic
+              Stripe
             </label>
           </div>
         </div>

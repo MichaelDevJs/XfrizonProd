@@ -73,39 +73,46 @@ export default function BlogEditorBlocks({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-3">
-        <h3 className="text-lg font-bold text-white mb-4">Content Blocks</h3>
-
-        {/* Add Block Button at Top */}
-        <div className="bg-[#2a2a2a] rounded-lg border-2 border-dashed border-[#444] p-3 text-center">
-          <button
-            onClick={() => addBlock("text")}
-            className="text-sm text-gray-400 hover:text-gray-200 font-semibold"
-          >
-            + Add First Block
-          </button>
+      <div className="bg-[#2a2a2a] rounded-lg p-3 border border-zinc-800">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+            Content Blocks
+          </h3>
+          <span className="text-[10px] text-zinc-500">Scrollable</span>
         </div>
 
-        {/* Blocks List with Sortable Context */}
-        <SortableContext
-          items={formData.blocks.map((b) => b.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {formData.blocks.map((block, idx) => (
-            <SortableBlockItem
-              key={block.id}
-              block={block}
-              idx={idx}
-              totalBlocks={formData.blocks.length}
-              expandedBlockId={expandedBlockId}
-              setExpandedBlockId={setExpandedBlockId}
-              removeBlock={removeBlock}
-              updateBlock={updateBlock}
-              applyFormat={applyFormat}
-              addBlock={addBlock}
-            />
-          ))}
-        </SortableContext>
+        <div className="max-h-96 overflow-y-auto hide-scrollbar pr-1 space-y-2">
+          {/* Add Block Button at Top */}
+          <div className="bg-[#232323] rounded-lg border border-dashed border-zinc-700 p-2 text-center">
+            <button
+              onClick={() => addBlock("text")}
+              className="text-xs text-gray-400 hover:text-gray-200 font-semibold"
+            >
+              + Add First Block
+            </button>
+          </div>
+
+          {/* Blocks List with Sortable Context */}
+          <SortableContext
+            items={formData.blocks.map((b) => b.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {formData.blocks.map((block, idx) => (
+              <SortableBlockItem
+                key={block.id}
+                block={block}
+                idx={idx}
+                totalBlocks={formData.blocks.length}
+                expandedBlockId={expandedBlockId}
+                setExpandedBlockId={setExpandedBlockId}
+                removeBlock={removeBlock}
+                updateBlock={updateBlock}
+                applyFormat={applyFormat}
+                addBlock={addBlock}
+              />
+            ))}
+          </SortableContext>
+        </div>
       </div>
     </DndContext>
   );
@@ -141,7 +148,7 @@ function SortableBlockItem({
     <div key={block.id} ref={setNodeRef} style={style}>
       {/* Block Container */}
       <div
-        className={`bg-[#2a2a2a] rounded-xl shadow-md overflow-hidden border border-[#444] ${
+        className={`bg-[#2a2a2a] rounded-lg overflow-hidden border border-zinc-800 ${
           isDragging ? "shadow-2xl ring-2 ring-purple-500" : ""
         }`}
       >
@@ -158,7 +165,7 @@ function SortableBlockItem({
 
         {/* Block Content */}
         {expandedBlockId === block.id && (
-          <div className="p-6 border-t border-[#444]">
+          <div className="p-3 border-t border-zinc-800">
             <BlockContentManager
               block={block}
               updateBlock={updateBlock}
@@ -166,8 +173,8 @@ function SortableBlockItem({
             />
 
             {/* Block Controls */}
-            <div className="flex gap-2 mt-4 pt-4 border-t border-[#444] justify-between">
-              <div className="text-xs text-gray-500">
+            <div className="flex gap-2 mt-3 pt-3 border-t border-zinc-800 justify-between">
+              <div className="text-[10px] text-gray-500">
                 📌 Drag handle: use ⋮⋮ icon to reorder
               </div>
             </div>
@@ -198,7 +205,7 @@ function BlockHeader({
 
   return (
     <div
-      className={`p-4 bg-[#333] border-b border-[#444] hover:bg-[#3a3a3a] transition flex items-center justify-between ${
+      className={`p-3 bg-[#333] border-b border-zinc-800 hover:bg-[#3a3a3a] transition flex items-center justify-between ${
         isDragging ? "bg-purple-900" : ""
       }`}
     >
@@ -212,7 +219,7 @@ function BlockHeader({
         >
           ⋮⋮
         </span>
-        <span className="text-lg">{blockInfo.icon}</span>
+        <span className="text-base">{blockInfo.icon}</span>
 
         {/* Block Info - Clickable for expand/collapse */}
         <div
@@ -221,10 +228,10 @@ function BlockHeader({
             setExpandedBlockId(expandedBlockId === block.id ? null : block.id)
           }
         >
-          <p className="text-sm font-bold text-white capitalize">
+          <p className="text-xs font-semibold text-white capitalize">
             {block.type} Block
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-[10px] text-gray-400">
             {block.type === "text"
               ? `${itemCount} characters`
               : `${itemCount} items`}
@@ -237,7 +244,7 @@ function BlockHeader({
         {/* Quick Delete Button */}
         <button
           onClick={() => removeBlock(block.id)}
-          className="px-2 py-1 bg-red-900/80 text-red-300 rounded hover:bg-red-800 transition text-sm"
+          className="px-2 py-1 bg-red-900/80 text-red-300 rounded hover:bg-red-800 transition text-xs"
           title="Delete block"
         >
           🗑
@@ -296,7 +303,7 @@ function BlockSeparator({ block, addBlock }) {
     <div className="py-2">
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#444]"></div>
+          <div className="w-full border-t border-zinc-800"></div>
         </div>
         <div className="relative flex justify-center">
           <div className="bg-[#1e1e1e] px-2 flex gap-2 flex-wrap">
@@ -304,7 +311,7 @@ function BlockSeparator({ block, addBlock }) {
               <button
                 key={item.type}
                 onClick={() => addBlock(item.type, block.id)}
-                className={`px-2 py-1 text-xs text-white rounded hover:opacity-90 transition ${item.color}`}
+                className={`px-2 py-1 text-[10px] text-white rounded hover:opacity-90 transition ${item.color}`}
                 title={`Add ${item.type} block`}
               >
                 {item.label}

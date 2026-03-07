@@ -137,7 +137,9 @@ const MyEvents = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-light text-gray-200 mb-1">My Events</h1>
+          <h1 className="text-xl sm:text-2xl font-light text-gray-200 mb-1">
+            My Events
+          </h1>
           <p className="text-xs text-gray-500 font-light">
             Manage and track all your events
           </p>
@@ -154,7 +156,9 @@ const MyEvents = () => {
       {/* Events List */}
       {events.length === 0 ? (
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
-          <p className="text-xs text-gray-500 font-light mb-3">No events created yet</p>
+          <p className="text-xs text-gray-500 font-light mb-3">
+            No events created yet
+          </p>
           <Link
             to="/organizer/create-event"
             className="inline-block px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-xs transition-all duration-300"

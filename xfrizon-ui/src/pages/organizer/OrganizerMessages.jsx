@@ -9,7 +9,9 @@ const OrganizerMessages = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-light text-gray-200 mb-1">Messages</h1>
+        <h1 className="text-xl sm:text-2xl font-light text-gray-200 mb-1">
+          Messages
+        </h1>
         <p className="text-xs text-gray-500 font-light">
           Communicate with customers about their tickets
         </p>
@@ -31,7 +33,9 @@ const OrganizerMessages = () => {
       {messages.length === 0 ? (
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
           <FaEnvelope className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-500 font-light text-sm mb-1">No messages yet</p>
+          <p className="text-gray-500 font-light text-sm mb-1">
+            No messages yet
+          </p>
           <p className="text-xs text-gray-600 font-light">
             When customers reach out, you'll see them here
           </p>

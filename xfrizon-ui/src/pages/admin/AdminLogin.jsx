@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaShieldAlt, FaEye, FaEyeSlash } from "react-icons/fa";
+import api from "../../api/axios";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -15,26 +16,46 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
 
-    // Simple demo authentication
-    if (email === "admin@xfrizon.com" && password === "admin123") {
-      localStorage.setItem("adminToken", "demo-token-" + Date.now());
-      toast.success("✓ Admin login successful!");
+    try {
+      // Call real backend login endpoint
+      const response = await api.post("/auth/login", {
+        email,
+        password,
+      });
 
-      // Add small delay to ensure token is persisted before navigation
-      setTimeout(() => {
+      if (response.data.success && response.data.token) {
+        // Store the real JWT token as adminToken
+        localStorage.setItem("adminToken", response.data.token);
+        localStorage.setItem("adminUser", JSON.stringify({
+          id: response.data.userId,
+          email: response.data.email,
+          role: response.data.role,
+          name: response.data.name || response.data.firstName,
+        }));
+        
+        toast.success("✓ Admin login successful!");
+
+        // Add small delay to ensure token is persisted before navigation
+        setTimeout(() => {
+          setLoading(false);
+          const from = location.state?.from;
+          const fromPath = from?.pathname
+            ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+            : null;
+          const isFromLogin = from?.pathname === "/admin-login";
+
+          navigate(!isFromLogin && fromPath ? fromPath : "/admin/dashboard", {
+            replace: true,
+          });
+        }, 100);
+      } else {
+        toast.error("Login failed. Please check your credentials.");
         setLoading(false);
-        const from = location.state?.from;
-        const fromPath = from?.pathname
-          ? `${from.pathname}${from.search || ""}${from.hash || ""}`
-          : null;
-        const isFromLogin = from?.pathname === "/admin-login";
-
-        navigate(!isFromLogin && fromPath ? fromPath : "/admin/dashboard", {
-          replace: true,
-        });
-      }, 100);
-    } else {
-      toast.error("Invalid credentials. Use admin@xfrizon.com / admin123");
+      }
+    } catch (error) {
+      console.error("Admin login error:", error);
+      const errorMsg = error?.response?.data?.message || "Invalid credentials. Please try again.";
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
@@ -69,7 +90,7 @@ export default function AdminLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 font-light text-sm transition-all duration-300 focus:outline-none hover:border-zinc-700 focus:border-[#403838]"
-                placeholder="admin@xfrizon.com"
+                placeholder="admin@example.com"
               />
             </div>
 
@@ -119,16 +140,11 @@ export default function AdminLogin() {
               </div>
               <div>
                 <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wide font-light">
-                  Demo Credentials:
+                  Admin Access:
                 </p>
                 <div className="space-y-1">
                   <p className="text-xs text-zinc-600 font-light">
-                    <span className="text-zinc-500">Email:</span>{" "}
-                    <span className="text-zinc-400">admin@xfrizon.com</span>
-                  </p>
-                  <p className="text-xs text-zinc-600 font-light">
-                    <span className="text-zinc-500">Password:</span>{" "}
-                    <span className="text-zinc-400">admin123</span>
+                    Use your admin credentials to access the dashboard
                   </p>
                 </div>
               </div>

@@ -9,9 +9,10 @@ import {
   FaEnvelope,
   FaTicketAlt,
   FaMusic,
+  FaHourglass,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CountdownTimer from "./CountdownTimer";
 import { COUNTRIES_DATA } from "../../data/countriesData";
 
@@ -19,6 +20,14 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   const navigate = useNavigate();
   const [selectedTickets, setSelectedTickets] = useState({});
   const [activeTab, setActiveTab] = useState("overview");
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const SERVICE_FEE_RATE = 0.1; // 10%
   const roundCurrency = (amount) =>
@@ -47,6 +56,36 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
       ...prev,
       [tierId]: quantity,
     }));
+  };
+
+  const isTicketAvailable = (tier) => {
+    const now = currentTime;
+    const saleStart = tier.saleStart ? new Date(tier.saleStart) : null;
+    const saleEnd = tier.saleEnd ? new Date(tier.saleEnd) : null;
+
+    if (saleStart && now < saleStart) {
+      return { available: false, reason: "notStarted", startsAt: saleStart };
+    }
+    if (saleEnd && now > saleEnd) {
+      return { available: false, reason: "ended", endedAt: saleEnd };
+    }
+    return { available: true };
+  };
+
+  const getTimeUntilEnd = (endDate) => {
+    if (!endDate) return null;
+    const end = new Date(endDate);
+    const now = currentTime;
+    const diff = end - now;
+
+    if (diff <= 0) return null;
+    if (diff > 24 * 60 * 60 * 1000) return null; // More than 24 hours
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return { hours, minutes, seconds };
   };
 
   const getTotalPrice = (tier) => {
@@ -247,19 +286,47 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                       const selectedQty = selectedTickets[tierId] || 0;
                       const availableQty =
                         (tier.quantity || 0) - (tier.quantitySold || 0);
+                      const availability = isTicketAvailable(tier);
+                      const timeLeft =
+                        availability.available && tier.saleEnd
+                          ? getTimeUntilEnd(tier.saleEnd)
+                          : null;
+
                       return (
                         <div
                           key={tierId}
-                          className="border-b border-gray-800 rounded-lg p-4 transition-all duration-200"
+                          className={`border-b border-gray-800 rounded-lg p-4 transition-all duration-200 ${
+                            !availability.available
+                              ? "opacity-50 bg-gray-900/50"
+                              : ""
+                          }`}
                         >
                           <div className="flex items-center justify-between mb-3">
-                            <div>
+                            <div className="flex-1">
                               <div className="text-sm font-medium text-white mb-1 tracking-wide">
                                 {tierName}
                               </div>
-                              <p className="text-xs text-gray-500">
-                                {availableQty} available
-                              </p>
+                              {availability.available ? (
+                                <p className="text-xs text-gray-500">
+                                  {availableQty} available
+                                </p>
+                              ) : availability.reason === "notStarted" ? (
+                                <p className="text-xs text-yellow-500">
+                                  Sales start{" "}
+                                  {new Date(
+                                    availability.startsAt,
+                                  ).toLocaleString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-red-500">
+                                  Sales ended
+                                </p>
+                              )}
                             </div>
                             <span className="text-base font-medium text-gray-300 font-mono">
                               {currencySymbol}
@@ -268,6 +335,15 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                 : tier.price}
                             </span>
                           </div>
+                          {timeLeft && (
+                            <div className="mb-2 bg-red-900/30 border border-red-800/50 rounded px-3 py-2 flex items-center gap-2">
+                              <FaHourglass className="text-red-500 text-xs" />
+                              <span className="text-xs text-red-400 font-medium">
+                                Ends in {timeLeft.hours}h {timeLeft.minutes}m{" "}
+                                {timeLeft.seconds}s
+                              </span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-2 pt-2">
                             <button
                               onClick={() =>
@@ -276,7 +352,9 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                   Math.max(0, selectedQty - 1),
                                 )
                               }
-                              disabled={selectedQty === 0}
+                              disabled={
+                                selectedQty === 0 || !availability.available
+                              }
                               className="bg-gray-900 w-7 h-7 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm"
                             >
                               −
@@ -291,7 +369,10 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                   Math.min(availableQty, selectedQty + 1),
                                 )
                               }
-                              disabled={selectedQty >= availableQty}
+                              disabled={
+                                selectedQty >= availableQty ||
+                                !availability.available
+                              }
                               className="bg-gray-900 w-7 h-7 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm"
                             >
                               +

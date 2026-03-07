@@ -254,19 +254,19 @@ export default function BlogManagement() {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* Header with New Button */}
-      <div className="flex justify-between items-center mb-8 bg-linear-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl">
-        <div>
-          <h1 className="text-3xl font-bold">Blog Management</h1>
-          <p className="mt-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-zinc-950 text-white p-3 sm:p-4 rounded-lg">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold">Blog Management</h1>
+          <p className="mt-1 text-xs text-zinc-400">
             Create, edit, and manage your blog posts with multimedia support
           </p>
         </div>
         <button
           onClick={() => setIsCreating(true)}
           disabled={isLoading}
-          className="px-6 py-3 bg-white text-purple-600 rounded-lg hover:bg-gray-100 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Loading..." : "+ New Blog Post"}
         </button>
@@ -276,24 +276,24 @@ export default function BlogManagement() {
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading blogs...</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-zinc-400 mx-auto mb-3"></div>
+            <p className="text-zinc-400 text-xs">Loading blogs...</p>
           </div>
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && blogs.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl shadow">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+        <div className="text-center py-10 bg-zinc-950 rounded-lg border border-zinc-800">
+          <h3 className="text-base font-semibold text-zinc-200 mb-2">
             No blogs yet
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-zinc-400 text-sm mb-4">
             Create your first blog post to get started
           </p>
           <button
             onClick={() => setIsCreating(true)}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
+            className="px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold"
           >
             Create Blog Post
           </button>

@@ -23,7 +23,7 @@ public class AdminOrganizerController {
 
     private final OrganizerService organizerService;
 
-    @GetMapping("/management")
+    @GetMapping({"/management", "/list"})
     public ResponseEntity<ApiResponse<List<AdminOrganizerManagementRow>>> getOrganizerManagementTable() {
         try {
             List<AdminOrganizerManagementRow> rows = organizerService.getAdminOrganizerManagementRows();

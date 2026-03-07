@@ -83,7 +83,8 @@ export default function AdminPayoutManagement() {
         toast.error("Your admin session expired. Please log in again.");
       } else {
         toast.error(
-          error.response?.data?.message || "Failed to load organizer payout preview",
+          error.response?.data?.message ||
+            "Failed to load organizer payout preview",
         );
       }
     } finally {
@@ -247,11 +248,14 @@ export default function AdminPayoutManagement() {
                 Organizer Payout Preview
               </h2>
               <p className="text-gray-400 text-sm">
-                Available to send = organizer earnings - sent payouts - pending payouts
+                Available to send = organizer earnings - sent payouts - pending
+                payouts
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {previewLoading && <FaSpinner className="animate-spin text-red-500" />}
+              {previewLoading && (
+                <FaSpinner className="animate-spin text-red-500" />
+              )}
             </div>
           </div>
 
@@ -335,19 +339,30 @@ export default function AdminPayoutManagement() {
                         className="hover:bg-zinc-800/50 transition-colors"
                       >
                         <td className="px-6 py-4">
-                          <div className="text-white font-medium">{item.organizerName}</div>
+                          <div className="text-white font-medium">
+                            {item.organizerName}
+                          </div>
                           <div className="text-gray-400 text-sm">
                             ID: {item.organizerId} • {item.organizerEmail}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-200">
-                          {formatCurrency(item.totalEarnedByOrganizer, item.currency)}
+                          {formatCurrency(
+                            item.totalEarnedByOrganizer,
+                            item.currency,
+                          )}
                         </td>
                         <td className="px-6 py-4 text-gray-300">
-                          {formatCurrency(item.alreadySentAmount, item.currency)}
+                          {formatCurrency(
+                            item.alreadySentAmount,
+                            item.currency,
+                          )}
                         </td>
                         <td className="px-6 py-4 text-yellow-400">
-                          {formatCurrency(item.pendingManualAmount, item.currency)}
+                          {formatCurrency(
+                            item.pendingManualAmount,
+                            item.currency,
+                          )}
                         </td>
                         <td className="px-6 py-4 font-semibold text-green-400">
                           {formatCurrency(item.availableToSend, item.currency)}
@@ -360,7 +375,9 @@ export default function AdminPayoutManagement() {
                             onClick={() => {
                               setPrefillPayout({
                                 organizerId: item.organizerId,
-                                amount: Number(item.availableToSend || 0).toFixed(2),
+                                amount: Number(
+                                  item.availableToSend || 0,
+                                ).toFixed(2),
                                 currency: item.currency,
                                 description: `Manual payout for organizer ticket revenue (${item.currency})`,
                               });

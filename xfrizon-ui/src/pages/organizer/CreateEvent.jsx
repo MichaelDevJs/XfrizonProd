@@ -75,7 +75,8 @@ export default function CreateEvent() {
     ticketType: "",
     quantity: "",
     price: "",
-    priceEnds: null,
+    saleStart: null,
+    saleEnd: null,
     currency:
       COUNTRY_CURRENCY[form.country] || COUNTRY_CURRENCY["Nigeria"] || "NGN",
   });
@@ -169,7 +170,8 @@ export default function CreateEvent() {
       ticketType: ticketInput.ticketType,
       quantity: parseInt(ticketInput.quantity) || 1,
       price: parseFloat(ticketInput.price) || 0,
-      priceEnds: ticketInput.priceEnds,
+      saleStart: ticketInput.saleStart,
+      saleEnd: ticketInput.saleEnd,
       currency: COUNTRY_CURRENCY[form.country] || "NGN",
       description: "",
       maxPerPerson: 5,
@@ -184,7 +186,8 @@ export default function CreateEvent() {
       ticketType: "",
       quantity: "",
       price: "",
-      priceEnds: null,
+      saleStart: null,
+      saleEnd: null,
       currency: COUNTRY_CURRENCY[form.country] || "NGN",
     });
   };
@@ -276,7 +279,8 @@ export default function CreateEvent() {
           price: parseFloat(ticket.price) || 0,
           quantity: parseInt(ticket.quantity) || 1,
           maxPerPerson: parseInt(ticket.maxPerPerson) || 1,
-          priceEnds: ticket.priceEnds ? ticket.priceEnds.toISOString() : null,
+          saleStart: ticket.saleStart ? ticket.saleStart.toISOString() : null,
+          saleEnd: ticket.saleEnd ? ticket.saleEnd.toISOString() : null,
           description: ticket.description || "",
         })),
       };
@@ -484,7 +488,7 @@ export default function CreateEvent() {
           </div>
 
           {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block mb-2 font-light text-gray-200 text-xs">
                 Event Start Date*
@@ -494,8 +498,10 @@ export default function CreateEvent() {
                 onChange={(date) => setForm({ ...form, eventDate: date })}
                 minDate={new Date()}
                 dateFormat="yyyy-MM-dd"
-                className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
                 placeholderText="Select date"
+                withPortal={window.innerWidth < 640}
+                popperClassName="react-datepicker-xf-theme"
               />
             </div>
             <div>
@@ -510,14 +516,16 @@ export default function CreateEvent() {
                 timeIntervals={15}
                 timeCaption="Time"
                 dateFormat="HH:mm"
-                className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
                 placeholderText="Select time"
+                withPortal={window.innerWidth < 640}
+                popperClassName="react-datepicker-xf-theme"
               />
             </div>
           </div>
 
           {/* Event End Date & Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block mb-2 font-light text-gray-200 text-xs">
                 Event End Date
@@ -527,8 +535,10 @@ export default function CreateEvent() {
                 onChange={(date) => setForm({ ...form, eventEndDate: date })}
                 minDate={form.eventDate || new Date()}
                 dateFormat="yyyy-MM-dd"
-                className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
                 placeholderText="Select end date (optional)"
+                withPortal={window.innerWidth < 640}
+                popperClassName="react-datepicker-xf-theme"
               />
             </div>
             <div>
@@ -543,8 +553,10 @@ export default function CreateEvent() {
                 timeIntervals={15}
                 timeCaption="Time"
                 dateFormat="HH:mm"
-                className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
                 placeholderText="Select end time"
+                withPortal={window.innerWidth < 640}
+                popperClassName="react-datepicker-xf-theme"
               />
             </div>
           </div>
@@ -775,30 +787,55 @@ export default function CreateEvent() {
                   className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
                 />
               </div>
-              <div>
-                <label className="block mb-2 font-light text-gray-200 text-sm">
-                  Sale Ends
-                </label>
-                <DatePicker
-                  selected={ticketInput.priceEnds}
-                  onChange={(date) =>
-                    setTicketInput({ ...ticketInput, priceEnds: date })
-                  }
-                  showTimeSelect
-                  dateFormat="yyyy-MM-dd HH:mm"
-                  timeIntervals={15}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
-                  placeholderText="Select sale end date & time"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block mb-2 font-light text-gray-200 text-sm">
+                    Sale Starts
+                  </label>
+                  <DatePicker
+                    selected={ticketInput.saleStart}
+                    onChange={(date) =>
+                      setTicketInput({ ...ticketInput, saleStart: date })
+                    }
+                    showTimeSelect
+                    dateFormat="yyyy-MM-dd HH:mm"
+                    timeIntervals={15}
+                    className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
+                    placeholderText="Select sale start date & time"
+                    minDate={new Date()}
+                    withPortal={window.innerWidth < 640}
+                    popperClassName="react-datepicker-xf-theme"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2 font-light text-gray-200 text-sm">
+                    Sale Ends
+                  </label>
+                  <DatePicker
+                    selected={ticketInput.saleEnd}
+                    onChange={(date) =>
+                      setTicketInput({ ...ticketInput, saleEnd: date })
+                    }
+                    showTimeSelect
+                    dateFormat="yyyy-MM-dd HH:mm"
+                    timeIntervals={15}
+                    className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
+                    placeholderText="Select sale end date & time"
+                    minDate={ticketInput.saleStart || new Date()}
+                    withPortal={window.innerWidth < 640}
+                    popperClassName="react-datepicker-xf-theme"
+                  />
+                </div>
               </div>
-              <button
-                onClick={handleAddTicket}
-                className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <FaPlus className="w-4 h-4" />
-                Add Ticket Tier
-              </button>
             </div>
+            
+            <button
+              onClick={handleAddTicket}
+              className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <FaPlus className="w-4 h-4" />
+              Add Ticket Tier
+            </button>
 
             {/* Display Ticket Tiers */}
             <div className="space-y-2">
@@ -807,7 +844,7 @@ export default function CreateEvent() {
                   key={index}
                   className="flex items-center justify-between bg-zinc-800 p-3 rounded-lg"
                 >
-                  <div>
+                  <div className="flex-1">
                     <p className="text-white font-light">
                       {ticket.ticketType || "General"}
                     </p>
@@ -815,6 +852,36 @@ export default function CreateEvent() {
                       {ticket.quantity} tickets @ {ticket.currency}{" "}
                       {ticket.price}
                     </p>
+                    {(ticket.saleStart || ticket.saleEnd) && (
+                      <p className="text-gray-500 font-light text-xs mt-1">
+                        {ticket.saleStart && (
+                          <span>
+                            Starts:{" "}
+                            {new Date(ticket.saleStart).toLocaleString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </span>
+                        )}
+                        {ticket.saleStart && ticket.saleEnd && " | "}
+                        {ticket.saleEnd && (
+                          <span>
+                            Ends:{" "}
+                            {new Date(ticket.saleEnd).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={() => handleRemoveTicket(index)}

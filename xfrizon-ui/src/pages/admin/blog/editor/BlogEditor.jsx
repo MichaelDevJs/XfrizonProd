@@ -90,20 +90,20 @@ export default function BlogEditor({
   };
 
   return (
-    <div className="bg-[#1e1e1e] min-h-screen p-8">
+    <div className="bg-[#1e1e1e] min-h-screen p-3 sm:p-4">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white">
+      <div className="mb-4">
+        <h1 className="text-xl sm:text-2xl font-semibold text-white">
           {editingId ? "Edit Blog Post" : "Create New Blog Post"}
         </h1>
-        <p className="text-gray-400 mt-2">
+        <p className="text-gray-400 mt-1 text-xs">
           Build your story with text and media blocks
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Left - Editor */}
-        <div className="col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-4">
           <BlogEditorForm
             formData={formData}
             handleInputChange={handleInputChange}
@@ -123,7 +123,7 @@ export default function BlogEditor({
         </div>
 
         {/* Right - Preview & Actions */}
-        <div className="space-y-6">
+        <div className="space-y-4 xl:sticky xl:top-4 self-start">
           <BlogEditorPreview
             formData={formData}
             isPreview={isPreview}
@@ -131,11 +131,11 @@ export default function BlogEditor({
           />
 
           {/* Action Buttons */}
-          <div className="space-y-3 bg-[#2a2a2a] p-6 rounded-lg">
+          <div className="space-y-2 bg-[#2a2a2a] p-3 rounded-lg">
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="w-full px-6 py-3 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving
                 ? "Saving..."
@@ -144,7 +144,7 @@ export default function BlogEditor({
             <button
               onClick={onCancel}
               disabled={isSaving}
-              className="w-full px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 bg-zinc-800 text-zinc-200 rounded-lg hover:bg-zinc-700 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

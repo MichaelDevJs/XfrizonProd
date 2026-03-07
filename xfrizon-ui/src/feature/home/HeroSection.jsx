@@ -9,6 +9,10 @@ export default function HeroSection() {
         autoPlay
         loop
         muted
+        playsInline
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplayback"
+        onContextMenu={(e) => e.preventDefault()}
       />
       <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/80" />
 

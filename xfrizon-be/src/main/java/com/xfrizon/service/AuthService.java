@@ -121,6 +121,63 @@ public class AuthService {
                 .build();
     }
 
+    public AuthResponse registerAdmin(RegisterRequest request, String adminSecretKey) {
+        // Verify admin secret key (simple security measure)
+        String expectedSecretKey = "xfrizon-admin-2026"; // In production, use environment variable
+        if (!expectedSecretKey.equals(adminSecretKey)) {
+            return AuthResponse.builder()
+                    .success(false)
+                    .message("Invalid admin secret key")
+                    .build();
+        }
+
+        // Check if email already exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return AuthResponse.builder()
+                    .success(false)
+                    .message("Email already registered")
+                    .build();
+        }
+
+        // Verify passwords match
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return AuthResponse.builder()
+                    .success(false)
+                    .message("Passwords do not match")
+                    .build();
+        }
+
+        // Create new admin user
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phoneNumber(request.getPhoneNumber())
+                .profilePicture(request.getProfilePicture())
+                .role(User.UserRole.ADMIN)
+                .isActive(true)
+                .isEmailVerified(true)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        // Generate JWT token
+        String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getId());
+
+        return AuthResponse.builder()
+                .success(true)
+                .message("Admin account created successfully")
+                .token(token)
+                .type("Bearer")
+                .userId(savedUser.getId())
+                .email(savedUser.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .role(savedUser.getRole().toString())
+                .build();
+    }
+
     public AuthResponse login(LoginRequest request) {
         // Find user by email
         User user = userRepository.findByEmail(request.getEmail())

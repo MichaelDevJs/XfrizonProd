@@ -1,7 +1,5 @@
 package com.xfrizon.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -13,11 +11,6 @@ import java.io.IOException;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
 
     /**
      * Configure SPA routing - forward all non-API, non-static requests to index.html

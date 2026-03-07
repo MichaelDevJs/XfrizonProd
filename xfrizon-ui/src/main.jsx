@@ -46,6 +46,7 @@ import AdminRoute from "./component/admin/AdminRoute";
 import UnauthorizedRedirectListener from "./component/UnauthorizedRedirectListener";
 
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminSignUp from "./pages/admin/AdminSignUp";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import BlogManagement from "./pages/admin/BlogManagement";
@@ -173,6 +174,7 @@ function RootApp() {
 
             {/* Admin Auth Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin-signup" element={<AdminSignUp />} />
 
             {/* Admin Protected Routes */}
             <Route
