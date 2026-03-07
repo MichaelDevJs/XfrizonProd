@@ -1,18 +1,10 @@
 FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
-
 COPY xfrizon-be /app
 COPY xfrizon-ui /xfrizon-ui
 
-# FORCE CACHE INVALIDATION: Create timestamp file to bust ALL subsequent Docker layers
-RUN date > /tmp/build-timestamp.txt && cat /tmp/build-timestamp.txt
-
-# Clean ALL frontend artifacts to force complete rebuild
-RUN rm -rf /xfrizon-ui/node_modules \
-    /xfrizon-ui/package-lock.json \
-    /xfrizon-ui/dist \
-    /xfrizon-ui/.vite \
-    /app/src/main/resources/static
+# Clean artifacts to ensure fresh build  
+RUN rm -rf /xfrizon-ui/node_modules /xfrizon-ui/dist
 
 RUN mvn -f /app/pom.xml clean package -DskipTests
 
