@@ -1,12 +1,11 @@
 import React from "react";
-import heroVideo from "../../asset/Xfrizon-Hero-Vid.mp4";
 
 export default function HeroSection() {
   return (
     <section className="relative h-[450px] w-full overflow-hidden px-6 py-6 bg-black rounded-b-2xl shadow-xl">
       <video
         className="absolute inset-0 w-full h-full object-cover"
-        src={heroVideo}
+        src="/assets/Xfrizon-Hero-Vid.mp4"
         autoPlay
         loop
         muted
