@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Locale;
+
 @Configuration
 @Slf4j
 public class StripeConfig {
@@ -15,7 +17,21 @@ public class StripeConfig {
 
     @PostConstruct
     public void init() {
-        Stripe.apiKey = stripeApiKey;
-        log.info("Stripe API initialized with key: sk_test_*");
+        String key = stripeApiKey == null ? "" : stripeApiKey.trim();
+        String lowered = key.toLowerCase(Locale.ROOT);
+
+        if (key.isEmpty()
+                || lowered.startsWith("replace-")
+                || lowered.startsWith("your_")
+                || lowered.contains("placeholder")) {
+            throw new IllegalStateException("Stripe is not configured. Set STRIPE_API_KEY in environment variables.");
+        }
+
+        if (!(key.startsWith("sk_test_") || key.startsWith("sk_live_"))) {
+            throw new IllegalStateException("Invalid Stripe secret key format. Expected key starting with sk_test_ or sk_live_.");
+        }
+
+        Stripe.apiKey = key;
+        log.info("Stripe API initialized");
     }
 }

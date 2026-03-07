@@ -45,10 +45,14 @@ public class PaymentController {
             log.warn("Invalid request: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (IllegalStateException e) {
+            log.error("Payment gateway configuration error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Payment service is temporarily unavailable. Please try again later.", 503));
         } catch (Exception e) {
             log.error("Error creating payment intent", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Failed to create payment intent: " + e.getMessage(), 500));
+                    .body(ApiResponse.error("Failed to create payment intent. Please try again.", 500));
         }
     }
 
