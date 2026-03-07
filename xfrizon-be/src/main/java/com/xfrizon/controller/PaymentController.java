@@ -3,6 +3,7 @@ package com.xfrizon.controller;
 import com.xfrizon.dto.ApiResponse;
 import com.xfrizon.dto.CreatePaymentIntentRequest;
 import com.xfrizon.dto.PaymentIntentResponse;
+import com.xfrizon.entity.PaymentRecord;
 import com.xfrizon.service.PaymentService;
 import com.xfrizon.util.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -66,10 +70,10 @@ public class PaymentController {
         try {
             log.info("Confirming payment for intent: {}", intentId);
 
-            var paymentRecord = paymentService.confirmPaymentStatus(intentId);
+            PaymentRecord paymentRecord = paymentService.confirmPaymentStatus(intentId);
 
             return ResponseEntity.ok()
-                    .body(ApiResponse.success(paymentRecord, "Payment confirmed"));
+                .body(ApiResponse.success(toPaymentSummary(paymentRecord), "Payment confirmed"));
 
         } catch (IllegalArgumentException e) {
             log.warn("Invalid request: {}", e.getMessage());
@@ -92,10 +96,10 @@ public class PaymentController {
         try {
             log.info("Fetching payment for intent: {}", intentId);
 
-            var paymentRecord = paymentService.getPaymentRecord(intentId);
+            PaymentRecord paymentRecord = paymentService.getPaymentRecord(intentId);
 
             return ResponseEntity.ok()
-                    .body(ApiResponse.success(paymentRecord, "Payment retrieved successfully"));
+                .body(ApiResponse.success(toPaymentSummary(paymentRecord), "Payment retrieved successfully"));
 
         } catch (IllegalArgumentException e) {
             log.warn("Payment not found: {}", e.getMessage());
@@ -128,5 +132,23 @@ public class PaymentController {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    private Map<String, Object> toPaymentSummary(PaymentRecord paymentRecord) {
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("id", paymentRecord.getId());
+        summary.put("stripeIntentId", paymentRecord.getStripeIntentId());
+        summary.put("status", paymentRecord.getStatus());
+        summary.put("amount", paymentRecord.getAmount());
+        summary.put("subtotalAmount", paymentRecord.getSubtotalAmount());
+        summary.put("serviceFeeAmount", paymentRecord.getServiceFeeAmount());
+        summary.put("organizerAmount", paymentRecord.getOrganizerAmount());
+        summary.put("currency", paymentRecord.getCurrency());
+        summary.put("paymentMethod", paymentRecord.getPaymentMethod());
+        summary.put("stripeChargeId", paymentRecord.getStripeChargeId());
+        summary.put("failureReason", paymentRecord.getFailureReason());
+        summary.put("createdAt", paymentRecord.getCreatedAt());
+        summary.put("updatedAt", paymentRecord.getUpdatedAt());
+        return summary;
     }
 }
