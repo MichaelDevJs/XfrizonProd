@@ -93,7 +93,7 @@ export default function CompactFilterBar() {
 
   return (
     <div
-      className="bg-zinc-950/70 border border-zinc-800 rounded-lg px-4 py-3 relative"
+      className="bg-zinc-950/70 border border-zinc-800 rounded-lg px-3 sm:px-4 py-3 relative"
       ref={panelRef}
     >
       <div className="flex items-center justify-between">
@@ -117,7 +117,7 @@ export default function CompactFilterBar() {
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-full md:w-130 bg-zinc-950 border border-zinc-800 rounded-lg p-4 shadow-xl z-20">
+        <div className="absolute left-0 md:left-auto md:right-0 mt-3 w-full md:w-lg bg-zinc-950 border border-zinc-800 rounded-lg p-3 sm:p-4 shadow-xl z-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <select
               className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
@@ -180,18 +180,18 @@ export default function CompactFilterBar() {
             />
           </div>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
             <button
               type="button"
               onClick={clearFilters}
-              className="text-xs text-zinc-400 hover:text-red-400 transition-colors"
+              className="text-xs text-zinc-400 hover:text-red-400 transition-colors text-left"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-xs text-zinc-200 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors"
+              className="text-xs text-zinc-200 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors w-full sm:w-auto"
             >
               Done
             </button>

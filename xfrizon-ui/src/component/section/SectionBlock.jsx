@@ -7,9 +7,9 @@ const SectionBlock = ({ title, children }) => {
     scrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
   };
   return (
-    <section className="py-12">
+    <section className="py-8 sm:py-12">
       <h2
-        className="text-2xl font-light uppercase tracking-widest mb-6"
+        className="text-xl sm:text-2xl font-light uppercase tracking-widest mb-4 sm:mb-6 px-1"
         style={{ color: "#ff0000", fontFamily: "'Rajdhani', sans-serif" }}
       >
         {title}
@@ -17,15 +17,15 @@ const SectionBlock = ({ title, children }) => {
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-2 bg-black/90 rounded-none px-6 py-8 hide-scrollbar"
+          className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory pb-2 bg-black/90 rounded-none px-3 sm:px-6 py-5 sm:py-8 hide-scrollbar"
           style={{ scrollBehavior: "smooth" }}
         >
           {React.Children.map(children, (child) => (
-            <div className="shrink-0 w-72">{child}</div>
+            <div className="shrink-0 w-68 sm:w-72">{child}</div>
           ))}
         </div>
         <button
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-black text-white rounded-full p-2 shadow-lg transition"
+          className="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-black text-white rounded-full p-2 shadow-lg transition"
           onClick={() => scrollBy(320)}
           aria-label="Scroll right"
           style={{ boxShadow: "0 0 16px 0 #0008" }}

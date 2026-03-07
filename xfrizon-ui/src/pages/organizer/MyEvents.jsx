@@ -133,44 +133,44 @@ const MyEvents = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-4xl font-light text-gray-200 mb-2">My Events</h1>
-          <p className="text-gray-500 font-light">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-light text-gray-200 mb-1">My Events</h1>
+          <p className="text-xs text-gray-500 font-light">
             Manage and track all your events
           </p>
         </div>
         <Link
           to="/organizer/create-event"
-          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center gap-2"
+          className="w-full sm:w-auto px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-xs transition-all duration-300 flex items-center justify-center gap-2"
         >
-          <FaPlus className="w-4 h-4" />
+          <FaPlus className="w-3 h-3" />
           Create Event
         </Link>
       </div>
 
       {/* Events List */}
       {events.length === 0 ? (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <p className="text-gray-500 font-light mb-4">No events created yet</p>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
+          <p className="text-xs text-gray-500 font-light mb-3">No events created yet</p>
           <Link
             to="/organizer/create-event"
-            className="inline-block px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-sm transition-all duration-300"
+            className="inline-block px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-xs transition-all duration-300"
           >
             Create Your First Event
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {events.map((event) => (
             <div
               key={event.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-500 transition-all duration-300 group"
+              className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden hover:border-red-500 transition-all duration-300 group"
             >
               {/* Flyer Image */}
-              <div className="w-full h-40 bg-gradient-to-br from-zinc-800 to-black overflow-hidden">
+              <div className="w-full h-32 bg-linear-to-br from-zinc-800 to-black overflow-hidden">
                 {event.flyerUrl || event.flyer_url ? (
                   <img
                     src={getImageUrl(event.flyerUrl || event.flyer_url)}
@@ -184,9 +184,9 @@ const MyEvents = () => {
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-900 to-zinc-900">
+                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-red-900 to-zinc-900">
                     <div className="text-center">
-                      <p className="text-gray-400 font-light text-sm">
+                      <p className="text-gray-400 font-light text-xs">
                         No flyer uploaded
                       </p>
                     </div>
@@ -195,13 +195,13 @@ const MyEvents = () => {
               </div>
 
               {/* Event Details */}
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-light text-white group-hover:text-red-500 transition-colors flex-1">
+              <div className="p-3">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-sm font-light text-white group-hover:text-red-500 transition-colors flex-1 pr-2 wrap-break-word">
                     {event.title}
                   </h3>
                   <span
-                    className={`text-xs font-light px-3 py-1 rounded-full ${
+                    className={`text-[10px] font-light px-2 py-0.5 rounded-full whitespace-nowrap ${
                       event.status === "PUBLISHED"
                         ? "bg-green-900 text-green-200"
                         : event.status === "DRAFT"
@@ -214,30 +214,30 @@ const MyEvents = () => {
                     {event.status}
                   </span>
                 </div>
-                <p className="text-gray-500 font-light text-sm mb-2">
+                <p className="text-gray-500 font-light text-xs mb-1.5">
                   {event.eventDateTime
                     ? new Date(event.eventDateTime).toLocaleDateString()
                     : event.date || "N/A"}
                 </p>
-                <p className="text-gray-400 font-light text-sm mb-4 line-clamp-2">
+                <p className="text-gray-400 font-light text-xs mb-3 line-clamp-2">
                   {event.description}
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-1.5">
                   {event.status === "DRAFT" ? (
                     <>
                       <Link
                         to={`/organizer/edit-event/${event.id}`}
-                        className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full sm:flex-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-blue-400 hover:text-blue-300 rounded font-light text-xs transition-all duration-300 flex items-center justify-center gap-1.5"
                       >
-                        <FaEdit className="w-4 h-4" />
+                        <FaEdit className="w-3 h-3" />
                         Edit
                       </Link>
                       <button
                         onClick={() => handlePublish(event.id)}
                         disabled={publishing[event.id]}
-                        className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full sm:flex-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-red-400 hover:text-red-300 disabled:opacity-50 rounded font-light text-xs transition-all duration-300 flex items-center justify-center gap-1.5"
                       >
-                        <FaCheck className="w-4 h-4" />
+                        <FaCheck className="w-3 h-3" />
                         {publishing[event.id] ? "Publishing..." : "Publish"}
                       </button>
                     </>
@@ -245,21 +245,22 @@ const MyEvents = () => {
                     <>
                       <Link
                         to={`/organizer/edit-event/${event.id}`}
-                        className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full sm:flex-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-blue-400 hover:text-blue-300 rounded font-light text-xs transition-all duration-300 flex items-center justify-center gap-1.5"
                       >
-                        <FaEdit className="w-4 h-4" />
+                        <FaEdit className="w-3 h-3" />
                         Edit
                       </Link>
-                      <button className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-light text-sm cursor-default">
+                      <button className="w-full sm:flex-1 px-3 py-1.5 bg-zinc-800 text-green-400 rounded font-light text-xs cursor-default">
                         ✓ Published
                       </button>
                     </>
                   )}
                   <button
                     onClick={() => handleDelete(event.id)}
-                    className="px-4 py-2 bg-zinc-800 hover:bg-red-900 text-red-400 rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-red-400 hover:text-red-300 rounded font-light text-xs transition-all duration-300 flex items-center justify-center gap-1.5"
                   >
-                    <FaTrash className="w-4 h-4" />
+                    <FaTrash className="w-3 h-3" />
+                    <span className="sm:hidden">Delete</span>
                   </button>
                 </div>
               </div>

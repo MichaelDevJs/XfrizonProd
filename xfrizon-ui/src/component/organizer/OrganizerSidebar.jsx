@@ -14,9 +14,13 @@ import {
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
-const OrganizerSidebar = () => {
+const OrganizerSidebar = ({ className = "", onNavigate = () => {} }) => {
   const location = useLocation();
-  const { logout } = useContext(AuthContext);
+  const { organizer, logout } = useContext(AuthContext);
+
+  const organizerProfilePath = organizer?.id
+    ? `/organizer/profile/${organizer.id}`
+    : "/organizer/profile-edit";
 
   const isActive = (path) => location.pathname.includes(path);
 
@@ -61,7 +65,7 @@ const OrganizerSidebar = () => {
       icon: <FaDollarSign className="w-4 h-4" />,
     },
     {
-      path: "/organizer/profile",
+      path: organizerProfilePath,
       label: "Profile",
       icon: <FaUser className="w-4 h-4" />,
     },
@@ -76,13 +80,15 @@ const OrganizerSidebar = () => {
   ];
 
   return (
-    <aside className="w-64 bg-zinc-900 text-white p-6 min-h-screen border-r border-zinc-800 sticky top-0 overflow-y-auto flex flex-col">
+    <aside
+      className={`w-72 max-w-[85vw] bg-zinc-900 text-white p-4 sm:p-6 min-h-dvh border-r border-zinc-800 overflow-y-auto flex flex-col ${className}`}
+    >
       {/* Logo */}
       <Link
         to="/organizer/dashboard"
-        className="flex items-center gap-2 mb-8 hover:opacity-80 transition"
+        className="flex items-center gap-2 mb-6 sm:mb-8 hover:opacity-80 transition"
       >
-        <span className="text-2xl font-light text-gray-400 tracking-wider">
+        <span className="text-xl sm:text-2xl font-light text-gray-400 tracking-wider">
           XFRIZON
         </span>
       </Link>
@@ -97,6 +103,7 @@ const OrganizerSidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 font-light text-sm ${
                 isActive(item.path)
                   ? "bg-red-500 text-white"
@@ -120,6 +127,7 @@ const OrganizerSidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 font-light text-sm relative ${
                 isActive(item.path)
                   ? "bg-red-500 text-white"
@@ -148,6 +156,7 @@ const OrganizerSidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 font-light text-sm ${
                 isActive(item.path)
                   ? "bg-red-500 text-white"
@@ -163,7 +172,10 @@ const OrganizerSidebar = () => {
 
       {/* Logout */}
       <button
-        onClick={logout}
+        onClick={() => {
+          logout();
+          onNavigate();
+        }}
         className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-500 hover:bg-zinc-800 rounded-lg transition-all duration-300 font-light text-sm"
       >
         <FaSignOutAlt className="w-4 h-4" />

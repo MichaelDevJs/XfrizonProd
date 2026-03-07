@@ -11,12 +11,12 @@ export default function HomePage() {
   return (
     <FilterProvider>
       <div className="bg-black text-white min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 pt-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28">
           <CenteredBanner />
           <HeroSection />
 
           {/* Transition spacing from Hero to Blog */}
-          <div className="h-12" />
+          <div className="h-8 sm:h-12" />
 
           {/* Blog Section - Dark Background */}
           <div className="bg-[#1e1e1e] text-gray-100 rounded-none px-0 py-0 mt-0 mx-0 shadow-none transition-all duration-500">
@@ -24,7 +24,7 @@ export default function HomePage() {
           </div>
 
           {/* Event Section */}
-          <div className="mt-8">
+          <div className="mt-6 sm:mt-8">
             <CompactFilterBar />
             <div className="h-6" />
             <EventSection />

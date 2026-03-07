@@ -9,10 +9,12 @@ const Header = () => {
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [genreDropdown, setGenreDropdown] = useState(false);
+  const [signupDropdownOpen, setSignupDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [imageLoadError, setImageLoadError] = useState(false);
   const dropdownBtnRef = useRef(null);
   const genreDropdownRef = useRef(null);
+  const signupDropdownRef = useRef(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -28,6 +30,12 @@ const Header = () => {
         !genreDropdownRef.current.contains(event.target)
       ) {
         setGenreDropdown(false);
+      }
+      if (
+        signupDropdownRef.current &&
+        !signupDropdownRef.current.contains(event.target)
+      ) {
+        setSignupDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -76,11 +84,17 @@ const Header = () => {
     }
   };
 
+  const isOrganizerDashboardArea =
+    location.pathname === "/organizer" ||
+    /^\/organizer\/(dashboard|statistics|scanner|my-events|create-event|edit-event|preview|profile|profile-edit|messages|finance|support)(\/|$)/.test(
+      location.pathname,
+    );
+
   return (
     <header className="w-full fixed top-0 left-0 z-50 bg-transparent backdrop-blur-md">
       {/* Main Header */}
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center px-6 py-4">
+        <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 gap-3">
           {/* Left: Logo */}
           <Link
             to="/"
@@ -98,59 +112,61 @@ const Header = () => {
           </Link>
 
           {/* Center: Navigation & Search */}
-          <div className="flex-1 flex items-center justify-center gap-10 mx-12">
-            {/* Category Links */}
-            <nav className="hidden lg:flex items-center gap-8">
-              {categories.map((cat, idx) => {
-                // Hide "For Organizers" if logged in as organizer
-                if (
-                  cat === "For Organizers" &&
-                  organizer?.role === "ORGANIZER"
-                ) {
-                  return null;
-                }
-
-                let link = "/";
-                if (cat === "Events") {
-                  link = "/";
-                } else if (cat === "For Organizers") {
-                  link =
+          {!isOrganizerDashboardArea && (
+            <div className="flex-1 flex items-center justify-center gap-4 lg:gap-10 mx-2 sm:mx-6 lg:mx-12 min-w-0">
+              {/* Category Links */}
+              <nav className="hidden lg:flex items-center gap-8">
+                {categories.map((cat, idx) => {
+                  // Hide "For Organizers" if logged in as organizer
+                  if (
+                    cat === "For Organizers" &&
                     organizer?.role === "ORGANIZER"
-                      ? "/organizer/dashboard"
-                      : "/auth/organizer-signup";
-                } else {
-                  link = `/${cat.toLowerCase()}`;
-                }
-                return (
-                  <Link
-                    key={idx}
-                    to={link}
-                    className="text-gray-400 hover:text-white transition-colors duration-300 font-light text-xs uppercase tracking-widest whitespace-nowrap"
-                  >
-                    {cat}
-                  </Link>
-                );
-              })}
-            </nav>
+                  ) {
+                    return null;
+                  }
 
-            {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-sm relative">
-              <form onSubmit={handleSearch} className="w-full">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search events..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 hover:border-zinc-700 focus:outline-none focus:border-red-500 focus:bg-zinc-900 transition-all duration-300 text-xs font-light"
-                  />
-                </div>
-              </form>
+                  let link = "/";
+                  if (cat === "Events") {
+                    link = "/";
+                  } else if (cat === "For Organizers") {
+                    link =
+                      organizer?.role === "ORGANIZER"
+                        ? "/organizer/dashboard"
+                        : "/auth/organizer-signup";
+                  } else {
+                    link = `/${cat.toLowerCase()}`;
+                  }
+                  return (
+                    <Link
+                      key={idx}
+                      to={link}
+                      className="text-gray-400 hover:text-white transition-colors duration-300 font-light text-xs uppercase tracking-widest whitespace-nowrap"
+                    >
+                      {cat}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              {/* Search Bar */}
+              <div className="hidden md:flex flex-1 max-w-sm relative">
+                <form onSubmit={handleSearch} className="w-full">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search events..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 hover:border-zinc-700 focus:outline-none focus:border-red-500 focus:bg-zinc-900 transition-all duration-300 text-xs font-light"
+                    />
+                  </div>
+                </form>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Right: User Section */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {/* Genre Selector */}
 
             {/* Auth Section */}
@@ -259,7 +275,11 @@ const Header = () => {
                         <button
                           onClick={() => {
                             setDropdownOpen(false);
-                            navigate("/organizer/profile");
+                            navigate(
+                              organizer?.id
+                                ? `/organizer/profile/${organizer.id}`
+                                : "/organizer/profile-edit",
+                            );
                           }}
                           className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
                         >
@@ -342,37 +362,61 @@ const Header = () => {
                 )}
               </div>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Link
                   to="/auth/login"
                   state={{ from: location }}
-                  className="px-4 py-2 text-gray-400 hover:text-xf-accent border border-zinc-800 rounded-lg hover:border-xf-accent hover:bg-zinc-900 transition-all duration-300 text-xs font-light uppercase tracking-widest"
+                  className="px-3 sm:px-4 py-2 text-gray-400 hover:text-xf-accent border border-zinc-800 rounded-lg hover:border-xf-accent hover:bg-zinc-900 transition-all duration-300 text-[11px] sm:text-xs font-light uppercase tracking-widest whitespace-nowrap"
                 >
                   Login
                 </Link>
-                <Link
-                  to="/auth/register"
-                  className="px-4 py-2 text-white bg-xf-accent hover:brightness-110 rounded-lg transition-all duration-300 text-xs font-light uppercase tracking-widest"
-                >
-                  Sign Up
-                </Link>
+                <div className="relative" ref={signupDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setSignupDropdownOpen((prev) => !prev)}
+                    className="px-3 sm:px-4 py-2 text-white bg-xf-accent hover:brightness-110 rounded-lg transition-all duration-300 text-[11px] sm:text-xs font-light uppercase tracking-widest whitespace-nowrap"
+                  >
+                    Sign Up
+                  </button>
+
+                  {signupDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-44 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden">
+                      <Link
+                        to="/auth/register"
+                        onClick={() => setSignupDropdownOpen(false)}
+                        className="block w-full px-4 py-2.5 text-gray-300 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 text-xs font-light uppercase tracking-widest"
+                      >
+                        User
+                      </Link>
+                      <Link
+                        to="/auth/organizer-signup"
+                        onClick={() => setSignupDropdownOpen(false)}
+                        className="block w-full px-4 py-2.5 text-gray-300 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 text-xs font-light uppercase tracking-widest border-t border-zinc-800"
+                      >
+                        Organizer
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
 
         {/* Mobile Search Bar */}
-        <div className="md:hidden px-6 pb-4 pt-2 border-t border-zinc-800">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              placeholder="Search events..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 hover:border-zinc-700 focus:outline-none focus:border-xf-accent transition-all duration-300 text-xs font-light"
-            />
-          </form>
-        </div>
+        {!isOrganizerDashboardArea && (
+          <div className="md:hidden px-4 sm:px-6 pb-3 pt-2 border-t border-zinc-800">
+            <form onSubmit={handleSearch} className="relative">
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 hover:border-zinc-700 focus:outline-none focus:border-xf-accent transition-all duration-300 text-xs font-light"
+              />
+            </form>
+          </div>
+        )}
       </div>
     </header>
   );

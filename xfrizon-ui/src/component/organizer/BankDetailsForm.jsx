@@ -96,167 +96,161 @@ const BankDetailsForm = () => {
 
   if (loading) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
-        <p className="text-gray-400">Loading bank details...</p>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
+        <p className="text-sm text-gray-400">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <FaUniversity className="w-6 h-6 text-xf-accent" />
-        <h2 className="text-2xl font-light text-gray-200">
-          Bank Details for Manual Payout
-        </h2>
-      </div>
-
+    <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
       {message && (
         <div
-          className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+          className={`p-3 flex items-center gap-2 text-sm ${
             message.type === "success"
-              ? "bg-green-500/10 border border-green-500 text-green-400"
-              : "bg-red-500/10 border border-red-500 text-red-400"
+              ? "bg-green-500/10 border-b border-green-500/30 text-green-400"
+              : "bg-red-500/10 border-b border-red-500/30 text-red-400"
           }`}
         >
           {message.type === "success" ? (
-            <FaCheckCircle className="w-5 h-5" />
+            <FaCheckCircle className="w-4 h-4 shrink-0" />
           ) : (
-            <FaExclamationTriangle className="w-5 h-5" />
+            <FaExclamationTriangle className="w-4 h-4 shrink-0" />
           )}
-          <p>{message.text}</p>
+          <p className="text-xs">{message.text}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              Bank Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="bankName"
-              value={formData.bankName}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="e.g., First Bank Nigeria"
-            />
+      <form onSubmit={handleSubmit}>
+        <div className="max-h-80 overflow-y-auto hide-scrollbar p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">
+                Bank Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="bankName"
+                value={formData.bankName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="e.g., First Bank Nigeria"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">
+                Account Holder Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="accountHolderName"
+                value={formData.accountHolderName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="Full name as per bank account"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">
+                IBAN (if applicable)
+              </label>
+              <input
+                type="text"
+                name="iban"
+                value={formData.iban}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="e.g., GB29 NWBK 6016 1331 9268 19"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">
+                BIC/SWIFT Code
+              </label>
+              <input
+                type="text"
+                name="bicSwift"
+                value={formData.bicSwift}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="e.g., DEUTDEFF"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">
+                Account Number
+              </label>
+              <input
+                type="text"
+                name="accountNumber"
+                value={formData.accountNumber}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="e.g., 0123456789"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">
+                Bank Country
+              </label>
+              <input
+                type="text"
+                name="bankCountry"
+                value={formData.bankCountry}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="e.g., Nigeria"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs text-gray-400 mb-1.5">
+                Bank Branch
+              </label>
+              <input
+                type="text"
+                name="bankBranch"
+                value={formData.bankBranch}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-gray-200 focus:border-xf-accent focus:outline-none"
+                placeholder="e.g., Victoria Island, Lagos"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              Account Holder Name <span className="text-red-500">*</span>
-            </label>
+          <div className="flex items-center gap-2 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg mt-3">
             <input
-              type="text"
-              name="accountHolderName"
-              value={formData.accountHolderName}
+              type="checkbox"
+              id="prefersManualPayout"
+              name="prefersManualPayout"
+              checked={formData.prefersManualPayout}
               onChange={handleChange}
-              required
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="Full name as per bank account"
+              className="w-4 h-4 text-xf-accent bg-zinc-700 border-zinc-600 rounded focus:ring-xf-accent"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              IBAN (if applicable)
+            <label
+              htmlFor="prefersManualPayout"
+              className="text-xs text-gray-300"
+            >
+              I prefer manual payout (admin-processed) instead of automatic Stripe
             </label>
-            <input
-              type="text"
-              name="iban"
-              value={formData.iban}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="e.g., GB29 NWBK 6016 1331 9268 19"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              BIC/SWIFT Code
-            </label>
-            <input
-              type="text"
-              name="bicSwift"
-              value={formData.bicSwift}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="e.g., DEUTDEFF"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              Account Number
-            </label>
-            <input
-              type="text"
-              name="accountNumber"
-              value={formData.accountNumber}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="e.g., 0123456789"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              Bank Country
-            </label>
-            <input
-              type="text"
-              name="bankCountry"
-              value={formData.bankCountry}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="e.g., Nigeria"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm text-gray-400 mb-2">
-              Bank Branch
-            </label>
-            <input
-              type="text"
-              name="bankBranch"
-              value={formData.bankBranch}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-gray-200 focus:border-xf-accent focus:outline-none"
-              placeholder="e.g., Victoria Island, Lagos"
-            />
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-4 bg-zinc-800 border border-zinc-700 rounded-lg">
-          <input
-            type="checkbox"
-            id="prefersManualPayout"
-            name="prefersManualPayout"
-            checked={formData.prefersManualPayout}
-            onChange={handleChange}
-            className="w-4 h-4 text-xf-accent bg-zinc-700 border-zinc-600 rounded focus:ring-xf-accent"
-          />
-          <label
-            htmlFor="prefersManualPayout"
-            className="text-sm text-gray-300"
-          >
-            I prefer manual payout (admin-processed bank transfer) instead of
-            automatic Stripe payments
-          </label>
-        </div>
-
-        <div className="flex justify-end gap-3">
+        <div className="border-t border-zinc-800 p-3 flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2 bg-xf-accent hover:brightness-110 text-white rounded-lg font-light flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-xf-accent hover:brightness-110 text-white rounded-lg font-light text-sm flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FaSave className="w-4 h-4" />
-            {saving ? "Saving..." : "Save Bank Details"}
+            <FaSave className="w-3.5 h-3.5" />
+            {saving ? "Saving..." : "Save Details"}
           </button>
         </div>
       </form>

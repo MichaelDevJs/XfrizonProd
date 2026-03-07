@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
@@ -146,6 +146,7 @@ function RootApp() {
                 </RoleBasedRoute>
               }
             >
+              <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<OrganizerDashboard />} />
               <Route path="statistics" element={<Statistics />} />
               <Route path="scanner" element={<TicketScanner />} />
@@ -153,6 +154,7 @@ function RootApp() {
               <Route path="create-event" element={<CreateEvent />} />
               <Route path="edit-event/:eventId" element={<EditEvent />} />
               <Route path="preview/:id" element={<PreviewEvent />} />
+              <Route path="profile" element={<OrganizerProfile />} />
               <Route
                 path="profile/:organizerId"
                 element={<OrganizerProfile />}

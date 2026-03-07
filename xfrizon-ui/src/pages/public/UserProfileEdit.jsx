@@ -265,9 +265,9 @@ export default function UserProfileEdit() {
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
             <FaArrowLeft size={18} />
-            Back
+            <span className="hidden md:inline">Back</span>
           </button>
-          <h1 className="text-xl font-semibold">Edit Profile</h1>
+          <h1 className="text-xl font-semibold hidden md:block">Edit Profile</h1>
         </div>
       </div>
 
@@ -315,9 +315,9 @@ export default function UserProfileEdit() {
               Profile Photo & Basic Info
             </h2>
 
-            <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-8">
+            <div className="flex flex-col md:flex-row gap-6 items-center md:items-center mb-8">
               {/* Photo Preview */}
-              <div className="shrink-0">
+              <div className="shrink-0 mx-auto md:mx-0">
                 {photoPreview ? (
                   <img
                     src={getImageUrl(photoPreview)}
@@ -332,10 +332,7 @@ export default function UserProfileEdit() {
               </div>
 
               {/* Upload Section */}
-              <div className="flex-1">
-                <p className="text-gray-400 mb-3 text-sm">
-                  Upload a new profile photo
-                </p>
+              <div className="w-full md:flex-1 text-center md:text-left">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -346,12 +343,13 @@ export default function UserProfileEdit() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 border border-zinc-700"
+                  className="mx-auto md:mx-0 w-12 h-12 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-all duration-300 flex items-center justify-center border border-zinc-700"
+                  title="Change photo"
+                  aria-label="Change photo"
                 >
                   <FaCamera size={18} />
-                  {photoPreview ? "Change Photo" : "Upload Photo"}
                 </button>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 mt-2 hidden md:block">
                   JPG, PNG, or GIF. Max 5MB
                 </p>
               </div>
@@ -583,18 +581,18 @@ export default function UserProfileEdit() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 justify-end pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end pt-4">
             <button
               type="button"
               onClick={() => navigate(`/profile`)}
-              className="px-6 py-2.5 border border-zinc-800 rounded-lg text-gray-300 hover:text-white hover:border-zinc-700 transition-colors font-medium"
+              className="w-full sm:w-auto min-h-11 px-6 py-2.5 border border-zinc-800 rounded-lg text-gray-300 hover:text-white hover:border-zinc-700 transition-colors font-medium inline-flex items-center justify-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 bg-xf-accent hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all font-medium flex items-center gap-2"
+              className="w-full sm:w-auto min-h-11 px-6 py-2.5 bg-xf-accent hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all font-medium inline-flex items-center justify-center gap-2"
             >
               <FaSave size={16} />
               {loading ? "Saving..." : "Save Changes"}

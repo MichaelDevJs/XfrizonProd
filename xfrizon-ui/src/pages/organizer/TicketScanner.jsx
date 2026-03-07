@@ -170,57 +170,57 @@ const TicketScanner = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-3 sm:items-center sm:gap-4">
         <button
           onClick={() => navigate("/organizer/dashboard")}
-          className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-zinc-800 rounded-lg transition-colors shrink-0"
         >
-          <FaArrowLeft className="w-5 h-5 text-gray-400 hover:text-white" />
+          <FaArrowLeft className="w-4 h-4 text-gray-400 hover:text-white" />
         </button>
-        <div>
-          <h1 className="text-4xl font-light text-gray-200 mb-2">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-light text-gray-200 mb-1">
             Ticket Scanner
           </h1>
-          <p className="text-gray-500 font-light">
+          <p className="text-gray-500 font-light text-xs">
             Scan QR codes to validate tickets
           </p>
         </div>
       </div>
 
       {/* Mode Toggle */}
-      <div className="flex gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           onClick={() => setScanMode("camera")}
-          className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all duration-300 ${
+          className={`flex-1 px-3 py-2 rounded-lg font-light text-xs transition-all duration-300 ${
             scanMode === "camera"
               ? "bg-indigo-600 text-white"
               : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
           }`}
         >
-          <FaQrcode className="inline mr-2 w-4 h-4" />
+          <FaQrcode className="inline mr-1.5 w-3 h-3" />
           Camera Scan
         </button>
         <button
           onClick={() => setScanMode("manual")}
-          className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all duration-300 ${
+          className={`flex-1 px-3 py-2 rounded-lg font-light text-xs transition-all duration-300 ${
             scanMode === "manual"
               ? "bg-indigo-600 text-white"
               : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
           }`}
         >
-          <FaKeyboard className="inline mr-2 w-4 h-4" />
+          <FaKeyboard className="inline mr-1.5 w-3 h-3" />
           Manual Entry
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Scanner */}
         <div className="lg:col-span-2">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8">
-            <div className="space-y-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4">
+            <div className="space-y-3">
               {scanMode === "camera" ? (
                 <>
                   <div className="bg-black rounded-lg overflow-hidden relative">
@@ -230,17 +230,17 @@ const TicketScanner = () => {
                       playsInline
                       className="w-full aspect-square object-cover"
                     />
-                    <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-0.5 rounded-full text-[10px] font-semibold">
                       Auto-Scanning
                     </div>
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                 </>
               ) : (
-                <div className="bg-zinc-800/50 rounded-lg p-8">
-                  <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div className="bg-zinc-800/50 rounded-lg p-4">
+                  <form onSubmit={handleManualSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-sm font-light text-gray-400 mb-2">
+                      <label className="block text-xs font-light text-gray-400 mb-1.5">
                         Validation Code
                       </label>
                       <input
@@ -248,16 +248,16 @@ const TicketScanner = () => {
                         value={manualCode}
                         onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                         placeholder="Enter ticket validation code"
-                        className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg font-mono text-lg focus:border-indigo-500 focus:outline-none"
+                        className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded-lg font-mono text-sm focus:border-indigo-500 focus:outline-none"
                         autoFocus
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={!manualCode.trim() || isValidating}
-                      className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-light text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-light text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <FaCheckCircle className="inline mr-2 w-4 h-4" />
+                      <FaCheckCircle className="inline mr-1.5 w-3 h-3" />
                       {isValidating ? "Validating..." : "Validate Ticket"}
                     </button>
                   </form>
@@ -265,8 +265,8 @@ const TicketScanner = () => {
               )}
 
               {scanResult && (
-                <div className="p-4 bg-indigo-500/10 border border-indigo-500 rounded-lg">
-                  <p className="text-indigo-400 font-light text-sm">
+                <div className="p-3 bg-indigo-500/10 border border-indigo-500 rounded-lg">
+                  <p className="text-indigo-400 font-light text-xs">
                     Scanned:{" "}
                     <span className="font-mono font-semibold">
                       {scanResult}
@@ -279,63 +279,67 @@ const TicketScanner = () => {
         </div>
 
         {/* Scan History */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <h2 className="text-lg font-light text-gray-200 mb-4">
-            Scan History
-          </h2>
-          <div className="space-y-2">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+          <div className="p-3 border-b border-zinc-800">
+            <h2 className="text-sm font-medium text-gray-200">
+              Scan History
+            </h2>
+          </div>
+          <div className="max-h-80 overflow-y-auto hide-scrollbar p-3">
             {scanHistory.length === 0 ? (
-              <p className="text-gray-500 font-light text-sm text-center py-8">
+              <p className="text-gray-500 font-light text-xs text-center py-8">
                 No scans yet
               </p>
             ) : (
-              scanHistory.map((entry, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-lg border ${
-                    entry.status === "success"
-                      ? "border-green-500/30 bg-green-500/10"
-                      : "border-red-500/30 bg-red-500/10"
-                  }`}
-                >
-                  <p
-                    className={`text-xs font-mono font-semibold ${
+              <div className="space-y-2">
+                {scanHistory.map((entry, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-2 rounded border ${
                       entry.status === "success"
-                        ? "text-green-400"
-                        : "text-red-400"
+                        ? "border-green-500/30 bg-green-500/10"
+                        : "border-red-500/30 bg-red-500/10"
                     }`}
                   >
-                    {entry.ticketNumber}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {entry.timestamp}
-                  </p>
-                </div>
-              ))
+                    <p
+                      className={`text-xs font-mono font-semibold ${
+                        entry.status === "success"
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {entry.ticketNumber}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {entry.timestamp}
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-        <h2 className="text-lg font-light text-gray-200 mb-4">Session Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-zinc-800/50 rounded-lg p-4">
-            <p className="text-gray-500 font-light text-sm mb-2">Total Scans</p>
-            <p className="text-2xl font-light text-white">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <h2 className="text-sm font-medium text-gray-200 mb-2">Session Stats</h2>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-zinc-800/50 rounded p-2">
+            <p className="text-gray-500 font-light text-xs mb-1">Total Scans</p>
+            <p className="text-lg font-light text-white">
               {scanHistory.length}
             </p>
           </div>
-          <div className="bg-zinc-800/50 rounded-lg p-4">
-            <p className="text-gray-500 font-light text-sm mb-2">Validated</p>
-            <p className="text-2xl font-light text-green-400">
+          <div className="bg-zinc-800/50 rounded p-2">
+            <p className="text-gray-500 font-light text-xs mb-1">Validated</p>
+            <p className="text-lg font-light text-green-400">
               {scanHistory.filter((s) => s.status === "success").length}
             </p>
           </div>
-          <div className="bg-zinc-800/50 rounded-lg p-4">
-            <p className="text-gray-500 font-light text-sm mb-2">Failed</p>
-            <p className="text-2xl font-light text-red-400">
+          <div className="bg-zinc-800/50 rounded p-2">
+            <p className="text-gray-500 font-light text-xs mb-1">Failed</p>
+            <p className="text-lg font-light text-red-400">
               {scanHistory.filter((s) => s.status === "failed").length}
             </p>
           </div>

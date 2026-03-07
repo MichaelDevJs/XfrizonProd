@@ -110,9 +110,9 @@ const OrganizerDashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="mb-6 flex items-start gap-3 sm:mb-8 sm:items-center sm:gap-4">
         <button
           onClick={() => navigate(-1)}
           className="p-2 hover:bg-zinc-800 rounded transition-colors"
@@ -121,58 +121,60 @@ const OrganizerDashboard = () => {
           <FaArrowLeft className="w-4 h-4 text-gray-400 hover:text-gray-300" />
         </button>
         <div>
-          <h1 className="text-3xl font-light text-gray-200">
+          <h1 className="text-2xl sm:text-3xl font-light text-gray-200">
             Recently Bought Tickets
           </h1>
-          <p className="text-gray-500 font-light text-sm mt-1">
+          <p className="text-gray-500 font-light text-xs sm:text-sm mt-1">
             Recent ticket purchases
           </p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="border border-zinc-700 rounded p-4 bg-[#1e1e1e]">
-          <p className="text-xs text-gray-500 font-light mb-2">Total Tickets</p>
-          <p className="text-2xl font-light text-cyan-400">{totalTickets}</p>
-        </div>
-        <div className="border border-zinc-700 rounded p-4 bg-[#1e1e1e]">
-          <p className="text-xs text-gray-500 font-light mb-2">Total Revenue</p>
-          <p className="text-2xl font-light text-lime-400">
-            {currencySymbol}
-            {totalRevenue.toLocaleString()}
-          </p>
-        </div>
-        <div className="border border-zinc-700 rounded p-4 bg-[#1e1e1e]">
-          <p className="text-xs text-gray-500 font-light mb-2">Show Rate</p>
-          <p className="text-2xl font-light text-green-400">{showRate}%</p>
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 overflow-x-auto hide-scrollbar">
+        <div className="flex min-w-max gap-3">
+          <div className="w-48 shrink-0 rounded border border-zinc-700 p-3 bg-zinc-800">
+            <p className="text-xs text-gray-400 mb-1.5">Total Tickets</p>
+            <p className="text-xl font-light text-cyan-400">{totalTickets}</p>
+          </div>
+          <div className="w-48 shrink-0 rounded border border-zinc-700 p-3 bg-zinc-800">
+            <p className="text-xs text-gray-400 mb-1.5">Total Revenue</p>
+            <p className="text-xl font-light text-lime-400 wrap-break-word">
+              {currencySymbol}
+              {totalRevenue.toLocaleString()}
+            </p>
+          </div>
+          <div className="w-48 shrink-0 rounded border border-zinc-700 p-3 bg-zinc-800">
+            <p className="text-xs text-gray-400 mb-1.5">Show Rate</p>
+            <p className="text-xl font-light text-green-400">{showRate}%</p>
+          </div>
         </div>
       </div>
 
       {/* Recently bought tickets section */}
-      <div className="border border-zinc-700 rounded overflow-hidden">
-        <div className="p-4 border-b border-zinc-700">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-sm font-light text-gray-400">Ticket History</h2>
+      <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-900">
+        <div className="p-3 border-b border-zinc-800">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-sm font-medium text-gray-200">Ticket History</h2>
             <button
               onClick={fetchRecentTickets}
-              className="text-xs font-light text-gray-400 border border-zinc-700 rounded px-3 py-1 hover:border-zinc-600 transition-colors"
+              className="w-full sm:w-auto text-xs font-light text-gray-400 border border-zinc-700 rounded px-3 py-1.5 hover:border-zinc-600 transition-colors"
             >
               ↻ Refresh
             </button>
           </div>
 
           {/* Quick Filters */}
-          <div className="space-y-3 mb-4">
-            <div className="grid sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <div className="grid sm:grid-cols-3 gap-2">
               <div>
-                <label className="text-xs text-gray-500 font-light block mb-2">
+                <label className="text-xs text-gray-500 font-light block mb-1">
                   Date Range
                 </label>
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-xs text-gray-300 focus:outline-none focus:border-zinc-600 font-light"
+                  className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-xs text-gray-300 focus:outline-none focus:border-xf-accent font-light"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today</option>
@@ -181,44 +183,40 @@ const OrganizerDashboard = () => {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-500 font-light block mb-2">
+                <label className="text-xs text-gray-500 font-light block mb-1">
                   Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-xs text-gray-300 focus:outline-none focus:border-zinc-600 font-light"
+                  className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-xs text-gray-300 focus:outline-none focus:border-xf-accent font-light"
                 >
                   <option value="all">All</option>
                   <option value="validated">Validated</option>
                   <option value="pending">Pending</option>
                 </select>
               </div>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-gray-500 font-light block mb-2">
-                Search Customer
-              </label>
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-2.5 text-gray-500 text-xs" />
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or ticket #..."
-                  value={localSearch}
-                  onChange={(e) => setLocalSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-zinc-900 border border-zinc-700 rounded text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-zinc-600 font-light"
-                />
+              <div>
+                <label className="text-xs text-gray-500 font-light block mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <FaSearch className="absolute left-2 top-2 text-gray-500 text-xs" />
+                  <input
+                    type="text"
+                    placeholder="Name, email, ticket #..."
+                    value={localSearch}
+                    onChange={(e) => setLocalSearch(e.target.value)}
+                    className="w-full pl-7 pr-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-xf-accent font-light"
+                  />
+                </div>
               </div>
             </div>
 
             {(localSearch ||
               dateFilter !== "all" ||
               statusFilter !== "all") && (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-gray-500 font-light">
                   Showing {filteredTickets.length} of {totalTickets}
                 </p>
@@ -228,7 +226,7 @@ const OrganizerDashboard = () => {
                     setDateFilter("all");
                     setStatusFilter("all");
                   }}
-                  className="text-xs font-light text-gray-400 border border-zinc-700 rounded px-3 py-1 hover:border-zinc-600 transition-colors"
+                  className="w-full sm:w-auto text-xs font-light text-gray-400 border border-zinc-700 rounded px-3 py-1 hover:border-zinc-600 transition-colors"
                 >
                   Clear All
                 </button>
@@ -237,12 +235,14 @@ const OrganizerDashboard = () => {
           </div>
         </div>
 
-        {/* Tickets table */}
-        <TicketsTable
-          tickets={filteredTickets}
-          onDownload={downloadUserData}
-          isLoading={loadingTickets}
-        />
+        {/* Tickets table with scrollable container */}
+        <div className="max-h-96 overflow-y-auto hide-scrollbar">
+          <TicketsTable
+            tickets={filteredTickets}
+            onDownload={downloadUserData}
+            isLoading={loadingTickets}
+          />
+        </div>
       </div>
     </div>
   );

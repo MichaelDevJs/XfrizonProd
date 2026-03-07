@@ -19,10 +19,21 @@ const OrganizerFinance = () => {
   const [dateRange, setDateRange] = useState("3months");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     fetchPayoutReport();
   }, [dateRange]);
+
+  // Auto-apply custom range when both dates are selected and valid
+  useEffect(() => {
+    if (dateRange === "custom" && customFrom && customTo) {
+      // Validate that end date is not before start date
+      if (new Date(customTo) >= new Date(customFrom)) {
+        fetchPayoutReport();
+      }
+    }
+  }, [customFrom, customTo]);
 
   const toDateKey = (value) => {
     if (!value) return null;
@@ -173,7 +184,12 @@ const OrganizerFinance = () => {
 
   const fetchPayoutReport = async () => {
     try {
-      setLoading(true);
+      // Use isRefreshing for filter changes to avoid scrolling
+      if (payoutReport) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       let fromDate = null;
@@ -254,13 +270,13 @@ const OrganizerFinance = () => {
       setError(err.message || "Failed to fetch payout report");
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  const handleCustomDateSubmit = () => {
-    if (customFrom && customTo) {
-      setDateRange("custom");
-    }
+  const handleClearCustomRange = () => {
+    setCustomFrom("");
+    setCustomTo("");
   };
 
   const formatCurrency = (amount, currency) => {
@@ -327,26 +343,34 @@ const OrganizerFinance = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-4xl font-light text-gray-200 mb-2">Finance</h1>
-          <p className="text-gray-500 font-light">
-            Track your earnings and payout report
-          </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-light text-gray-200 mb-2">
+              Finance
+            </h1>
+            <p className="text-gray-500 font-light">
+              Track your earnings and payout report
+            </p>
+          </div>
+          {isRefreshing && (
+            <FaSpinner className="w-5 h-5 text-xf-accent animate-spin" />
+          )}
         </div>
         <button
+          type="button"
           onClick={exportToCSV}
           disabled={!payoutReport?.payoutSummary?.length}
-          className="px-4 py-2 bg-xf-accent hover:brightness-110 text-white rounded-lg font-light text-sm flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto justify-center px-4 py-2 bg-xf-accent hover:brightness-110 text-white rounded-lg font-light text-sm flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FaDownload className="w-4 h-4" />
           Export CSV
         </button>
       </div>
 
-      {loading && (
+      {loading && !payoutReport && (
         <div className="flex justify-center items-center py-12">
           <FaSpinner className="w-8 h-8 text-xf-accent animate-spin" />
         </div>
@@ -358,273 +382,313 @@ const OrganizerFinance = () => {
         </div>
       )}
 
-      {!loading && (
+      {(payoutReport || !loading) && (
         <>
           {/* Financial Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
-              <p className="text-xs font-light text-green-100 mb-2">
-                Gross Revenue
-              </p>
-              <p className="text-3xl font-light">
-                {formatCurrency(
-                  totals.totalGrossRevenue,
-                  payoutReport?.currency,
-                )}
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
-              <p className="text-xs font-light text-blue-100 mb-2">
-                Tickets Sold
-              </p>
-              <p className="text-3xl font-light">
-                {totals.totalTicketsSold || 0}
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl p-6 text-white">
-              <p className="text-xs font-light text-yellow-100 mb-2">
-                Service Fee (10%)
-              </p>
-              <p className="text-3xl font-light">
-                {formatCurrency(totals.totalServiceFee, payoutReport?.currency)}
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white">
-              <p className="text-xs font-light text-indigo-100 mb-2">
-                Net Earnings
-              </p>
-              <p className="text-3xl font-light">
-                {formatCurrency(
-                  totals.totalNetForOrganizer,
-                  payoutReport?.currency,
-                )}
-              </p>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3 sm:p-4 overflow-x-auto hide-scrollbar">
+            <div className="flex min-w-max gap-3 sm:gap-4">
+              <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
+                <p className="text-xs font-light text-gray-400 mb-2">
+                  Gross Revenue
+                </p>
+                <p className="text-xl sm:text-2xl font-light text-emerald-400 wrap-break-word">
+                  {formatCurrency(
+                    totals.totalGrossRevenue,
+                    payoutReport?.currency,
+                  )}
+                </p>
+              </div>
+              <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
+                <p className="text-xs font-light text-gray-400 mb-2">
+                  Tickets Sold
+                </p>
+                <p className="text-xl sm:text-2xl font-light text-sky-400">
+                  {totals.totalTicketsSold || 0}
+                </p>
+              </div>
+              <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
+                <p className="text-xs font-light text-gray-400 mb-2">
+                  Service Fee (10%)
+                </p>
+                <p className="text-xl sm:text-2xl font-light text-amber-400 wrap-break-word">
+                  {formatCurrency(totals.totalServiceFee, payoutReport?.currency)}
+                </p>
+              </div>
+              <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
+                <p className="text-xs font-light text-gray-400 mb-2">
+                  Net Earnings
+                </p>
+                <p className="text-xl sm:text-2xl font-light text-violet-400 wrap-break-word">
+                  {formatCurrency(
+                    totals.totalNetForOrganizer,
+                    payoutReport?.currency,
+                  )}
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Payout Settings */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h2 className="text-2xl font-light text-gray-200 mb-4">
-              Payout Settings
-            </h2>
-            <p className="text-gray-500 font-light mb-6">
-              Configure how you receive payments from ticket sales
-            </p>
-            {user?.id && (
-              <StripeConnectSetup organizerId={user.id} organizer={user} />
-            )}
+          <div className="space-y-5">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-light text-gray-200">
+                Payout Settings
+              </h2>
+              <div className="group relative">
+                <FaInfoCircle className="w-4 h-4 text-gray-500 cursor-help" />
+                <div
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-64 p-3 bg-zinc-900 border border-zinc-600 rounded-lg text-xs text-gray-300 font-normal shadow-xl z-50"
+                >
+                  Configure how you receive earnings from ticket sales. Choose between automatic Stripe transfers or manual bank payouts.
+                </div>
+              </div>
+            </div>
 
-            {/* Bank Details for Manual Payout */}
-            <BankDetailsForm />
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">
+                  Stripe Payouts
+                </p>
+                {user?.id && (
+                  <StripeConnectSetup organizerId={user.id} organizer={user} />
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">
+                  Bank Details
+                </p>
+                <BankDetailsForm />
+              </div>
+            </div>
           </div>
 
           {/* Date Filter */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setDateRange("thisMonth")}
-              className={`px-4 py-2 bg-zinc-900 border ${
-                dateRange === "thisMonth"
-                  ? "border-xf-accent"
-                  : "border-zinc-800"
-              } text-gray-300 rounded-lg font-light text-sm hover:border-xf-accent transition-all duration-300`}
-            >
-              <FaCalendar className="inline-block mr-2 w-4 h-4" />
-              This Month
-            </button>
-            <button
-              onClick={() => setDateRange("lastMonth")}
-              className={`px-4 py-2 bg-zinc-900 border ${
-                dateRange === "lastMonth"
-                  ? "border-xf-accent"
-                  : "border-zinc-800"
-              } text-gray-300 rounded-lg font-light text-sm hover:border-xf-accent transition-all duration-300`}
-            >
-              Last Month
-            </button>
-            <button
-              onClick={() => setDateRange("3months")}
-              className={`px-4 py-2 bg-zinc-900 border ${
-                dateRange === "3months" ? "border-xf-accent" : "border-zinc-800"
-              } text-gray-300 rounded-lg font-light text-sm hover:border-xf-accent transition-all duration-300`}
-            >
-              Last 3 Months
-            </button>
-
-            <div className="flex gap-2 items-center">
-              <input
-                type="date"
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="px-3 py-2 bg-zinc-900 border border-zinc-800 text-gray-300 rounded-lg font-light text-sm focus:border-xf-accent focus:outline-none"
-              />
-              <span className="text-gray-500">to</span>
-              <input
-                type="date"
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="px-3 py-2 bg-zinc-900 border border-zinc-800 text-gray-300 rounded-lg font-light text-sm focus:border-xf-accent focus:outline-none"
-              />
-              <button
-                onClick={handleCustomDateSubmit}
-                disabled={!customFrom || !customTo}
-                className="px-4 py-2 bg-xf-accent hover:brightness-110 text-white rounded-lg font-light text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+            <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+              Date Range
+            </p>
+            <div className="space-y-2">
+              <select
+                value={dateRange}
+                onChange={(e) => {
+                  setDateRange(e.target.value);
+                  if (e.target.value !== "custom") {
+                    setCustomFrom("");
+                    setCustomTo("");
+                  }
+                }}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-gray-300 rounded text-xs focus:border-xf-accent focus:outline-none"
               >
-                Apply
-              </button>
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="3months">Last 3 Months</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              
+              {dateRange === "custom" && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">From</label>
+                      <input
+                        type="date"
+                        value={customFrom}
+                        onChange={(e) => setCustomFrom(e.target.value)}
+                        max={customTo || undefined}
+                        className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 text-gray-300 rounded text-xs focus:border-xf-accent focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">To</label>
+                      <input
+                        type="date"
+                        value={customTo}
+                        onChange={(e) => setCustomTo(e.target.value)}
+                        min={customFrom || undefined}
+                        className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 text-gray-300 rounded text-xs focus:border-xf-accent focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  {customFrom && customTo && (
+                    <div className="flex items-center justify-between text-xs">
+                      {new Date(customTo) < new Date(customFrom) ? (
+                        <p className="text-red-400">End date must be after start date</p>
+                      ) : (
+                        <p className="text-green-400 flex items-center gap-1">
+                          <FaInfoCircle className="w-3 h-3" />
+                          Auto-applied
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleClearCustomRange}
+                        className="text-gray-400 hover:text-gray-200 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Payout Summary */}
           {!payoutReport?.payoutSummary?.length ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-              <FaDollarSign className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 font-light">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 text-center">
+              <FaDollarSign className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 font-light">
                 No payout data for selected period
               </p>
             </div>
           ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-              <div className="p-6 border-b border-zinc-800">
-                <h2 className="text-xl font-light text-gray-200">
-                  Payout Breakdown
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {payoutReport.payoutSummary[0]?.cadence === "WEEKLY"
-                    ? "Weekly"
-                    : "Monthly"}{" "}
-                  payout schedule
-                </p>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+              <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-medium text-gray-200">
+                    Payout Breakdown
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {payoutReport.payoutSummary[0]?.cadence === "WEEKLY"
+                      ? "Weekly"
+                      : "Monthly"}{" "}
+                    schedule
+                  </p>
+                </div>
               </div>
-              <div className="overflow-x-auto overflow-y-visible">
-                <table className="w-full text-sm font-light">
-                  <thead className="border-b border-zinc-700">
-                    <tr>
-                      <th className="text-left py-3 px-4 text-gray-400">
-                        Period
-                      </th>
-                      <th className="text-right py-3 px-4 text-gray-400">
-                        <div className="flex items-center justify-end gap-1">
-                          Tickets
-                          <div className="group relative">
-                            <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div
-                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
-                              style={{ zIndex: 9999 }}
-                            >
-                              Total individual tickets sold in this period
+              <div className="max-h-96 overflow-y-auto hide-scrollbar">
+                <div className="overflow-x-auto hide-scrollbar">
+                  <table className="w-full min-w-190 text-xs font-light">
+                    <thead className="border-b border-zinc-700 bg-zinc-900 sticky top-0">
+                      <tr>
+                        <th className="text-left py-2 px-3 text-gray-400">
+                          Period
+                        </th>
+                        <th className="text-right py-2 px-3 text-gray-400">
+                          <div className="flex items-center justify-end gap-1">
+                            Tickets
+                            <div className="group relative">
+                              <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
+                              <div
+                                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                                style={{ zIndex: 9999 }}
+                              >
+                                Total individual tickets sold in this period
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </th>
-                      <th className="text-right py-3 px-4 text-gray-400">
-                        <div className="flex items-center justify-end gap-1">
-                          Gross Revenue
-                          <div className="group relative">
-                            <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div
-                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
-                              style={{ zIndex: 9999 }}
-                            >
-                              Total amount paid by customers (ticket price +
-                              service fee)
+                        </th>
+                        <th className="text-right py-2 px-3 text-gray-400">
+                          <div className="flex items-center justify-end gap-1">
+                            Gross Revenue
+                            <div className="group relative">
+                              <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
+                              <div
+                                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                                style={{ zIndex: 9999 }}
+                              >
+                                Total amount paid by customers (ticket price +
+                                service fee)
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </th>
-                      <th className="text-right py-3 px-4 text-gray-400">
-                        <div className="flex items-center justify-end gap-1">
-                          Service Fee
-                          <div className="group relative">
-                            <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div
-                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-52 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
-                              style={{ zIndex: 9999 }}
-                            >
-                              Platform's 10% commission deducted from ticket
-                              price
+                        </th>
+                        <th className="text-right py-2 px-3 text-gray-400">
+                          <div className="flex items-center justify-end gap-1">
+                            Service Fee
+                            <div className="group relative">
+                              <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
+                              <div
+                                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-52 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                                style={{ zIndex: 9999 }}
+                              >
+                                Platform's 10% commission deducted from ticket
+                                price
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </th>
-                      <th className="text-right py-3 px-4 text-gray-400">
-                        <div className="flex items-center justify-end gap-1">
-                          Net Earnings
-                          <div className="group relative">
-                            <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
-                            <div
-                              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
-                              style={{ zIndex: 9999 }}
-                            >
-                              Amount you'll receive in your account (Gross -
-                              Service Fee)
+                        </th>
+                        <th className="text-right py-2 px-3 text-gray-400">
+                          <div className="flex items-center justify-end gap-1">
+                            Net Earnings
+                            <div className="group relative">
+                              <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
+                              <div
+                                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
+                                style={{ zIndex: 9999 }}
+                              >
+                                Amount you'll receive in your account (Gross -
+                                Service Fee)
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
+                        </th>
+                      </tr>
+                    </thead>
                   <tbody>
-                    {payoutReport.payoutSummary.map((window, idx) => (
-                      <tr
-                        key={idx}
-                        className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors"
-                      >
-                        <td className="py-3 px-4 text-gray-300">
-                          {formatPeriodLabel(window)}
+                      {payoutReport.payoutSummary.map((window, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors"
+                        >
+                          <td className="py-2 px-3 text-gray-300 whitespace-nowrap">
+                            {formatPeriodLabel(window)}
+                          </td>
+                          <td className="py-2 px-3 text-right text-gray-300">
+                            {window.totalTicketsSold}
+                          </td>
+                          <td className="py-2 px-3 text-right text-gray-300">
+                            {formatCurrency(
+                              window.grossRevenue,
+                              payoutReport.currency,
+                            )}
+                          </td>
+                          <td className="py-2 px-3 text-right text-yellow-400">
+                            -
+                            {formatCurrency(
+                              window.serviceFeeTotal,
+                              payoutReport.currency,
+                            )}
+                          </td>
+                          <td className="py-2 px-3 text-right text-green-400 font-medium">
+                            {formatCurrency(
+                              window.netForOrganizer,
+                              payoutReport.currency,
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t-2 border-zinc-700 bg-zinc-800/50 sticky bottom-0">
+                      <tr className="font-medium">
+                        <td className="py-2.5 px-3 text-gray-200">Total</td>
+                        <td className="py-2.5 px-3 text-right text-gray-200">
+                          {displayedTicketsTotal}
                         </td>
-                        <td className="py-3 px-4 text-right text-gray-300">
-                          {window.totalTicketsSold}
-                        </td>
-                        <td className="py-3 px-4 text-right text-gray-300">
+                        <td className="py-2.5 px-3 text-right text-gray-200">
                           {formatCurrency(
-                            window.grossRevenue,
+                            totals.totalGrossRevenue,
                             payoutReport.currency,
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right text-yellow-400">
+                        <td className="py-2.5 px-3 text-right text-yellow-400">
                           -
                           {formatCurrency(
-                            window.serviceFeeTotal,
+                            totals.totalServiceFee,
                             payoutReport.currency,
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right text-green-400 font-medium">
+                        <td className="py-2.5 px-3 text-right text-green-400 text-sm">
                           {formatCurrency(
-                            window.netForOrganizer,
+                            totals.totalNetForOrganizer,
                             payoutReport.currency,
                           )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="border-t-2 border-zinc-700 bg-zinc-800/50">
-                    <tr className="font-medium">
-                      <td className="py-4 px-4 text-gray-200">Total</td>
-                      <td className="py-4 px-4 text-right text-gray-200">
-                        {displayedTicketsTotal}
-                      </td>
-                      <td className="py-4 px-4 text-right text-gray-200">
-                        {formatCurrency(
-                          totals.totalGrossRevenue,
-                          payoutReport.currency,
-                        )}
-                      </td>
-                      <td className="py-4 px-4 text-right text-yellow-400">
-                        -
-                        {formatCurrency(
-                          totals.totalServiceFee,
-                          payoutReport.currency,
-                        )}
-                      </td>
-                      <td className="py-4 px-4 text-right text-green-400 text-lg">
-                        {formatCurrency(
-                          totals.totalNetForOrganizer,
-                          payoutReport.currency,
-                        )}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             </div>
           )}
