@@ -10,7 +10,6 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [genreDropdown, setGenreDropdown] = useState(false);
   const [signupDropdownOpen, setSignupDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [imageLoadError, setImageLoadError] = useState(false);
   const dropdownBtnRef = useRef(null);
   const genreDropdownRef = useRef(null);
@@ -77,13 +76,6 @@ const Header = () => {
 
   const categories = ["Events", "For Organizers"];
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
   const isOrganizerDashboardArea =
     location.pathname === "/organizer" ||
     /^\/organizer\/(dashboard|statistics|scanner|my-events|create-event|edit-event|preview|profile|profile-edit|messages|finance|support)(\/|$)/.test(
@@ -111,7 +103,7 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* Center: Navigation & Search */}
+          {/* Center: Navigation */}
           {!isOrganizerDashboardArea && (
             <div className="flex-1 flex items-center justify-center gap-4 lg:gap-10 mx-2 sm:mx-6 lg:mx-12 min-w-0">
               {/* Category Links */}
@@ -147,21 +139,6 @@ const Header = () => {
                   );
                 })}
               </nav>
-
-              {/* Search Bar */}
-              <div className="hidden md:flex flex-1 max-w-sm relative">
-                <form onSubmit={handleSearch} className="w-full">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search events..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 hover:border-zinc-700 focus:outline-none focus:border-red-500 focus:bg-zinc-900 transition-all duration-300 text-xs font-light"
-                    />
-                  </div>
-                </form>
-              </div>
             </div>
           )}
 
@@ -402,21 +379,6 @@ const Header = () => {
             )}
           </div>
         </div>
-
-        {/* Mobile Search Bar */}
-        {!isOrganizerDashboardArea && (
-          <div className="md:hidden px-4 sm:px-6 pb-3 pt-2 border-t border-zinc-800">
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                placeholder="Search events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 hover:border-zinc-700 focus:outline-none focus:border-xf-accent transition-all duration-300 text-xs font-light"
-              />
-            </form>
-          </div>
-        )}
       </div>
     </header>
   );

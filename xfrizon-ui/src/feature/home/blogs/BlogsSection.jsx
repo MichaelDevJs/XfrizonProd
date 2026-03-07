@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import BlogCard from "./BlogCard";
 import blogApi from "../../../api/blogApi";
 
@@ -7,7 +7,6 @@ export default function BlogsSection() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBlogs();
@@ -57,7 +56,13 @@ export default function BlogsSection() {
 
       // Filter only published blogs and get latest ones
       const publishedBlogs = Array.isArray(blogList)
-        ? blogList.filter((blog) => blog.status === "PUBLISHED").slice(0, 6)
+        ? blogList
+            .filter((blog) => blog.status === "PUBLISHED")
+            .sort(
+              (a, b) =>
+                new Date(b.publishedAt || b.createdAt || 0) -
+                new Date(a.publishedAt || a.createdAt || 0),
+            )
         : [];
 
       setBlogs(publishedBlogs);
@@ -112,6 +117,26 @@ export default function BlogsSection() {
     };
   });
 
+  const normalizeCategory = (value) =>
+    (value || "General").trim().toLowerCase();
+
+  const sectionConfig = [
+    { key: "general", title: "General", mobileVertical: true },
+    { key: "music", title: "Music", mobileVertical: false },
+    { key: "news", title: "News", mobileVertical: false },
+    { key: "fashion", title: "Fashion", mobileVertical: false },
+    { key: "reviews", title: "Reviews", mobileVertical: false },
+    { key: "diaspora", title: "Diaspora", mobileVertical: false },
+    { key: "politics", title: "Politics", mobileVertical: false },
+  ];
+
+  const sectionBlocks = sectionConfig.map((section) => ({
+    ...section,
+    blogs: transformedBlogs
+      .filter((blog) => normalizeCategory(blog.category) === section.key)
+      .slice(0, 6),
+  }));
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -141,31 +166,63 @@ export default function BlogsSection() {
 
   return (
     <div className="mt-0 mb-0 bg-[#1e1e1e] px-6 py-16">
-      {/* Section Header */}
-      <div className="mb-16 text-center">
-        <h2 className="text-4xl md:text-5xl font-black uppercase tracking-wider text-gray-100 mb-2">
-          Articles
-        </h2>
-      </div>
+      <div className="flex gap-6 overflow-x-auto hide-scrollbar pb-2 snap-x snap-mandatory">
+        {sectionBlocks.map((section) => (
+          <div
+            key={section.key}
+            className="w-full shrink-0 snap-start bg-[#262626] border border-zinc-800 rounded-xl p-4 md:p-6"
+          >
+            <div className="mb-6">
+              <h3 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-gray-100">
+                {section.title}
+              </h3>
+            </div>
 
-      {/* Blogs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-        {transformedBlogs.map((blog) => (
-          <BlogCard key={blog.id} blog={blog} />
+            {section.blogs.length === 0 ? (
+              <div className="h-56 border border-zinc-800 rounded-lg flex items-center justify-center text-gray-500 text-sm">
+                No blogs yet in {section.title}
+              </div>
+            ) : section.mobileVertical ? (
+              <>
+                <div
+                  className="md:hidden overflow-y-auto hide-scrollbar snap-y snap-mandatory"
+                  style={{ maxHeight: "540px" }}
+                >
+                  {section.blogs.map((blog) => (
+                    <div
+                      key={`${section.key}-mobile-${blog.id}`}
+                      className="snap-start mb-6 last:mb-0"
+                    >
+                      <BlogCard blog={blog} />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-8">
+                  {section.blogs.map((blog) => (
+                    <BlogCard key={`${section.key}-desktop-${blog.id}`} blog={blog} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {section.blogs.map((blog) => (
+                  <BlogCard key={`${section.key}-${blog.id}`} blog={blog} />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 text-center">
+              <Link
+                to="/blogs"
+                className="text-red-500 hover:text-red-400 font-light uppercase tracking-widest text-sm transition-colors duration-200"
+              >
+                Read More Articles
+              </Link>
+            </div>
+          </div>
         ))}
       </div>
-
-      {/* View All Button */}
-      {transformedBlogs.length >= 6 && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => navigate("/AllBlogs")}
-            className="text-gray-300 hover:text-red-500 font-light uppercase tracking-widest text-sm transition-colors duration-200"
-          >
-            Read More Articles
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -226,11 +226,11 @@ export const BLOCK_COLORS = {
 };
 
 export const CATEGORIES = [
-  "General",
-  "Guides",
-  "Trends",
-  "Reviews",
   "News",
-  "Interviews",
-  "DJ Mixes",
+  "Fashion",
+  "Reviews",
+  "Diaspora",
+  "Music",
+  "Politics",
+  "General",
 ];

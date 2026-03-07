@@ -25,14 +25,13 @@ export default function AllBlogs() {
 
   // Unique values for filters
   const categories = [
-    "General",
+    "News",
+    "Fashion",
+    "Reviews",
+    "Diaspora",
     "Music",
-    "Sports",
-    "Business",
-    "Technology",
-    "Entertainment",
-    "Travel",
-    "Food",
+    "Politics",
+    "General",
   ];
   const genres = [
     "Hip-Hop",
@@ -48,21 +47,63 @@ export default function AllBlogs() {
     fetchBlogs();
   }, []);
 
+  const parseTags = (tags) => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === "string") {
+      try {
+        const parsed = JSON.parse(tags);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+      }
+    }
+    return [];
+  };
+
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const response = await blogApi.getAllBlogs({ status: "PUBLISHED" });
-      let blogList = response.data?.content || response.data || [];
+      const allBlogs = [];
+      let page = 0;
+      const size = 50;
+      let hasMore = true;
 
-      // Parse JSON fields
-      blogList = blogList.map((blog) => ({
-        ...blog,
-        tags: blog.tags
-          ? typeof blog.tags === "string"
-            ? JSON.parse(blog.tags)
-            : blog.tags
-          : [],
-      }));
+      while (hasMore) {
+        const response = await blogApi.getAllBlogs({
+          status: "PUBLISHED",
+          page,
+          size,
+        });
+
+        const payload = response?.data ?? response;
+
+        if (Array.isArray(payload)) {
+          allBlogs.push(...payload);
+          hasMore = false;
+        } else if (Array.isArray(payload?.content)) {
+          allBlogs.push(...payload.content);
+          const totalPages = payload.totalPages ?? 1;
+          page += 1;
+          hasMore = page < totalPages;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const blogList = allBlogs
+        .map((blog) => ({
+          ...blog,
+          tags: parseTags(blog.tags),
+        }))
+        .sort(
+          (a, b) =>
+            new Date(b.publishedAt || b.createdAt || 0) -
+            new Date(a.publishedAt || a.createdAt || 0),
+        );
 
       setBlogs(blogList);
       applyFilters(blogList, filters);
@@ -82,15 +123,22 @@ export default function AllBlogs() {
       const searchLower = filterObj.search.toLowerCase();
       result = result.filter(
         (blog) =>
-          blog.title.toLowerCase().includes(searchLower) ||
-          blog.excerpt.toLowerCase().includes(searchLower) ||
-          blog.author.toLowerCase().includes(searchLower),
+          (blog.title || "").toLowerCase().includes(searchLower) ||
+          (blog.excerpt || blog.content || "")
+            .toLowerCase()
+            .includes(searchLower) ||
+          (blog.author || "").toLowerCase().includes(searchLower),
       );
     }
 
     // Category filter
     if (filterObj.category) {
-      result = result.filter((blog) => blog.category === filterObj.category);
+      const selectedCategory = filterObj.category.trim().toLowerCase();
+      result = result.filter(
+        (blog) =>
+          (blog.category || "General").trim().toLowerCase() ===
+          selectedCategory,
+      );
     }
 
     // Location filter
@@ -122,11 +170,21 @@ export default function AllBlogs() {
 
     // Sorting
     if (filterObj.sortBy === "newest") {
-      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      result.sort(
+        (a, b) =>
+          new Date(b.publishedAt || b.createdAt || 0) -
+          new Date(a.publishedAt || a.createdAt || 0),
+      );
     } else if (filterObj.sortBy === "oldest") {
-      result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      result.sort(
+        (a, b) =>
+          new Date(a.publishedAt || a.createdAt || 0) -
+          new Date(b.publishedAt || b.createdAt || 0),
+      );
     } else if (filterObj.sortBy === "title") {
-      result.sort((a, b) => a.title.localeCompare(b.title));
+      result.sort((a, b) =>
+        (a.title || "").localeCompare(b.title || ""),
+      );
     }
 
     setFilteredBlogs(result);
@@ -172,31 +230,33 @@ export default function AllBlogs() {
     filters.sortBy !== "newest";
 
   return (
-    <div className="min-h-screen bg-[#1e1e1e] py-12">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-[#1e1e1e] py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">All Blogs</h1>
-          <p className="text-gray-400">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-[0.12em] uppercase text-zinc-100 mb-2">
+            All Blogs
+          </h1>
+          <p className="text-zinc-500 text-sm md:text-base font-light">
             Discover stories, insights, and experiences from our community
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6 flex gap-3">
+        <div className="mb-6 flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <FaSearch className="absolute left-3 top-3.5 text-gray-500 text-sm" />
+            <FaSearch className="absolute left-3 top-3.5 text-zinc-500 text-sm" />
             <input
               type="text"
               placeholder="Search blogs..."
               value={filters.search}
               onChange={(e) => handleFilterChange("search", e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#2a2a2a] border border-[#444] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#403838]"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition"
+            className="px-4 py-2.5 bg-[#403838] hover:bg-[#4f4545] text-white rounded-lg flex items-center justify-center gap-2 transition text-sm uppercase tracking-wider"
           >
             <FaFilter size={16} />
             Filters
@@ -205,11 +265,11 @@ export default function AllBlogs() {
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="mb-6 bg-[#2a2a2a] border border-[#444] rounded-lg p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mb-6 bg-zinc-950 border border-zinc-800 rounded-lg p-4 md:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Category */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-xs font-light text-zinc-400 mb-2 uppercase tracking-wider">
                   Category
                 </label>
                 <select
@@ -217,7 +277,7 @@ export default function AllBlogs() {
                   onChange={(e) =>
                     handleFilterChange("category", e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-[#1e1e1e] border border-[#555] rounded text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-[#403838]"
                 >
                   <option value="">All Categories</option>
                   {categories.map((cat) => (
@@ -230,7 +290,7 @@ export default function AllBlogs() {
 
               {/* Location */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-xs font-light text-zinc-400 mb-2 uppercase tracking-wider">
                   Location
                 </label>
                 <input
@@ -240,19 +300,19 @@ export default function AllBlogs() {
                   onChange={(e) =>
                     handleFilterChange("location", e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-[#1e1e1e] border border-[#555] rounded text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#403838]"
                 />
               </div>
 
               {/* Genre */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-xs font-light text-zinc-400 mb-2 uppercase tracking-wider">
                   Genre
                 </label>
                 <select
                   value={filters.genre}
                   onChange={(e) => handleFilterChange("genre", e.target.value)}
-                  className="w-full px-3 py-2 bg-[#1e1e1e] border border-[#555] rounded text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-[#403838]"
                 >
                   <option value="">All Genres</option>
                   {genres.map((genre) => (
@@ -265,7 +325,7 @@ export default function AllBlogs() {
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-xs font-light text-zinc-400 mb-2 uppercase tracking-wider">
                   Tags
                 </label>
                 <input
@@ -273,19 +333,19 @@ export default function AllBlogs() {
                   placeholder="Search tags..."
                   value={filters.tags}
                   onChange={(e) => handleFilterChange("tags", e.target.value)}
-                  className="w-full px-3 py-2 bg-[#1e1e1e] border border-[#555] rounded text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#403838]"
                 />
               </div>
 
               {/* Sort */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-xs font-light text-zinc-400 mb-2 uppercase tracking-wider">
                   Sort By
                 </label>
                 <select
                   value={filters.sortBy}
                   onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                  className="w-full px-3 py-2 bg-[#1e1e1e] border border-[#555] rounded text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm text-white focus:outline-none focus:border-[#403838]"
                 >
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>
@@ -298,7 +358,7 @@ export default function AllBlogs() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded flex items-center gap-2 transition text-sm"
+                className="mt-4 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded flex items-center gap-2 transition text-xs uppercase tracking-wider"
               >
                 <FaTimes size={14} />
                 Clear All Filters
@@ -308,27 +368,27 @@ export default function AllBlogs() {
         )}
 
         {/* Results Count */}
-        <div className="mb-6 text-gray-400 text-sm">
+        <div className="mb-6 text-zinc-500 text-xs md:text-sm uppercase tracking-wider">
           Showing {filteredBlogs.length} of {blogs.length} blogs
         </div>
 
         {/* Blogs Grid */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-gray-400">Loading blogs...</div>
+            <div className="text-zinc-400">Loading blogs...</div>
           </div>
         ) : filteredBlogs.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">No blogs found</div>
+            <div className="text-zinc-400 mb-4">No blogs found</div>
             <button
               onClick={clearFilters}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition"
+              className="px-4 py-2 bg-[#403838] hover:bg-[#4f4545] text-white rounded transition text-xs uppercase tracking-wider"
             >
               Clear Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {filteredBlogs.map((blog) => (
               <div
                 key={blog.id}
