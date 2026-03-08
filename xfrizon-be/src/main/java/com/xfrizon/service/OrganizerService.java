@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -173,6 +174,14 @@ public class OrganizerService {
             user.setCoverPhoto(updateData.getCoverPhoto());
         }
 
+        if (updateData.getMedia() != null && !updateData.getMedia().isEmpty()) {
+            try {
+                user.setMedia(objectMapper.writeValueAsString(updateData.getMedia()));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid media payload");
+            }
+        }
+
         User updatedUser = userRepository.save(user);
         return mapToUserResponse(updatedUser);
     }
@@ -188,10 +197,11 @@ public class OrganizerService {
             throw new IllegalArgumentException("Organizer not found");
         }
 
-        // Validate file is an image
+        // Validate file is an image or video
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Please upload a valid image file");
+        if (contentType == null ||
+                (!contentType.startsWith("image/") && !contentType.startsWith("video/"))) {
+            throw new IllegalArgumentException("Please upload a valid image or video file");
         }
 
         // Create upload directory if it doesn't exist
@@ -230,10 +240,11 @@ public class OrganizerService {
             throw new IllegalArgumentException("Organizer not found");
         }
 
-        // Validate file is an image
+        // Validate file is an image or video
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Please upload a valid image file");
+        if (contentType == null ||
+                (!contentType.startsWith("image/") && !contentType.startsWith("video/"))) {
+            throw new IllegalArgumentException("Please upload a valid image or video file");
         }
 
         // Create upload directory if it doesn't exist
@@ -254,6 +265,27 @@ public class OrganizerService {
         log.info("Organizer media uploaded successfully: {} at {}", filename, filePath.toAbsolutePath());
 
         String mediaUrl = "/api/v1/uploads/" + filename;
+
+        try {
+            List<UserResponse.MediaItem> mediaItems = new ArrayList<>();
+            if (user.getMedia() != null && !user.getMedia().isEmpty()) {
+                mediaItems = objectMapper.readValue(
+                        user.getMedia(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, UserResponse.MediaItem.class));
+            }
+
+            mediaItems.add(UserResponse.MediaItem.builder()
+                    .url(mediaUrl)
+                    .caption("")
+                    .type(contentType.startsWith("video/") ? "video" : "image")
+                    .build());
+
+            user.setMedia(objectMapper.writeValueAsString(mediaItems));
+            userRepository.save(user);
+        } catch (Exception e) {
+            log.warn("Failed to persist organizer media list for organizer {}: {}", organizerId, e.getMessage());
+        }
+
         return mediaUrl;
     }
 
@@ -293,8 +325,20 @@ public class OrganizerService {
                         objectMapper.getTypeFactory().constructCollectionType(List.class, UserResponse.MediaItem.class));
             } catch (Exception e) {
                 log.warn("Error parsing media JSON: {}", e.getMessage());
-                // If parsing fails, return empty list
-                media = List.of();
+                // Backward compatibility: support legacy media stored as array of URL strings
+                try {
+                    List<String> mediaUrls = objectMapper.readValue(user.getMedia(),
+                            objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                    media = mediaUrls.stream()
+                            .map(url -> UserResponse.MediaItem.builder()
+                                    .url(url)
+                                    .caption("")
+                                    .type(url != null && url.matches("(?i).*(\\.mp4|\\.mov|\\.webm|\\.m4v|\\.ogg)(\\?.*)?$") ? "video" : "image")
+                                    .build())
+                            .collect(Collectors.toList());
+                } catch (Exception fallbackEx) {
+                    media = List.of();
+                }
             }
         } else {
             media = List.of();

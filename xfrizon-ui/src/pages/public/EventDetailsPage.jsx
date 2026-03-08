@@ -46,9 +46,28 @@ export default function EventDetailsPage() {
 
       setEvent(eventData);
 
-      // Use organizer from event response if available
       if (eventData.organizer) {
         setOrganizer(eventData.organizer);
+      }
+
+      const organizerId =
+        eventData.organizer?.id ||
+        eventData.organizer?.organizerId ||
+        eventData.organizer?.userId ||
+        eventData.organizerId ||
+        eventData.createdBy ||
+        eventData.userId;
+
+      if (organizerId) {
+        try {
+          const organizerRes = await api.get(`/organizers/${organizerId}`);
+          const fullOrganizer = organizerRes.data?.data || organizerRes.data;
+          if (fullOrganizer) {
+            setOrganizer(fullOrganizer);
+          }
+        } catch (organizerError) {
+          console.warn("Could not load full organizer profile:", organizerError);
+        }
       }
     } catch (error) {
       console.error("Error fetching event details:", error);

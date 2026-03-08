@@ -36,6 +36,11 @@ export default function OrganizerProfileEdit() {
     description: currentOrganizer?.bio || currentOrganizer?.description || "",
   });
 
+  const persistedMediaCount = Array.isArray(currentOrganizer?.media)
+    ? currentOrganizer.media.length
+    : 0;
+  const queuedVideoCount = mediaUpload.filter((item) => item.type === "video").length;
+
   // Update form data when currentOrganizer changes
   useEffect(() => {
     if (currentOrganizer) {
@@ -74,6 +79,67 @@ export default function OrganizerProfileEdit() {
       return `http://localhost:8081${normalized}`;
     }
     return `http://localhost:8081/api/v1${normalized}`;
+  };
+
+  const postUploadWithFallback = async (endpoints, file) => {
+    const baseUrl = String(api?.defaults?.baseURL || "");
+    const origin = baseUrl.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
+
+    const originCandidates = [];
+    if (origin) {
+      originCandidates.push(origin);
+    }
+    if (typeof window !== "undefined" && window.location?.origin) {
+      originCandidates.push(window.location.origin.replace(/\/$/, ""));
+    }
+    if (import.meta.env.DEV) {
+      originCandidates.push("http://localhost:8081");
+    }
+
+    const candidates = [];
+    endpoints.forEach((endpoint) => {
+      candidates.push(endpoint);
+      if (endpoint.startsWith("/")) {
+        originCandidates.forEach((candidateOrigin) => {
+          if (candidateOrigin) {
+            candidates.push(`${candidateOrigin}${endpoint}`);
+          }
+        });
+      }
+    });
+
+    const uniqueCandidates = [...new Set(candidates)];
+    let lastError = null;
+
+    for (const url of uniqueCandidates) {
+      try {
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", file);
+
+        const response = await api.post(url, formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 30000,
+        });
+
+        if (response?.data?.url) {
+          return response.data.url;
+        }
+      } catch (error) {
+        lastError = error;
+        const status = error?.response?.status;
+        if (
+          status === 400 ||
+          status === 404 ||
+          status === 405 ||
+          (typeof status === "number" && status >= 500)
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw lastError || new Error("Upload failed");
   };
 
   const handleLogoUpload = (e) => {
@@ -128,8 +194,11 @@ export default function OrganizerProfileEdit() {
           toast.warning(`${file.name} is too large (max 10MB)`);
           return;
         }
-        if (!file.type.startsWith("image/")) {
-          toast.warning(`${file.name} is not an image`);
+        if (
+          !file.type.startsWith("image/") &&
+          !file.type.startsWith("video/")
+        ) {
+          toast.warning(`${file.name} must be an image or video`);
           return;
         }
 
@@ -140,6 +209,7 @@ export default function OrganizerProfileEdit() {
             {
               id: Date.now() + Math.random(),
               file,
+              type: file.type.startsWith("video/") ? "video" : "image",
               preview: reader.result,
               caption: "",
             },
@@ -164,21 +234,7 @@ export default function OrganizerProfileEdit() {
     if (!logoFile) return null;
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("file", logoFile);
-
-      const response = await api.post(
-        "/uploads/organizer-logo",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          timeout: 30000,
-        },
-      );
-
-      return response.data.url;
+      return await postUploadWithFallback(["/uploads/organizer-logo"], logoFile);
     } catch (error) {
       console.error("Logo upload failed:", error);
       throw new Error("Failed to upload logo");
@@ -190,15 +246,7 @@ export default function OrganizerProfileEdit() {
     if (!coverPhotoFile) return null;
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("file", coverPhotoFile);
-
-      const response = await api.post("/uploads/cover-photo", formDataToSend, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 30000,
-      });
-
-      return response.data.url;
+      return await postUploadWithFallback(["/uploads/cover-photo"], coverPhotoFile);
     } catch (error) {
       console.error("Cover photo upload failed:", error);
       throw new Error("Failed to upload cover photo");
@@ -210,23 +258,38 @@ export default function OrganizerProfileEdit() {
     const uploadedMedia = [];
 
     for (const media of mediaUpload) {
+      const mediaType =
+        media.type || (media.file?.type?.startsWith("video/") ? "video" : "image");
+
+      const endpointsToTry =
+        mediaType === "video"
+          ? [
+              `/organizers/${currentOrganizer?.id}/media`,
+              "/uploads/upload",
+              "/uploads/media",
+            ]
+          : [
+              `/organizers/${currentOrganizer?.id}/media`,
+              "/uploads/media",
+              "/uploads/upload",
+            ];
+
+      let uploadedUrl = null;
       try {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", media.file);
-
-        const response = await api.post("/uploads/media", formDataToSend, {
-          headers: { "Content-Type": "multipart/form-data" },
-          timeout: 30000,
-        });
-
-        uploadedMedia.push({
-          url: response.data.url,
-          caption: media.caption || "",
-        });
+        uploadedUrl = await postUploadWithFallback(endpointsToTry, media.file);
       } catch (error) {
         console.error("Media upload failed:", error);
+        if (mediaType === "video") {
+          throw new Error("Failed to upload video. Ensure backend is running and supports organizer media upload.");
+        }
         throw new Error("Failed to upload media");
       }
+
+      uploadedMedia.push({
+        url: uploadedUrl,
+        type: mediaType,
+        caption: media.caption || "",
+      });
     }
 
     return uploadedMedia;
@@ -286,6 +349,13 @@ export default function OrganizerProfileEdit() {
         description: formData.description,
       };
 
+      if (uploadedMedia.length > 0) {
+        const existingMedia = Array.isArray(currentOrganizer?.media)
+          ? currentOrganizer.media
+          : [];
+        updateData.media = [...existingMedia, ...uploadedMedia];
+      }
+
       console.log("Update data being sent to API:", updateData);
       console.log("Location in update data:", updateData.location);
 
@@ -326,6 +396,11 @@ export default function OrganizerProfileEdit() {
               uploadedCoverUrl ||
               response.data.coverPhoto ||
               currentOrganizer.coverPhoto,
+            media:
+              response.data.media ||
+              (uploadedMedia.length > 0
+                ? [...(Array.isArray(currentOrganizer?.media) ? currentOrganizer.media : []), ...uploadedMedia]
+                : currentOrganizer.media),
             // Include form data to ensure all fields are updated
             firstName: formData.name,
             name: formData.name,
@@ -591,12 +666,18 @@ export default function OrganizerProfileEdit() {
               <FaPlus className="text-indigo-500" /> Upload Media
             </h2>
 
+            {import.meta.env.DEV && (
+              <p className="text-xs text-amber-400 mb-4">
+                DEV: Saved media = {persistedMediaCount}, queued upload = {mediaUpload.length}, queued videos = {queuedVideoCount}
+              </p>
+            )}
+
             {/* Upload Button */}
             <input
               type="file"
               ref={mediaInputRef}
               onChange={handleMediaUpload}
-              accept="image/*"
+              accept="image/*,video/*"
               multiple
               className="hidden"
             />
@@ -606,7 +687,7 @@ export default function OrganizerProfileEdit() {
               className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all text-sm mb-6"
             >
               <FaPlus size={14} className="inline mr-2" />
-              Add Media Files
+              Add Media Files (Image or Video)
             </button>
 
             {/* Media Preview */}
@@ -621,11 +702,20 @@ export default function OrganizerProfileEdit() {
                     className="bg-[#0f0f0f] border border-gray-700/50 rounded-lg p-4"
                   >
                     <div className="flex gap-4">
-                      <img
-                        src={media.preview}
-                        alt="media"
-                        className="w-20 h-20 rounded object-cover"
-                      />
+                      {media.type === "video" ? (
+                        <video
+                          src={media.preview}
+                          className="w-20 h-20 rounded object-cover"
+                          muted
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={media.preview}
+                          alt="media"
+                          className="w-20 h-20 rounded object-cover"
+                        />
+                      )}
                       <div className="flex-1">
                         <input
                           type="text"

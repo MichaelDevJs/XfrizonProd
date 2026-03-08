@@ -158,16 +158,22 @@ export default function EventCard({ event, onSaveChange }) {
   };
 
   return (
-    <div onClick={handleCardClick} className={`block ${isPastEvent() ? "cursor-not-allowed" : "cursor-pointer"}`}>
-      <div className={`hover:shadow-lg transition-all duration-300 flex flex-col justify-between group h-full ${isPastEvent() ? "opacity-50" : ""}`}>
+    <div
+      onClick={handleCardClick}
+      className={`block ${isPastEvent() ? "cursor-not-allowed" : "cursor-pointer"}`}
+    >
+      <div
+        className={`shadow-[0_8px_22px_rgba(0,0,0,0.45),0_0_14px_rgba(236,72,153,0.22),0_0_24px_rgba(34,211,238,0.18)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.5),0_0_20px_rgba(236,72,153,0.35),0_0_34px_rgba(34,211,238,0.28)] transition-all duration-300 flex flex-col justify-between group h-full ${isPastEvent() ? "opacity-50" : ""}`}
+      >
         {/* Event Image with Save Button - Using Image as Hover Trigger */}
         <div className="relative overflow-hidden h-48 border border-zinc-800">
           <img
             src={
               imageError
                 ? PLACEHOLDER_IMAGE
-                : resolveFlyerUrl(event.flyerUrl || event.flyer_url || event.image) ||
-                  PLACEHOLDER_IMAGE
+                : resolveFlyerUrl(
+                    event.flyerUrl || event.flyer_url || event.image,
+                  ) || PLACEHOLDER_IMAGE
             }
             onError={handleImageError}
             alt={event.title}
@@ -255,14 +261,26 @@ export default function EventCard({ event, onSaveChange }) {
           {/* Genre Tags */}
           {event.genres && event.genres.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {event.genres.map((genre) => (
-                <span
-                  key={genre}
-                  className="inline-block px-2 py-1 bg-red-500/10 text-red-400 text-xs rounded hover:bg-red-500/20 hover:text-red-500 transition-all duration-300 font-light"
-                >
-                  {genre}
-                </span>
-              ))}
+              {event.genres.map((genre, index) => {
+                const nightClubTextColors = [
+                  "text-fuchsia-300",
+                  "text-cyan-300",
+                  "text-violet-300",
+                  "text-emerald-300",
+                  "text-pink-300",
+                ];
+                const tagTextColor =
+                  nightClubTextColors[index % nightClubTextColors.length];
+
+                return (
+                  <span
+                    key={genre}
+                    className={`inline-block px-2 py-1 bg-red-500/10 border border-red-500/20 ${tagTextColor} text-xs rounded hover:bg-red-500/20 transition-all duration-300 font-light`}
+                  >
+                    {genre}
+                  </span>
+                );
+              })}
             </div>
           )}
 
@@ -312,7 +330,8 @@ export default function EventCard({ event, onSaveChange }) {
                   </span>
 
                   {/* User Avatars or Message */}
-                  {currentEvent.attendees && currentEvent.attendees.length > 0 ? (
+                  {currentEvent.attendees &&
+                  currentEvent.attendees.length > 0 ? (
                     <div className="flex items-center -space-x-2">
                       {currentEvent.attendees.slice(0, 3).map((user) => {
                         console.log(
@@ -322,7 +341,9 @@ export default function EventCard({ event, onSaveChange }) {
                         return (
                           <div
                             key={user.id}
-                            title={`${user.firstName} ${user.lastName}` || "User"}
+                            title={
+                              `${user.firstName} ${user.lastName}` || "User"
+                            }
                             className="w-6 h-6 rounded-full object-cover bg-zinc-800 shrink-0"
                           >
                             {user.profilePicture ? (

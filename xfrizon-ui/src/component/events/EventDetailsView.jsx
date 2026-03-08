@@ -160,6 +160,58 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   };
 
   const currencySymbol = getCurrencySymbol();
+
+  const parseOrganizerMedia = () => {
+    const raw = organizer?.media || organizer?.mediaGallery || organizer?.gallery;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const isVideoUrl = (url = "") => {
+    const value = String(url).toLowerCase();
+    return /(\.mp4|\.mov|\.webm|\.m4v|\.ogg)(\?|$)/.test(value);
+  };
+
+  const getMediaUrl = (item) => {
+    if (!item) return "";
+    if (typeof item === "string") return item;
+    return item.url || item.src || item.path || item.mediaUrl || "";
+  };
+
+  const getMediaType = (item) => {
+    if (!item || typeof item === "string") return "";
+    return String(item.type || item.mediaType || "").toLowerCase();
+  };
+
+  const organizerMedia = parseOrganizerMedia();
+  const organizerVideoCount = organizerMedia.filter((item) => {
+    const type = getMediaType(item);
+    const url = getMediaUrl(item);
+    return type === "video" || isVideoUrl(url);
+  }).length;
+  const nightWithUsMedia = organizerMedia.find((item) => {
+    if (!item) return false;
+    const type = getMediaType(item);
+    const url = getMediaUrl(item);
+    return type === "video" || isVideoUrl(url);
+  });
+
+  const nightWithUsVideoUrl = nightWithUsMedia
+    ? resolveFlyerUrl(getMediaUrl(nightWithUsMedia))
+    : null;
+  const nightWithUsCaption =
+    (typeof nightWithUsMedia === "object" ? nightWithUsMedia?.caption : "") ||
+    "From organizer media";
+
   return (
     <>
       <div className="min-h-screen bg-black text-white">
@@ -447,7 +499,31 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                       : "Select Tickets"}
                   </button>
                 </div>
+
               </div>
+
+              {/* Night With Us Video */}
+              {organizer && nightWithUsVideoUrl && (
+                <div className="w-full mt-5 flex justify-center">
+                  <div className="w-full max-w-md overflow-hidden">
+                    <div className="px-4 pt-4 pb-2 text-center">
+                      <h3 className="text-sm font-light text-gray-300 tracking-wide">
+                        Night with Us
+                      </h3>
+                    </div>
+
+                    <video
+                      src={nightWithUsVideoUrl}
+                      className="w-full aspect-video object-cover"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                    />
+                  </div>
+                </div>
+              )}
             </>
           )}
 

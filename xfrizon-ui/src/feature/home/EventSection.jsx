@@ -112,6 +112,19 @@ export default function EventSection() {
     loadEvents();
   };
 
+  const getRecentTimestamp = (event) => {
+    const candidate =
+      event?.createdAt ||
+      event?.created_at ||
+      event?.publishedAt ||
+      event?.published_at ||
+      event?.updatedAt ||
+      event?.updated_at ||
+      event?.eventDateTime;
+    const parsed = new Date(candidate).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
   const getFilteredData = () => {
     if (!homeData || !homeData.categories) {
       console.log("No homeData or categories");
@@ -129,44 +142,48 @@ export default function EventSection() {
       categories: homeData.categories
         .map((category) => ({
           ...category,
-          events: category.events.filter((event) => {
-            // Note: Past events are shown but greyed out in EventCard component
-            // Filter by event type if selected
-            if (selectedEventType) {
-              if (!event.eventType || event.eventType !== selectedEventType) {
-                return false;
+          events: category.events
+            .filter((event) => {
+              // Note: Past events are shown but greyed out in EventCard component
+              // Filter by event type if selected
+              if (selectedEventType) {
+                if (!event.eventType || event.eventType !== selectedEventType) {
+                  return false;
+                }
               }
-            }
-            // Filter by genre if selected
-            if (selectedGenre) {
-              if (!event.genres || !event.genres.includes(selectedGenre)) {
-                return false;
+              // Filter by genre if selected
+              if (selectedGenre) {
+                if (!event.genres || !event.genres.includes(selectedGenre)) {
+                  return false;
+                }
               }
-            }
-            // Always filter by country: default is Germany
-            if (
-              selectedCountry &&
-              selectedCountry.code &&
-              selectedCountry.code !== "ALL"
-            ) {
-              if (event.country !== selectedCountry.name) {
-                console.log(
-                  `Filtering out event ${event.id} - event.country: ${event.country}, selectedCountry.name: ${selectedCountry.name}`,
-                );
-                return false;
-              }
-            }
-            // Filter by state if selected
-            if (selectedState) {
+              // Always filter by country: default is Germany
               if (
-                !event.city ||
-                !event.city.toLowerCase().includes(selectedState.toLowerCase())
+                selectedCountry &&
+                selectedCountry.code &&
+                selectedCountry.code !== "ALL"
               ) {
-                return false;
+                if (event.country !== selectedCountry.name) {
+                  console.log(
+                    `Filtering out event ${event.id} - event.country: ${event.country}, selectedCountry.name: ${selectedCountry.name}`,
+                  );
+                  return false;
+                }
               }
-            }
-            return true;
-          }),
+              // Filter by state if selected
+              if (selectedState) {
+                if (
+                  !event.city ||
+                  !event.city
+                    .toLowerCase()
+                    .includes(selectedState.toLowerCase())
+                ) {
+                  return false;
+                }
+              }
+              return true;
+            })
+            .sort((a, b) => getRecentTimestamp(b) - getRecentTimestamp(a)),
         }))
         // Remove categories with no events
         .filter((category) => category.events.length > 0),
@@ -174,34 +191,6 @@ export default function EventSection() {
   };
 
   const filteredData = getFilteredData();
-
-  const getRecentTimestamp = (event) => {
-    const candidate =
-      event?.createdAt ||
-      event?.created_at ||
-      event?.publishedAt ||
-      event?.published_at ||
-      event?.updatedAt ||
-      event?.updated_at ||
-      event?.eventDateTime;
-    const parsed = new Date(candidate).getTime();
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  const recentlyUploadedEvents = (filteredData?.categories || [])
-    .flatMap((category) => category.events || [])
-    .sort((a, b) => getRecentTimestamp(b) - getRecentTimestamp(a));
-
-  const displayCategories = recentlyUploadedEvents.length
-    ? [
-        {
-          id: "recently-uploaded",
-          name: "Recently Uploaded",
-          events: recentlyUploadedEvents,
-        },
-        ...filteredData.categories,
-      ]
-    : filteredData.categories;
 
   if (loading)
     return (
@@ -223,7 +212,7 @@ export default function EventSection() {
         </div>
       )}
 
-      {displayCategories?.map((category) => (
+      {filteredData?.categories?.map((category) => (
         <EventRow
           key={category.id}
           category={category}

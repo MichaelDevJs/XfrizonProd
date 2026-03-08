@@ -58,5 +58,6 @@ public class UserResponse {
     public static class MediaItem {
         private String url;
         private String caption;
+        private String type;
     }
 }

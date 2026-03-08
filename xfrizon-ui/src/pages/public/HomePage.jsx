@@ -1,34 +1,151 @@
-import React from "react";
-import HeroSection from "../../feature/home/HeroSection";
+import React, { useState, useEffect } from "react";
+import HeroSlideshow from "../../component/HeroSlideshow/HeroSlideshow";
 import CompactFilterBar from "../../feature/home/CompactFilterBar";
 import EventSection from "../../feature/home/EventSection";
 import CenteredBanner from "../../component/CenteredBanner/CenteredBanner";
-
 import BlogsSection from "../../feature/home/blogs/BlogsSection";
 import FilterProvider from "../../context/FilterContext";
+import api from "../../api/axios";
 
 export default function HomePage() {
-  return (
-    <FilterProvider>
-      <div className="bg-black text-white min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28">
-          <CenteredBanner />
-          <HeroSection />
+  const [loading, setLoading] = useState(true);
+  const [heroSlideshow, setHeroSlideshow] = useState([
+    {
+      id: "1",
+      type: "video",
+      url: "/assets/Xfrizon-Hero-Vid.mp4",
+      duration: 10000,
+      order: 0,
+    },
+  ]);
+  const [heroTitle, setHeroTitle] = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [bannerTexts, setBannerTexts] = useState([
+    "Promoting Afrocentric Events",
+    "Discover Events Near You",
+    "Celebrate Culture Together",
+  ]);
+  const [blockOrder, setBlockOrder] = useState([
+    "centeredBanner",
+    "heroSection",
+    "blogsSection",
+    "eventSection",
+  ]);
 
-          {/* Transition spacing from Hero to Blog */}
-          <div className="h-8 sm:h-12" />
+  useEffect(() => {
+    fetchHomePageSettings();
+  }, []);
 
-          {/* Blog Section - Dark Background */}
-          <div className="bg-[#1e1e1e] text-gray-100 rounded-none px-0 py-0 mt-0 mx-0 shadow-none transition-all duration-500">
-            <BlogsSection />
+  const fetchHomePageSettings = async () => {
+    try {
+      const response = await api.get("/homepage-settings");
+      const settings = response.data;
+
+      if (settings.heroSlideshow) {
+        try {
+          const slideshow = JSON.parse(settings.heroSlideshow);
+          if (Array.isArray(slideshow) && slideshow.length > 0) {
+            setHeroSlideshow(slideshow);
+          }
+        } catch (e) {
+          console.error("Error parsing hero slideshow:", e);
+        }
+      }
+
+      if (settings.bannerTexts) {
+        try {
+          const texts = JSON.parse(settings.bannerTexts);
+          if (Array.isArray(texts) && texts.length > 0) {
+            setBannerTexts(texts);
+          }
+        } catch (e) {
+          console.error("Error parsing banner texts:", e);
+        }
+      }
+
+      if (typeof settings.heroTitle === "string") {
+        setHeroTitle(settings.heroTitle);
+      }
+
+      if (typeof settings.heroSubtitle === "string") {
+        setHeroSubtitle(settings.heroSubtitle);
+      }
+
+      if (settings.blockOrder) {
+        try {
+          const order = JSON.parse(settings.blockOrder);
+          if (Array.isArray(order) && order.length > 0) {
+            setBlockOrder(order);
+          }
+        } catch (e) {
+          console.error("Error parsing block order:", e);
+        }
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching homepage settings:", error);
+      // Continue with defaults
+      setLoading(false);
+    }
+  };
+
+  const renderBlock = (blockId) => {
+    switch (blockId) {
+      case "centeredBanner":
+        return <CenteredBanner key="centeredBanner" texts={bannerTexts} />;
+
+      case "heroSection":
+        return (
+          <HeroSlideshow
+            key="heroSection"
+            items={heroSlideshow}
+            title={heroTitle}
+            subtitle={heroSubtitle}
+          />
+        );
+
+      case "blogsSection":
+        return (
+          <div key="blogsSection">
+            {/* Transition spacing */}
+            <div className="h-8 sm:h-12" />
+            {/* Blog Section - Dark Background */}
+            <div className="bg-[#1e1e1e] text-gray-100 rounded-none px-0 py-0 mt-0 mx-0 shadow-none transition-all duration-500">
+              <BlogsSection />
+            </div>
           </div>
+        );
 
-          {/* Event Section */}
-          <div className="mt-6 sm:mt-8">
+      case "eventSection":
+        return (
+          <div key="eventSection" className="mt-6 sm:mt-8">
             <CompactFilterBar />
             <div className="h-6" />
             <EventSection />
           </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <FilterProvider>
+        <div className="bg-black text-white min-h-screen flex items-center justify-center">
+          <div className="text-gray-400">Loading...</div>
+        </div>
+      </FilterProvider>
+    );
+  }
+
+  return (
+    <FilterProvider>
+      <div className="bg-black text-white min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-0">
+          {blockOrder.map((blockId) => renderBlock(blockId))}
         </div>
       </div>
     </FilterProvider>

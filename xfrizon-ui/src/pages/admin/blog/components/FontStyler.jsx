@@ -192,7 +192,9 @@ export default function FontStyler({ blockId, style = {}, onStyleChange }) {
 
         {/* Preview */}
         <div className="border-t border-zinc-800 pt-2">
-          <p className="text-[10px] font-semibold text-gray-400 mb-1.5">Text Preview:</p>
+          <p className="text-[10px] font-semibold text-gray-400 mb-1.5">
+            Text Preview:
+          </p>
           <div
             className="bg-[#1e1e1e] p-2 rounded border border-zinc-800 text-center"
             style={{

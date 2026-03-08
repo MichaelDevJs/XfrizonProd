@@ -249,6 +249,10 @@ public class OrganizerController {
                     file.getOriginalFilename(),
                     file.getSize()
             ));
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error uploading media for organizer {}: {}", organizerId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(false, e.getMessage()));
         } catch (Exception e) {
             log.error("Error uploading media", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

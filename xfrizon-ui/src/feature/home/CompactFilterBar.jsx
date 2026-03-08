@@ -38,23 +38,68 @@ export default function CompactFilterBar() {
     clearFilters,
   } = useContext(FilterContext);
 
-  const countriesList = [
-    { name: "All", code: "ALL", flag: "🌍" },
-    { name: "Germany", code: "DE", flag: "🇩🇪" },
-    { name: "Japan", code: "JP", flag: "🇯🇵" },
-    { name: "Nigeria", code: "NG", flag: "🇳🇬" },
-    { name: "United States", code: "US", flag: "🇺🇸" },
-    { name: "United Kingdom", code: "GB", flag: "🇬🇧" },
-    { name: "France", code: "FR", flag: "🇫🇷" },
-    { name: "Others", code: "OTHER", flag: "🌍" },
-  ];
+  const [lockedCountry, setLockedCountry] = useState(null);
 
-  // Set default country to All if not set
+  const parseLocaleCountryCode = () => {
+    const locale =
+      navigator?.languages?.[0] ||
+      navigator?.language ||
+      Intl.DateTimeFormat().resolvedOptions().locale;
+    if (!locale || !locale.includes("-")) return null;
+    const region = locale.split("-").pop()?.toUpperCase();
+    return region && region.length === 2 ? region : null;
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const setCountryByCode = (code) => {
+      if (!code) return false;
+      const match = COUNTRIES_LIST.find((country) => country.code === code);
+      if (!match) return false;
+      if (!mounted) return true;
+      setLockedCountry(match);
+      setSelectedCountry(match);
+      return true;
+    };
+
+    const detectCountry = async () => {
+      try {
+        const response = await fetch("https://ipapi.co/json/");
+        if (!response.ok) throw new Error("Location lookup failed");
+        const data = await response.json();
+        if (setCountryByCode((data?.country_code || "").toUpperCase())) {
+          return;
+        }
+      } catch {
+        // Fallback to browser locale below
+      }
+
+      const localeCode = parseLocaleCountryCode();
+      setCountryByCode(localeCode);
+    };
+
+    detectCountry();
+
+    return () => {
+      mounted = false;
+    };
+  }, [setSelectedCountry]);
+
+  // Set default country once if not already set
   useEffect(() => {
     if (!selectedCountry || !selectedCountry.code) {
-      setSelectedCountry({ name: "All", code: "ALL", flag: "🌍" });
+      if (lockedCountry) {
+        setSelectedCountry(lockedCountry);
+      }
     }
-  }, [selectedCountry, setSelectedCountry]);
+  }, []);
+
+  const countriesList = [
+    { name: "Show All", code: "ALL", flag: "🌍" },
+    ...COUNTRIES_LIST,
+  ];
+
   const citiesByCountry = CITIES_BY_COUNTRY_CODE;
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef(null);
@@ -147,13 +192,13 @@ export default function CompactFilterBar() {
 
             <select
               className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
-              value={selectedCountry?.code || "ALL"}
+              value={selectedCountry?.code || ""}
               onChange={(e) => {
                 const next = countriesList.find(
                   (country) => country.code === e.target.value,
                 );
                 setSelectedCountry(
-                  next || { name: "All", code: "ALL", flag: "🌍" },
+                  next || { name: "Show All", code: "ALL", flag: "🌍" },
                 );
                 setSelectedState(null);
               }}
@@ -161,7 +206,7 @@ export default function CompactFilterBar() {
             >
               {countriesList.map((country) => (
                 <option key={country.code} value={country.code}>
-                  {country.name}
+                  {`${country.flag} ${country.name}`}
                 </option>
               ))}
             </select>
