@@ -763,19 +763,19 @@ export default function AdminBlogHeroBlocksPage() {
                     : "border-zinc-700"
                 } ${draggedSlideId === slide.id ? "opacity-50" : ""}`}
               >
-                <div className="flex gap-4">
-                  <div className="w-32 h-20 shrink-0 bg-zinc-900 rounded overflow-hidden">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                  <div className="w-24 h-16 md:w-32 md:h-20 shrink-0 bg-zinc-900 rounded overflow-hidden border border-zinc-700">
                     {slide.type === "video" || isVideoUrl(slide.url) ? (
                       <video
                         src={resolveMediaUrl(slide.url)}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         muted
                       />
                     ) : (
                       <img
                         src={resolveMediaUrl(slide.url)}
                         alt={slide.title || "Slide"}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         onError={(e) => {
                           e.target.src =
                             "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23333' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='18' fill='%23666' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -784,8 +784,8 @@ export default function AdminBlogHeroBlocksPage() {
                     )}
                   </div>
 
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex justify-between items-start gap-2">
                       <div>
                         <div className="text-xs text-gray-400 mb-1">
                           {slide.type.toUpperCase()} • {slide.duration}ms
