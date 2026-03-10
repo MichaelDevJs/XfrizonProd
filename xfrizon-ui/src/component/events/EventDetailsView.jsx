@@ -10,16 +10,20 @@ import {
   FaMusic,
   FaHourglass,
 } from "react-icons/fa";
+import { FiCalendar, FiClock, FiMapPin, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import CountdownTimer from "./CountdownTimer";
 import { COUNTRIES_DATA } from "../../data/countriesData";
+import HeroSlideshow from "../HeroSlideshow/HeroSlideshow";
+import api from "../../api/axios";
 
 export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   const navigate = useNavigate();
   const [selectedTickets, setSelectedTickets] = useState({});
   const [activeTab, setActiveTab] = useState("overview");
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [blogHeadlineSlideshow, setBlogHeadlineSlideshow] = useState([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -28,17 +32,36 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const fetchBlogHeadlineSlides = async () => {
+      try {
+        const response = await api.get("/blog-hero-settings");
+        const settings = response?.data || {};
+        if (!settings.blogHeroSlideshow) {
+          setBlogHeadlineSlideshow([]);
+          return;
+        }
+
+        const parsed = JSON.parse(settings.blogHeroSlideshow);
+        setBlogHeadlineSlideshow(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setBlogHeadlineSlideshow([]);
+      }
+    };
+
+    fetchBlogHeadlineSlides();
+  }, []);
+
   const SERVICE_FEE_RATE = 0.1; // 10%
   const roundCurrency = (amount) =>
     Math.round((Number(amount) + 1e-9) * 100) / 100;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const yy = String(date.getFullYear()).slice(-2);
+    return `${mm}-${dd}-${yy}`;
   };
 
   const formatTime = (dateString) => {
@@ -216,7 +239,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
     <>
       <div className="min-h-screen bg-black text-white">
         {/* Hero Flyer Section - Full Width */}
-        <section className="relative w-full h-125 bg-black overflow-hidden">
+        <section className="relative w-full h-125 bg-black overflow-hidden -mt-20">
           <img
             src={
               resolveFlyerUrl(
@@ -231,13 +254,10 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
             }
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/45 to-black/10"></div>
           <div className="absolute inset-0">
-            <div className="max-w-5xl mx-auto px-6 h-full flex items-end pb-8">
-              <div className="max-w-3xl">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-gray-200 mb-2 block">
-                  {event.genre || event.category || "Event"}
-                </span>
+            <div className="max-w-5xl mx-auto px-6 h-full flex items-end justify-center pb-8">
+              <div className="max-w-3xl text-center">
                 <h1
                   className="text-3xl md:text-5xl font-extrabold text-white leading-tight"
                   style={{
@@ -248,18 +268,23 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                 >
                   {event.title}
                 </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px]">
-                  {event.ageLimit && (
-                    <span className="inline-block bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded text-gray-200 border border-gray-700 uppercase tracking-[0.15em]">
-                      {event.ageLimit}+
+                <div className="mt-4 space-y-2 text-[11px] font-light tracking-[0.02em] text-gray-200/90">
+                  <div className="flex items-center justify-center gap-2">
+                    <FiCalendar size={13} className="text-gray-300 shrink-0" />
+                    <span>
+                      Start {formatDate(event.eventDateTime)}{" "}
+                      {formatTime(event.eventDateTime)}
+                      {event.eventEndDate
+                        ? ` - End ${formatDate(event.eventEndDate)} ${formatTime(event.eventEndDate)}`
+                        : ""}
                     </span>
-                  )}
-                  <span className="text-gray-200 uppercase tracking-[0.15em]">
-                    {event.venueName}
-                  </span>
-                  <span className="text-gray-200 uppercase tracking-[0.15em]">
-                    {event.city}, {event.country}
-                  </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <FiMapPin size={13} className="text-gray-300 shrink-0" />
+                    <span>
+                      {event.venueName}, {event.city}, {event.country}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -269,15 +294,15 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
         {/* Main Content - Clean Layout */}
         <div className="max-w-3xl mx-auto px-4 pb-12">
           {/* Navigation Tabs */}
-          <div className="flex gap-6 mb-8 pt-8 border-b border-gray-800/50">
+          <div className="flex justify-center gap-5 mb-6 pt-6">
             <button
-              className={`pb-3 font-medium text-sm transition-colors duration-200 ${activeTab === "overview" ? "text-red-400 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
+              className={`pb-2.5 font-medium text-xs transition-colors duration-200 ${activeTab === "overview" ? "text-gray-200 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
               onClick={() => setActiveTab("overview")}
             >
               Overview
             </button>
             <button
-              className={`pb-3 font-medium text-sm transition-colors duration-200 ${activeTab === "info" ? "text-red-400 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
+              className={`pb-2.5 font-medium text-xs transition-colors duration-200 ${activeTab === "info" ? "text-gray-200 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
               onClick={() => setActiveTab("info")}
             >
               Info
@@ -286,55 +311,23 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
 
           {activeTab === "overview" && (
             <>
-              <div className="space-y-3 mb-8 text-sm text-gray-400 pb-8 border-b border-gray-800/50">
-                <div className="flex items-center gap-3">
-                  <FaCalendarAlt size={16} className="text-gray-500 shrink-0" />
-                  <span>
-                    {formatDate(event.eventDateTime)} at{" "}
-                    {formatTime(event.eventDateTime)}
-                  </span>
+              {/* About Event */}
+              {event.description && (
+                <div className="w-full max-w-lg mx-auto mb-6 space-y-3">
+                  <h2 className="text-sm font-medium tracking-wide uppercase text-gray-200">
+                    About Event
+                  </h2>
+                  <p className="text-[12px] text-gray-400 font-light leading-relaxed max-h-[7.5em] overflow-y-auto hide-scrollbar pr-1">
+                    {event.description}
+                  </p>
                 </div>
-                {event.eventEndDate && (
-                  <div className="flex items-center gap-3">
-                    <FaClock size={16} className="text-gray-500 shrink-0" />
-                    <span>
-                      Ends {formatDate(event.eventEndDate)}{" "}
-                      {formatTime(event.eventEndDate)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-center gap-3">
-                  <FaMapMarkerAlt
-                    size={16}
-                    className="text-gray-500 shrink-0"
-                  />
-                  <span>
-                    {event.venueName}, {event.city}, {event.country}
-                  </span>
-                </div>
-                {event.capacity && (
-                  <div className="flex items-center gap-3">
-                    <FaUsers size={16} className="text-gray-500 shrink-0" />
-                    <span>Capacity: {event.capacity}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="mb-8">
-                <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-                  {event.description}
-                </p>
-              </div>
+              )}
 
               {/* Tickets Section - Clean and Minimal */}
-              <div className="space-y-4 bg-[#1e1e1e] rounded-lg p-4 text-sm">
-                <h2 className="text-sm font-medium tracking-wide uppercase text-gray-200">
-                  Get Tickets
-                </h2>
+              <div className="w-full max-w-lg mx-auto space-y-2 bg-black/20 border-r border-b border-emerald-500/70 shadow-sm shadow-black/20 p-2.5 text-xs">
                 {(event.ticketTiers && event.ticketTiers.length > 0) ||
                 (event.tickets && event.tickets.length > 0) ? (
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-2 mb-5">
                     {(event.ticketTiers && event.ticketTiers.length > 0
                       ? event.ticketTiers
                       : event.tickets
@@ -355,15 +348,15 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                       return (
                         <div
                           key={tierId}
-                          className={`border-b border-gray-800 rounded-lg p-4 transition-all duration-200 ${
+                          className={`p-3 transition-all duration-200 ${
                             !availability.available
                               ? "opacity-50 bg-gray-900/50"
                               : ""
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-2">
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-white mb-1 tracking-wide">
+                              <div className="text-xs font-medium text-white mb-0.5 tracking-wide">
                                 {tierName}
                               </div>
                               {availability.available ? (
@@ -388,7 +381,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                 </p>
                               )}
                             </div>
-                            <span className="text-base font-medium text-gray-300 font-mono">
+                            <span className="text-sm font-medium text-gray-300 font-mono">
                               {currencySymbol}
                               {tier.price?.toLocaleString
                                 ? tier.price.toLocaleString()
@@ -415,11 +408,11 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                               disabled={
                                 selectedQty === 0 || !availability.available
                               }
-                              className="bg-gray-900 w-7 h-7 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm"
+                              className="bg-gray-900 w-6 h-6 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-xs"
                             >
                               −
                             </button>
-                            <span className="w-6 text-center font-medium text-white font-mono">
+                            <span className="w-5 text-center font-medium text-white font-mono text-xs">
                               {selectedQty}
                             </span>
                             <button
@@ -433,12 +426,12 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                 selectedQty >= availableQty ||
                                 !availability.available
                               }
-                              className="bg-gray-900 w-7 h-7 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm"
+                              className="bg-gray-900 w-6 h-6 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-xs"
                             >
                               +
                             </button>
                             {selectedQty > 0 && (
-                              <span className="ml-auto text-sm font-medium text-gray-300 font-mono">
+                              <span className="ml-auto text-xs font-medium text-gray-300 font-mono">
                                 {currencySymbol}
                                 {getTotalPrice({
                                   ...tier,
@@ -458,10 +451,10 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                 )}
 
                 {/* Buy Button */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-800/50">
-                  <div className="text-sm">
+                <div className="flex items-center justify-between pt-3">
+                  <div className="text-xs">
                     <span className="text-gray-400">Total: </span>
-                    <span className="text-base font-medium text-gray-200">
+                    <span className="text-sm font-medium text-gray-200">
                       <span className="font-mono">
                         {getTotalSelectedTickets()}
                       </span>{" "}
@@ -500,7 +493,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                       }
                     }}
                     disabled={getTotalSelectedTickets() === 0}
-                    className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 text-sm"
+                    className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-5 rounded transition-all duration-200 text-xs"
                   >
                     {getTotalSelectedTickets() > 0
                       ? `Buy ${getTotalSelectedTickets()} Ticket${getTotalSelectedTickets() !== 1 ? "s" : ""}`
@@ -508,6 +501,59 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                   </button>
                 </div>
               </div>
+
+              <div className="w-full max-w-lg mx-auto mt-6">
+                <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
+                  Blog Headline
+                </h3>
+
+                <div className="overflow-hidden">
+                  <HeroSlideshow items={blogHeadlineSlideshow} />
+                </div>
+              </div>
+
+              {organizer && (
+                <div className="w-full max-w-lg mx-auto mt-6">
+                  <h4 className="text-[11px] font-medium tracking-wide uppercase text-gray-300 mb-2 text-left">
+                    About Org
+                  </h4>
+                  <div
+                    className="rounded-lg p-3 transition-colors duration-200 cursor-pointer"
+                    onClick={() => organizer?.id && navigate(`/organizer/${organizer.id}`)}
+                  >
+                    <div className="flex flex-col items-start gap-2">
+                      {organizer.profilePicture ? (
+                        <img
+                          src={resolveFlyerUrl(organizer.profilePicture)}
+                          alt={organizer.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                          onError={(e) => (e.target.style.display = "none")}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-200">
+                          <FaUser className="text-sm" />
+                        </div>
+                      )}
+
+                      <div className="w-full min-w-0">
+                        <p className="text-sm font-medium text-white">
+                          {organizer.name || "Organizer"}
+                        </p>
+                        {organizer.email && (
+                          <p className="text-[11px] text-gray-400">
+                            {organizer.email}
+                          </p>
+                        )}
+                        {organizer.phone && (
+                          <p className="text-[11px] text-gray-400 truncate">
+                            {organizer.phone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

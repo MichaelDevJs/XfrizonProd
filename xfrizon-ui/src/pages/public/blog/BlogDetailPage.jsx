@@ -9,9 +9,18 @@ export default function BlogDetailPage() {
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentInput, setCommentInput] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   useEffect(() => {
     fetchBlogDetail();
+  }, [id]);
+
+  useEffect(() => {
+    fetchComments();
   }, [id]);
 
   // Load embed scripts and process embeds after blog data is loaded
@@ -134,6 +143,67 @@ export default function BlogDetailPage() {
       setError("Failed to load blog article");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      setCommentsLoading(true);
+      const response = await blogApi.getBlogComments(id);
+      const payload = response?.data ?? response;
+      setComments(Array.isArray(payload) ? payload : []);
+    } catch (err) {
+      console.error("Failed to load comments:", err);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const formatCommentDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const isLoggedIn = Boolean(localStorage.getItem("userToken"));
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+    const content = commentInput.trim();
+    if (!content) return;
+
+    try {
+      setCommentSubmitting(true);
+      setCommentError("");
+      const response = await blogApi.createBlogComment(id, { content });
+      const created = response?.data ?? response;
+      if (created && created.id) {
+        setComments((prev) => [created, ...prev]);
+      } else {
+        await fetchComments();
+      }
+      setCommentInput("");
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+      setCommentError(
+        err?.message || err?.error || "Failed to post comment. Please try again.",
+      );
+    } finally {
+      setCommentSubmitting(false);
     }
   };
 
@@ -658,6 +728,70 @@ export default function BlogDetailPage() {
 
         {/* Article Content */}
         <div className="prose prose-lg max-w-none">{renderBlockContent()}</div>
+
+        {/* Comment Section */}
+        <section className="mt-12 pt-8 border-t border-gray-700">
+          <h3 className="text-xl font-semibold text-gray-100 mb-4">Comments</h3>
+
+          {isLoggedIn ? (
+            <form onSubmit={handleSubmitComment} className="mb-6">
+              <textarea
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                placeholder="Write a comment..."
+                rows={3}
+                maxLength={1000}
+                className="w-full rounded-md bg-[#252525] border border-gray-600 text-gray-100 px-3 py-2 text-sm focus:outline-none focus:border-red-500"
+              />
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  Commenting as {currentUser?.name || currentUser?.firstName || "User"}
+                </p>
+                <button
+                  type="submit"
+                  disabled={commentSubmitting || !commentInput.trim()}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs uppercase tracking-wider rounded"
+                >
+                  {commentSubmitting ? "Posting..." : "Post Comment"}
+                </button>
+              </div>
+              {commentError && (
+                <p className="mt-2 text-xs text-red-400">{commentError}</p>
+              )}
+            </form>
+          ) : (
+            <div className="mb-6 p-3 rounded-md bg-[#252525] border border-gray-700 text-sm text-gray-300">
+              Please log in to comment.
+            </div>
+          )}
+
+          {commentsLoading ? (
+            <p className="text-sm text-gray-400">Loading comments...</p>
+          ) : comments.length === 0 ? (
+            <p className="text-sm text-gray-400">No comments yet. Be the first to comment.</p>
+          ) : (
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="rounded-md bg-[#252525] border border-gray-700 px-4 py-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-gray-100">
+                      {comment.authorName || "User"}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {formatCommentDate(comment.createdAt)}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-300 whitespace-pre-wrap">
+                    {comment.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Related Articles CTA */}
         <div className="mt-12 pt-8">

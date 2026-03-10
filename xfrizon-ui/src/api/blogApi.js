@@ -70,6 +70,26 @@ const blogApi = {
       throw error.response?.data || { message: error.message };
     }
   },
+
+  // Get comments for a blog post
+  getBlogComments: async (id) => {
+    try {
+      const response = await api.get(`/blogs/${id}/comments`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: error.message };
+    }
+  },
+
+  // Create a new comment for a blog post
+  createBlogComment: async (id, payload) => {
+    try {
+      const response = await api.post(`/blogs/${id}/comments`, payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: error.message };
+    }
+  },
 };
 
 export default blogApi;

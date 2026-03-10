@@ -1,10 +1,17 @@
 package com.xfrizon.controller;
 
 import com.xfrizon.dto.ApiResponse;
+import com.xfrizon.dto.BlogCommentResponse;
 import com.xfrizon.dto.BlogResponse;
+import com.xfrizon.dto.CreateBlogCommentRequest;
 import com.xfrizon.dto.CreateBlogRequest;
 import com.xfrizon.dto.UpdateBlogRequest;
+import com.xfrizon.entity.Blog;
+import com.xfrizon.entity.BlogComment;
 import com.xfrizon.entity.User;
+import com.xfrizon.repository.BlogCommentRepository;
+import com.xfrizon.repository.BlogRepository;
+import com.xfrizon.repository.UserRepository;
 import com.xfrizon.service.BlogService;
 import com.xfrizon.util.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +26,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin(
     origins = {"http://localhost:5173", "http://127.0.0.1:5173"},
@@ -41,6 +50,9 @@ public class BlogController {
 
     private final BlogService blogService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final BlogRepository blogRepository;
+    private final UserRepository userRepository;
+    private final BlogCommentRepository blogCommentRepository;
 
     /**
      * GET /api/v1/blogs - Get all blogs with filtering
@@ -253,5 +265,88 @@ public class BlogController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to fetch user blogs: " + e.getMessage(), 500));
         }
+    }
+
+    /**
+     * GET /api/v1/blogs/:id/comments - Get comments for a blog article
+     */
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<ApiResponse<List<BlogCommentResponse>>> getBlogComments(@PathVariable Long id) {
+        try {
+            if (!blogRepository.existsAndNotDeleted(id)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Blog not found", 404));
+            }
+
+            List<BlogCommentResponse> comments = blogCommentRepository.findByBlogIdOrderByCreatedAtDesc(id)
+                    .stream()
+                    .map(BlogCommentResponse::from)
+                    .toList();
+
+            return ResponseEntity.ok(ApiResponse.success(comments, "Comments retrieved successfully"));
+        } catch (Exception e) {
+            log.error("Error fetching comments for blog {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch comments", 500));
+        }
+    }
+
+    /**
+     * POST /api/v1/blogs/:id/comments - Add a comment (requires valid JWT)
+     */
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<ApiResponse<BlogCommentResponse>> createBlogComment(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateBlogCommentRequest request,
+            HttpServletRequest httpRequest) {
+        try {
+            String token = getTokenFromRequest(httpRequest);
+            if (token == null || !jwtTokenProvider.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("Authentication required", 401));
+            }
+
+            Long userId = jwtTokenProvider.getUserIdFromToken(token);
+            User user = userRepository.findByIdAndIsActiveTrue(userId)
+                    .orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("Invalid user", 401));
+            }
+
+            Blog blog = blogRepository.findById(id)
+                    .orElse(null);
+            if (blog == null || blog.getDeletedAt() != null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Blog not found", 404));
+            }
+
+            String content = request.getContent() != null ? request.getContent().trim() : "";
+            if (content.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Comment content is required", 400));
+            }
+
+            BlogComment saved = blogCommentRepository.save(BlogComment.builder()
+                    .blog(blog)
+                    .user(user)
+                    .content(content)
+                    .build());
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(BlogCommentResponse.from(saved), "Comment added successfully"));
+        } catch (Exception e) {
+            log.error("Error creating comment for blog {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to create comment", 500));
+        }
+    }
+
+    private String getTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }

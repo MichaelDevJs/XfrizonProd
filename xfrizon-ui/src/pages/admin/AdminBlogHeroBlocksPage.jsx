@@ -429,7 +429,9 @@ export default function AdminBlogHeroBlocksPage() {
       toast.success("Slide added and saved.");
     } catch (error) {
       console.error("Error auto-saving blog hero slideshow:", error);
-      toast.error("Slide added locally. Click Save Settings to persist changes.");
+      toast.error(
+        "Slide added locally. Click Save Settings to persist changes.",
+      );
     }
 
     setNewSlideUrl("");
@@ -542,7 +544,9 @@ export default function AdminBlogHeroBlocksPage() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Blog Hero Slideshow</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-white">
+            Blog Hero Slideshow
+          </h1>
           <p className="text-xs md:text-sm text-gray-400 mt-1">
             Manage the slideshow that appears at the top of the blogs page
           </p>
@@ -569,7 +573,9 @@ export default function AdminBlogHeroBlocksPage() {
         <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <div>
-              <h2 className="text-lg md:text-xl font-semibold text-white">Live Preview</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white">
+                Live Preview
+              </h2>
               <p className="text-xs md:text-sm text-gray-400 mt-1">
                 This is how your carousel will appear on the blogs page
               </p>

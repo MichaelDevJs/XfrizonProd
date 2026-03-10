@@ -792,7 +792,9 @@ export default function AdminHomeBlocksPage() {
       toast.success("Slide added and saved.");
     } catch (error) {
       console.error("Error auto-saving hero slideshow:", error);
-      toast.error("Slide added locally. Click Save Settings to persist changes.");
+      toast.error(
+        "Slide added locally. Click Save Settings to persist changes.",
+      );
     }
 
     // Reset form
@@ -935,7 +937,9 @@ export default function AdminHomeBlocksPage() {
         <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <div>
-              <h2 className="text-lg md:text-xl font-semibold text-white">Live Preview</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white">
+                Live Preview
+              </h2>
               <p className="text-xs md:text-sm text-gray-400 mt-1">
                 This is how your carousel will appear on the homepage
               </p>
@@ -1442,9 +1446,7 @@ export default function AdminHomeBlocksPage() {
                     <span className="px-2 py-0.5 bg-zinc-900 text-gray-400 rounded">
                       {slide.type}
                     </span>
-                    <span className="text-gray-500">
-                      Slide {index + 1}
-                    </span>
+                    <span className="text-gray-500">Slide {index + 1}</span>
                   </div>
                   <p className="text-xs text-white truncate mb-2">
                     {slide.url}

@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
-import { FaPlus, FaArrowRight, FaCheck, FaTrash, FaEdit, FaCopy } from "react-icons/fa";
+import {
+  FaPlus,
+  FaArrowRight,
+  FaCheck,
+  FaTrash,
+  FaEdit,
+  FaCopy,
+} from "react-icons/fa";
 
 const MyEvents = () => {
   const [events, setEvents] = useState([]);
