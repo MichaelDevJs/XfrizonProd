@@ -149,6 +149,76 @@ public class EventService {
     }
 
     /**
+     * Duplicate an event for the same organizer as a new DRAFT event.
+     */
+    public EventResponse duplicateEvent(Long eventId, Long organizerId) {
+        log.info("Duplicating event: {} for organizer: {}", eventId, organizerId);
+
+        Event sourceEvent = getEventByIdAndOrganizer(eventId, organizerId);
+
+        Event duplicatedEvent = Event.builder()
+            .title(sourceEvent.getTitle() != null ? sourceEvent.getTitle() + " (Copy)" : "Untitled Event (Copy)")
+            .description(sourceEvent.getDescription() != null ? sourceEvent.getDescription() : "")
+            .organizer(sourceEvent.getOrganizer())
+            .eventDateTime(sourceEvent.getEventDateTime())
+            .eventEndDate(sourceEvent.getEventEndDate())
+            .venueName(sourceEvent.getVenueName())
+            .venueAddress(sourceEvent.getVenueAddress() != null ? sourceEvent.getVenueAddress() : "")
+            .venueMapLink(sourceEvent.getVenueMapLink())
+            .country(sourceEvent.getCountry() != null && !sourceEvent.getCountry().isEmpty() ? sourceEvent.getCountry() : "Unspecified")
+            .city(sourceEvent.getCity() != null ? sourceEvent.getCity() : "")
+            .currency(sourceEvent.getCurrency())
+            .ageLimit(sourceEvent.getAgeLimit() != null ? sourceEvent.getAgeLimit() : 0)
+            .capacity(sourceEvent.getCapacity() != null ? sourceEvent.getCapacity() : 0)
+            .genres(sourceEvent.getGenres() != null ? new ArrayList<>(sourceEvent.getGenres()) : new ArrayList<>())
+            .flyerUrl(sourceEvent.getFlyerUrl())
+            .status(Event.EventStatus.DRAFT)
+            .totalCapacity(BigDecimal.ZERO)
+            .totalRevenue(BigDecimal.ZERO)
+            .totalTicketsSold(0)
+            .build();
+
+        duplicatedEvent = eventRepository.save(duplicatedEvent);
+
+        if (sourceEvent.getTicketTiers() != null && !sourceEvent.getTicketTiers().isEmpty()) {
+            List<TicketTier> duplicatedTiers = new ArrayList<>();
+            BigDecimal totalCapacity = BigDecimal.ZERO;
+
+            for (int i = 0; i < sourceEvent.getTicketTiers().size(); i++) {
+                TicketTier sourceTier = sourceEvent.getTicketTiers().get(i);
+
+                TicketTier duplicatedTier = TicketTier.builder()
+                    .event(duplicatedEvent)
+                    .ticketType(sourceTier.getTicketType())
+                    .currency(sourceTier.getCurrency())
+                    .price(sourceTier.getPrice())
+                    .quantity(sourceTier.getQuantity())
+                    .quantitySold(0)
+                    .maxPerPerson(sourceTier.getMaxPerPerson() != null ? sourceTier.getMaxPerPerson() : 1)
+                    .saleEndsAt(sourceTier.getSaleEndsAt())
+                    .status(TicketTier.TicketStatus.ACTIVE)
+                    .description(sourceTier.getDescription())
+                    .displayOrder(sourceTier.getDisplayOrder() != null ? sourceTier.getDisplayOrder() : i)
+                    .build();
+
+                duplicatedTiers.add(duplicatedTier);
+
+                if (sourceTier.getQuantity() != null) {
+                    totalCapacity = totalCapacity.add(BigDecimal.valueOf(sourceTier.getQuantity()));
+                }
+            }
+
+            ticketTierRepository.saveAll(duplicatedTiers);
+            duplicatedEvent.setTicketTiers(duplicatedTiers);
+            duplicatedEvent.setTotalCapacity(totalCapacity);
+            duplicatedEvent = eventRepository.save(duplicatedEvent);
+        }
+
+        log.info("Event duplicated successfully: sourceEventId={}, newEventId={}", eventId, duplicatedEvent.getId());
+        return mapEventToResponse(duplicatedEvent);
+    }
+
+    /**
      * Get event by ID and organizer (for authorization)
      */
     public EventResponse getEvent(Long eventId, Long organizerId) {

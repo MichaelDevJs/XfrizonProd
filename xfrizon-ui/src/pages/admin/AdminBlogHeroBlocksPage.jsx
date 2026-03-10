@@ -395,13 +395,47 @@ export default function AdminBlogHeroBlocksPage() {
       sourceType: "manual",
     };
 
-    setBlogHeroSlideshow([...blogHeroSlideshow, newSlide]);
+    const updatedSlides = [...blogHeroSlideshow, newSlide];
+    setBlogHeroSlideshow(updatedSlides);
+
+    // Persist new slideshow immediately so refresh does not drop unsaved media
+    try {
+      const processedSlides = updatedSlides.map((slide, index) => {
+        const normalized = normalizeSlide(slide, index);
+        return {
+          id: normalized.id,
+          type: normalized.type,
+          url: normalized.url,
+          duration: normalized.duration,
+          order: normalized.order,
+          title: normalized.title,
+          caption: normalized.caption,
+          ctaLabel: normalized.ctaLabel,
+          ctaLink: normalized.ctaLink,
+          sourceType: normalized.sourceType,
+          blogId: normalized.blogId,
+          textColor: normalized.textColor,
+          textSize: normalized.textSize,
+          textPosition: normalized.textPosition,
+          overlayOpacity: normalized.overlayOpacity,
+          ctaBgColor: normalized.ctaBgColor,
+          ctaTextColor: normalized.ctaTextColor,
+        };
+      });
+
+      await api.post("/blog-hero-settings/bulk", {
+        blogHeroSlideshow: JSON.stringify(processedSlides),
+      });
+      toast.success("Slide added and saved.");
+    } catch (error) {
+      console.error("Error auto-saving blog hero slideshow:", error);
+      toast.error("Slide added locally. Click Save Settings to persist changes.");
+    }
 
     setNewSlideUrl("");
     setNewSlideFile(null);
     setNewSlideFilePreview(null);
     setNewSlideDuration(5000);
-    toast.success("Slide added successfully!");
   };
 
   const handleRemoveSlide = (id) => {

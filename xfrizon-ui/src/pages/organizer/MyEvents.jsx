@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
-import { FaPlus, FaArrowRight, FaCheck, FaTrash, FaEdit } from "react-icons/fa";
+import { FaPlus, FaArrowRight, FaCheck, FaTrash, FaEdit, FaCopy } from "react-icons/fa";
 
 const MyEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState({});
+  const [duplicating, setDuplicating] = useState({});
 
   // Helper function to construct image URLs
   const getImageUrl = (path) => {
@@ -124,6 +125,32 @@ const MyEvents = () => {
     }
   };
 
+  const handleDuplicate = async (eventId) => {
+    if (!eventId) {
+      toast.error("Event ID is missing");
+      return;
+    }
+
+    setDuplicating((prev) => ({ ...prev, [eventId]: true }));
+    try {
+      const response = await api.post(`/events/${eventId}/duplicate`);
+      const duplicatedEvent = response?.data;
+
+      if (duplicatedEvent?.id) {
+        setEvents((prev) => [duplicatedEvent, ...prev]);
+      } else {
+        await fetchEvents();
+      }
+
+      toast.success("Event duplicated successfully");
+    } catch (error) {
+      console.error("Duplicate error:", error);
+      toast.error(error.response?.data?.message || "Failed to duplicate event");
+    } finally {
+      setDuplicating((prev) => ({ ...prev, [eventId]: false }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -227,6 +254,14 @@ const MyEvents = () => {
                   {event.description}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-1.5">
+                  <button
+                    onClick={() => handleDuplicate(event.id)}
+                    disabled={duplicating[event.id]}
+                    className="w-full sm:flex-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-purple-300 hover:text-purple-200 disabled:opacity-50 rounded font-light text-xs transition-all duration-300 flex items-center justify-center gap-1.5"
+                  >
+                    <FaCopy className="w-3 h-3" />
+                    {duplicating[event.id] ? "Duplicating..." : "Duplicate"}
+                  </button>
                   {event.status === "DRAFT" ? (
                     <>
                       <Link

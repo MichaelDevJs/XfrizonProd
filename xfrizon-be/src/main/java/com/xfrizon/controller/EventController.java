@@ -139,6 +139,22 @@ public class EventController {
     }
 
     /**
+     * Duplicate event (creates a new DRAFT copy)
+     */
+    @PostMapping("/{eventId}/duplicate")
+    public @Nullable ResponseEntity<EventResponse> duplicateEvent(
+        @PathVariable Long eventId,
+        HttpServletRequest httpRequest
+    ) {
+        log.info("Duplicating event: {}", eventId);
+
+        Long organizerId = extractUserIdFromToken(httpRequest);
+        EventResponse response = eventService.duplicateEvent(eventId, organizerId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
      * Upload event flyer
      */
     @PostMapping("/{eventId}/flyer")

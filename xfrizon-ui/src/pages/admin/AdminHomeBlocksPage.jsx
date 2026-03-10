@@ -763,14 +763,43 @@ export default function AdminHomeBlocksPage() {
       sourceType: "manual",
     };
 
-    setHeroSlideshow([...heroSlideshow, newSlide]);
+    const updatedSlides = [...heroSlideshow, newSlide];
+    setHeroSlideshow(updatedSlides);
+
+    // Persist new slideshow immediately so refresh does not drop unsaved media
+    try {
+      const processedSlides = updatedSlides.map((slide, index) => {
+        const normalized = normalizeSlide(slide, index);
+        return {
+          id: normalized.id,
+          type: normalized.type,
+          url: normalized.url,
+          duration: normalized.duration,
+          order: normalized.order,
+          title: normalized.title,
+          caption: normalized.caption,
+          ctaLabel: normalized.ctaLabel,
+          ctaLink: normalized.ctaLink,
+          sourceType: normalized.sourceType,
+          organizerId: normalized.organizerId,
+          blogId: normalized.blogId,
+        };
+      });
+
+      await api.post("/homepage-settings/bulk", {
+        heroSlideshow: JSON.stringify(processedSlides),
+      });
+      toast.success("Slide added and saved.");
+    } catch (error) {
+      console.error("Error auto-saving hero slideshow:", error);
+      toast.error("Slide added locally. Click Save Settings to persist changes.");
+    }
 
     // Reset form
     setNewSlideUrl("");
     setNewSlideFile(null);
     setNewSlideFilePreview(null);
     setNewSlideDuration(5000);
-    toast.success("Slide added successfully!");
   };
 
   const handleRemoveSlide = (id) => {
