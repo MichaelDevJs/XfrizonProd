@@ -509,9 +509,6 @@ const renderTicketPdfPage = async (doc, ticket) => {
     detailsY + 16,
   );
 
-  const locLines = doc.splitTextToSize(location || "—", detailsW);
-  doc.text(locLines, detailsX, detailsY + 23);
-
   doc.setFontSize(7);
   doc.setTextColor(...muted);
   const detailsGap = 6;

@@ -39,7 +39,9 @@ export default function OrganizerProfileEdit() {
   const persistedMediaCount = Array.isArray(currentOrganizer?.media)
     ? currentOrganizer.media.length
     : 0;
-  const queuedVideoCount = mediaUpload.filter((item) => item.type === "video").length;
+  const queuedVideoCount = mediaUpload.filter(
+    (item) => item.type === "video",
+  ).length;
 
   // Update form data when currentOrganizer changes
   useEffect(() => {
@@ -234,7 +236,10 @@ export default function OrganizerProfileEdit() {
     if (!logoFile) return null;
 
     try {
-      return await postUploadWithFallback(["/uploads/organizer-logo"], logoFile);
+      return await postUploadWithFallback(
+        ["/uploads/organizer-logo"],
+        logoFile,
+      );
     } catch (error) {
       console.error("Logo upload failed:", error);
       throw new Error("Failed to upload logo");
@@ -246,7 +251,10 @@ export default function OrganizerProfileEdit() {
     if (!coverPhotoFile) return null;
 
     try {
-      return await postUploadWithFallback(["/uploads/cover-photo"], coverPhotoFile);
+      return await postUploadWithFallback(
+        ["/uploads/cover-photo"],
+        coverPhotoFile,
+      );
     } catch (error) {
       console.error("Cover photo upload failed:", error);
       throw new Error("Failed to upload cover photo");
@@ -259,7 +267,8 @@ export default function OrganizerProfileEdit() {
 
     for (const media of mediaUpload) {
       const mediaType =
-        media.type || (media.file?.type?.startsWith("video/") ? "video" : "image");
+        media.type ||
+        (media.file?.type?.startsWith("video/") ? "video" : "image");
 
       const endpointsToTry =
         mediaType === "video"
@@ -280,7 +289,9 @@ export default function OrganizerProfileEdit() {
       } catch (error) {
         console.error("Media upload failed:", error);
         if (mediaType === "video") {
-          throw new Error("Failed to upload video. Ensure backend is running and supports organizer media upload.");
+          throw new Error(
+            "Failed to upload video. Ensure backend is running and supports organizer media upload.",
+          );
         }
         throw new Error("Failed to upload media");
       }
@@ -310,11 +321,16 @@ export default function OrganizerProfileEdit() {
     // Validate required fields
     console.log("Form submission - Location value:", formData.location);
     console.log("Location trimmed:", formData.location?.trim());
-    console.log("Is location empty?", !formData.location || formData.location.trim() === "");
-    
+    console.log(
+      "Is location empty?",
+      !formData.location || formData.location.trim() === "",
+    );
+
     if (!formData.location || formData.location.trim() === "") {
       console.error("Validation failed - Location is empty");
-      toast.error("Location is required. Please include your city and country (e.g., Berlin, Germany)");
+      toast.error(
+        "Location is required. Please include your city and country (e.g., Berlin, Germany)",
+      );
       setLoading(false);
       return;
     }
@@ -399,7 +415,12 @@ export default function OrganizerProfileEdit() {
             media:
               response.data.media ||
               (uploadedMedia.length > 0
-                ? [...(Array.isArray(currentOrganizer?.media) ? currentOrganizer.media : []), ...uploadedMedia]
+                ? [
+                    ...(Array.isArray(currentOrganizer?.media)
+                      ? currentOrganizer.media
+                      : []),
+                    ...uploadedMedia,
+                  ]
                 : currentOrganizer.media),
             // Include form data to ensure all fields are updated
             firstName: formData.name,
@@ -624,7 +645,8 @@ export default function OrganizerProfileEdit() {
                   className="w-full px-4 py-2 bg-[#0f0f0f] border border-gray-700/50 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/50 focus:shadow-lg focus:shadow-indigo-600/10 transition-all text-sm"
                 />
                 <p className="mt-1.5 text-xs text-gray-500">
-                  Required for payment processing. Please include your country (e.g., Berlin, Germany).
+                  Required for payment processing. Please include your country
+                  (e.g., Berlin, Germany).
                 </p>
               </div>
 
@@ -668,7 +690,8 @@ export default function OrganizerProfileEdit() {
 
             {import.meta.env.DEV && (
               <p className="text-xs text-amber-400 mb-4">
-                DEV: Saved media = {persistedMediaCount}, queued upload = {mediaUpload.length}, queued videos = {queuedVideoCount}
+                DEV: Saved media = {persistedMediaCount}, queued upload ={" "}
+                {mediaUpload.length}, queued videos = {queuedVideoCount}
               </p>
             )}
 

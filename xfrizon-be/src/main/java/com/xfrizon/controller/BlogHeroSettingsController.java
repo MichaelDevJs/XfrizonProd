@@ -1,7 +1,7 @@
 package com.xfrizon.controller;
 
-import com.xfrizon.entity.HomePageSettings;
-import com.xfrizon.repository.HomePageSettingsRepository;
+import com.xfrizon.entity.BlogHeroSettings;
+import com.xfrizon.repository.BlogHeroSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,15 +12,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/homepage-settings")
+@RequestMapping("/api/v1/blog-hero-settings")
 @CrossOrigin(origins = "*")
-public class HomePageSettingsController {
-    private static final Logger logger = LoggerFactory.getLogger(HomePageSettingsController.class);
+public class BlogHeroSettingsController {
+    private static final Logger logger = LoggerFactory.getLogger(BlogHeroSettingsController.class);
 
     @Autowired
-    private HomePageSettingsRepository settingsRepository;
+    private BlogHeroSettingsRepository settingsRepository;
 
-    // Get all homepage settings
+    // Get all blog hero settings
     @GetMapping
     public ResponseEntity<Map<String, String>> getAllSettings() {
         Map<String, String> settings = new HashMap<>();
@@ -30,9 +30,7 @@ public class HomePageSettingsController {
         
         // Return defaults if no settings exist
         if (settings.isEmpty()) {
-            settings.put("heroSlideshow", "[{\"id\":\"1\",\"type\":\"video\",\"url\":\"/assets/Xfrizon-Hero-Vid.mp4\",\"duration\":10000,\"order\":0}]");
-            settings.put("bannerTexts", "[\"Promoting Afrocentric Events\",\"Discover Events Near You\",\"Celebrate Culture Together\"]");
-            settings.put("blockOrder", "[\"centeredBanner\",\"heroSection\",\"blogsSection\",\"eventSection\"]");
+            settings.put("blogHeroSlideshow", "[]");
         }
         
         return ResponseEntity.ok(settings);
@@ -48,22 +46,22 @@ public class HomePageSettingsController {
 
     // Update or create a setting
     @PostMapping("/{key}")
-    public ResponseEntity<HomePageSettings> updateSetting(
+    public ResponseEntity<BlogHeroSettings> updateSetting(
             @PathVariable String key,
             @RequestBody Map<String, String> payload) {
         
         String value = payload.get("value");
         String type = payload.getOrDefault("type", "TEXT");
         
-        HomePageSettings setting = settingsRepository.findBySettingKey(key)
-                .orElse(HomePageSettings.builder()
+        BlogHeroSettings setting = settingsRepository.findBySettingKey(key)
+                .orElse(BlogHeroSettings.builder()
                         .settingKey(key)
                         .build());
         
         setting.setSettingValue(value);
         setting.setSettingType(type);
         
-        HomePageSettings saved = settingsRepository.save(setting);
+        BlogHeroSettings saved = settingsRepository.save(setting);
         return ResponseEntity.ok(saved);
     }
 
@@ -72,36 +70,35 @@ public class HomePageSettingsController {
     public ResponseEntity<Map<String, String>> bulkUpdate(@RequestBody Map<String, String> settings) {
         try {
             if (settings == null || settings.isEmpty()) {
-                logger.warn("Received empty or null settings for bulk update");
+                logger.warn("Received empty or null settings for blog hero bulk update");
                 return ResponseEntity.badRequest().body(Map.of("error", "No settings provided"));
             }
             
             settings.forEach((key, value) -> {
                 try {
-                    logger.debug("Saving setting: {} with value length: {}", key, value != null ? value.length() : 0);
+                    logger.debug("Saving blog hero setting: {} with value length: {}", key, value != null ? value.length() : 0);
                     
-                    HomePageSettings setting = settingsRepository.findBySettingKey(key)
-                            .orElse(HomePageSettings.builder()
+                    BlogHeroSettings setting = settingsRepository.findBySettingKey(key)
+                            .orElse(BlogHeroSettings.builder()
                                     .settingKey(key)
                                     .settingType("TEXT")
                                     .build());
                     setting.setSettingValue(value);
                     settingsRepository.save(setting);
                     
-                    logger.debug("Successfully saved setting: {}", key);
+                    logger.debug("Successfully saved blog hero setting: {}", key);
                 } catch (Exception e) {
-                    logger.error("Error saving setting: {} - {}", key, e.getMessage(), e);
+                    logger.error("Error saving blog hero setting: {} - {}", key, e.getMessage(), e);
                     throw new RuntimeException("Failed to save setting: " + key, e);
                 }
             });
             
-            logger.info("Bulk settings update completed successfully for {} settings", settings.size());
+            logger.info("Blog hero bulk settings update completed successfully for {} settings", settings.size());
             return getAllSettings();
         } catch (Exception e) {
-            logger.error("Bulk update failed: {}", e.getMessage(), e);
+            logger.error("Blog hero bulk update failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Failed to update settings: " + e.getMessage()));
+                    .body(Map.of("error", "Failed to update blog hero settings: " + e.getMessage()));
         }
     }
 }
-

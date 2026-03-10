@@ -6,6 +6,7 @@ const PLACEHOLDER_IMAGE =
 const resolveImage = (path) => {
   if (!path) return PLACEHOLDER_IMAGE;
   if (typeof path !== "string") return PLACEHOLDER_IMAGE;
+  if (path.startsWith("data:")) return path;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const normalized = path.startsWith("/") ? path : `/${path}`;
   if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
@@ -30,42 +31,48 @@ export default function BlogCard({ blog }) {
   const excerpt = blog?.excerpt || blog?.content || "No description available.";
   const category = blog?.category || "General";
   const author = blog?.author || "Unknown";
-  const publishedDate = formatDate(blog?.publishedAt || blog?.createdAt || blog?.date);
+  const publishedDate = formatDate(
+    blog?.publishedAt || blog?.createdAt || blog?.date,
+  );
 
   const imageSource = resolveImage(
     blog?.coverImage?.src || blog?.coverImage || blog?.image,
   );
 
   return (
-    <article className="group h-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 transition-colors duration-200 hover:border-zinc-700">
-      <div className="h-48 w-full overflow-hidden bg-zinc-900">
+    <article className="group relative h-full overflow-hidden">
+      <div className="relative w-full aspect-video sm:aspect-2/1 overflow-hidden">
         <img
           src={imageSource}
           alt={title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
         />
-      </div>
 
-      <div className="p-4 md:p-5">
-        <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest text-zinc-500">
-          <span className="truncate">{category}</span>
-          {publishedDate && <span className="shrink-0">{publishedDate}</span>}
+        {/* Overlay with gradient for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+
+        {/* Content overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+          <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest text-zinc-300">
+            <span className="truncate">{category}</span>
+            {publishedDate && <span className="shrink-0">{publishedDate}</span>}
+          </div>
+
+          <h3 className="mb-2 line-clamp-2 text-base sm:text-lg font-semibold text-white">
+            {title}
+          </h3>
+
+          <p className="mb-2 line-clamp-2 text-xs sm:text-sm font-light leading-relaxed text-zinc-200">
+            {excerpt}
+          </p>
+
+          <p className="text-[10px] font-light uppercase tracking-wide text-zinc-300">
+            By {author}
+          </p>
         </div>
-
-        <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-zinc-100">
-          {title}
-        </h3>
-
-        <p className="mb-4 line-clamp-3 text-sm font-light leading-relaxed text-zinc-400">
-          {excerpt}
-        </p>
-
-        <p className="text-xs font-light uppercase tracking-wide text-zinc-500">
-          By {author}
-        </p>
       </div>
     </article>
   );

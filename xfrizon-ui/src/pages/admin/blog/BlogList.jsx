@@ -6,6 +6,7 @@ export default function BlogList({
   onEdit,
   onDelete,
   onPublish,
+  onDuplicate,
   searchTerm,
   setSearchTerm,
   isDeleting = null,
@@ -157,6 +158,14 @@ export default function BlogList({
                   className="flex-1 px-2.5 py-1.5 bg-blue-500/20 text-blue-300 rounded hover:bg-blue-500/30 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ✎ Edit
+                </button>
+                <button
+                  onClick={() => onDuplicate(blog)}
+                  disabled={isDeleting === blog.id}
+                  title="Duplicate blog"
+                  className="px-2.5 py-1.5 bg-purple-500/20 text-purple-300 rounded hover:bg-purple-500/30 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  📋
                 </button>
                 {blog.status !== "PUBLISHED" ? (
                   <button

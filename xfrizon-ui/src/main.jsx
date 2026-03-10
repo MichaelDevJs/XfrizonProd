@@ -55,6 +55,7 @@ import OrganizersManagement from "./pages/admin/OrganizersManagement";
 import OrganizerVerificationSystem from "./pages/admin/OrganizerVerificationSystem";
 import MessagesManagement from "./pages/admin/MessagesManagement";
 import AdminHomeBlocksPage from "./pages/admin/AdminHomeBlocksPage";
+import AdminBlogHeroBlocksPage from "./pages/admin/AdminBlogHeroBlocksPage";
 import AdminPayoutManagement from "./pages/admin/AdminPayoutManagement";
 
 function RootApp() {
@@ -86,6 +87,10 @@ function RootApp() {
 
             {/* Organizer Store/Profile (Public) */}
             <Route path="/organizer/:id" element={<OrganizerProfile />} />
+            <Route
+              path="/organizer/:organizerId/store"
+              element={<OrganizerStorePage />}
+            />
 
             {/* User Profile (Public) */}
             <Route path="/user/:userId" element={<UserProfile />} />
@@ -187,6 +192,7 @@ function RootApp() {
             >
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="blogs" element={<BlogManagement />} />
+              <Route path="blog-hero-blocks" element={<AdminBlogHeroBlocksPage />} />
               <Route path="users" element={<UsersManagement />} />
               <Route path="organizers" element={<OrganizersManagement />} />
               <Route path="home-blocks" element={<AdminHomeBlocksPage />} />

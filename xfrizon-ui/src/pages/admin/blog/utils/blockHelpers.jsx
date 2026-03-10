@@ -2,8 +2,20 @@
 import { toast } from "react-toastify";
 
 export const initializeBlocks = (blog) => {
-  if (blog?.blocks && blog.blocks.length > 0) {
-    return blog.blocks;
+  if (blog?.blocks) {
+    // Handle string (JSON) or array
+    let blocks = blog.blocks;
+    if (typeof blocks === "string") {
+      try {
+        blocks = JSON.parse(blocks);
+      } catch (e) {
+        console.error("Failed to parse blocks:", e);
+        blocks = [];
+      }
+    }
+    if (Array.isArray(blocks) && blocks.length > 0) {
+      return blocks;
+    }
   }
   return [{ id: Date.now(), type: "text", content: blog?.content || "" }];
 };

@@ -9,6 +9,7 @@ This document describes the comprehensive fraud prevention and automated verific
 The system consists of **4 integrated components**:
 
 ### 1. **Database Schema (User Entity Enhancement)**
+
 **File**: `User.java` entity
 
 Added 8 new fields to track verification and fraud detection:
@@ -27,22 +28,26 @@ LocalDateTime lastFraudCheckAt        // When fraud analysis last ran
 ```
 
 **Enums**:
+
 - `VerificationStatus`: PENDING → STRIPE_VERIFIED → ADMIN_APPROVED/REJECTED → SUSPENDED
 - `FraudRiskLevel`: LOW, MEDIUM, HIGH, CRITICAL (auto-assigned by fraud detection)
 
 ---
 
 ### 2. **Fraud Detection Service**
+
 **File**: `FraudDetectionService.java` (Service Layer)
 
 **Purpose**: Automatically analyze organizers for fraud risk using multiple behavioral and profile indicators.
 
 **Key Method**:
+
 ```java
 FraudAnalysisResult analyzeFraudRisk(Long organizerId)
 ```
 
 **Detection Factors**:
+
 1. **Velocity Checks** (30 points max)
    - Very new account (< 24 hours): +30 pts
    - New account (< 7 days): +15 pts
@@ -68,6 +73,7 @@ FraudAnalysisResult analyzeFraudRisk(Long organizerId)
    - Suspicious bio content (spam, fraud, hack): +40 pts
 
 **Output**:
+
 ```java
 FraudAnalysisResult {
   organizerId: Long,
@@ -83,6 +89,7 @@ FraudAnalysisResult {
 ---
 
 ### 3. **Organizer Verification Service**
+
 **File**: `OrganizerVerificationService.java` (Business Logic)
 
 **Purpose**: Handle approval/rejection workflow and manage verification state transitions.
@@ -125,11 +132,13 @@ boolean isOrganizerAllowedToOperate(Long organizerId)
 ---
 
 ### 4. **Stripe Webhook Handler**
+
 **File**: `StripeWebhookController.java` (Controller)
 
 **Purpose**: Consume Stripe account.updated events to trigger verification updates and fraud analysis in real-time.
 
 **Endpoints**:
+
 ```
 POST /api/v1/webhooks/stripe
   - Verifies webhook signature
@@ -157,6 +166,7 @@ GET /api/v1/webhooks/stripe/health
    - Logs closure for audit trail
 
 **Configuration**:
+
 ```properties
 stripe.webhook.secret=whsec_test_secret_change_in_production
 ```
@@ -164,6 +174,7 @@ stripe.webhook.secret=whsec_test_secret_change_in_production
 ---
 
 ### 5. **Admin Verification API**
+
 **File**: `AdminVerificationController.java` (REST API)
 
 **Endpoints**:
@@ -203,9 +214,11 @@ POST /api/v1/admin/verification/organizer/{organizerId}/suspend
 ## Frontend Integration
 
 ### Admin UI Component
+
 **File**: `OrganizerVerificationSystemEnhanced.jsx`
 
 **Features**:
+
 - **Organizer List**: Search, filter by status, filter by fraud risk
 - **Detail Panel**: Overview, Stripe KYC, Fraud Analysis tabs
 - **Real-time Actions**:
@@ -221,6 +234,7 @@ POST /api/v1/admin/verification/organizer/{organizerId}/suspend
   - Risk score progress bar
 
 **Tabs**:
+
 1. **Overview**: Basic info, status, risk level
 2. **Stripe KYC**: Full verification data from Stripe
 3. **Fraud Analysis**: Risk score, flags, recommended action
@@ -269,6 +283,7 @@ STEP 5: Admin Enforcement (if needed)
 ## Fraud Detection Example
 
 **Organizer Profile**:
+
 - Email: `testuser123@gmail.com` (contains "test" = +30)
 - Created: 1 hour ago (< 24hrs = +30)
 - Phone: ❌ Missing (+10)
@@ -280,6 +295,7 @@ STEP 5: Admin Enforcement (if needed)
 **Recommended Action**: MANUAL_REVIEW_REQUIRED
 
 **Flags**:
+
 - VERY_NEW_ACCOUNT
 - SUSPICIOUS_EMAIL
 - MISSING_PHONE
@@ -291,23 +307,26 @@ STEP 5: Admin Enforcement (if needed)
 ## Database Queries Reference
 
 **Find organizers by verification status**:
+
 ```sql
-SELECT * FROM users 
+SELECT * FROM users
 WHERE verification_status = 'ADMIN_APPROVED';
 ```
 
 **Find high-risk organizers**:
+
 ```sql
-SELECT * FROM users 
+SELECT * FROM users
 WHERE fraud_risk_level IN ('HIGH', 'CRITICAL')
 ORDER BY last_fraud_check_at DESC;
 ```
 
 **Get recently verified organizers**:
+
 ```sql
-SELECT * FROM users 
-WHERE verification_status = 'ADMIN_APPROVED' 
-ORDER BY verified_at DESC 
+SELECT * FROM users
+WHERE verification_status = 'ADMIN_APPROVED'
+ORDER BY verified_at DESC
 LIMIT 20;
 ```
 
@@ -316,6 +335,7 @@ LIMIT 20;
 ## Configuration
 
 **application.properties**:
+
 ```properties
 # Stripe
 stripe.api.key=sk_test_...
@@ -332,16 +352,19 @@ xfrizon.stripe.connect.return-url=http://localhost:5173/organizer/settings/payou
 ## Testing Checklist
 
 ### Unit Tests
+
 - [ ] FraudDetectionService.analyzeFraudRisk() with various flag combinations
 - [ ] OrganizerVerificationService approval/rejection workflow
 - [ ] VerificationStatus transitions validation
 
 ### Integration Tests
+
 - [ ] Admin API endpoints (GET/POST verification routes)
 - [ ] Webhook signature verification
 - [ ] Auto-approval trigger on Stripe event
 
 ### Manual Testing
+
 - [ ] Create test organizer with Stripe account
 - [ ] Verify webhook received and processed
 - [ ] View organizer in admin panel
@@ -351,6 +374,7 @@ xfrizon.stripe.connect.return-url=http://localhost:5173/organizer/settings/payou
 - [ ] Fraud detection results match expected flags
 
 ### Security Testing
+
 - [ ] Invalid webhook signatures rejected
 - [ ] Admin endpoints require auth token
 - [ ] PII data never logged in fraud analysis
@@ -390,6 +414,7 @@ xfrizon.stripe.connect.return-url=http://localhost:5173/organizer/settings/payou
 ## Files Modified/Created
 
 **Backend**:
+
 - ✅ `User.java` - Enhanced with verification fields
 - ✅ `FraudDetectionService.java` - NEW
 - ✅ `OrganizerVerificationService.java` - NEW
@@ -400,6 +425,7 @@ xfrizon.stripe.connect.return-url=http://localhost:5173/organizer/settings/payou
 - ✅ `application.properties` - Added webhook secret
 
 **Frontend**:
+
 - ✅ `OrganizerVerificationSystemEnhanced.jsx` - NEW (comprehensive admin UI)
 - ✅ `StripeVerificationPanel.jsx` - Already created (displays KYC data)
 
@@ -410,6 +436,7 @@ xfrizon.stripe.connect.return-url=http://localhost:5173/organizer/settings/payou
 ## Status: ✅ IMPLEMENTATION COMPLETE
 
 All 4 features fully implemented:
+
 1. ✅ Automated approval/rejection workflow
 2. ✅ Fraud detection system with 5 detection factors
 3. ✅ Stripe webhook integration

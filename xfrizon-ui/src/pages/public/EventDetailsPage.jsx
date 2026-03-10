@@ -66,7 +66,10 @@ export default function EventDetailsPage() {
             setOrganizer(fullOrganizer);
           }
         } catch (organizerError) {
-          console.warn("Could not load full organizer profile:", organizerError);
+          console.warn(
+            "Could not load full organizer profile:",
+            organizerError,
+          );
         }
       }
     } catch (error) {

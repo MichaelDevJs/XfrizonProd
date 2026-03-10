@@ -32,6 +32,51 @@ export default function HomePage() {
     "eventSection",
   ]);
 
+  const isVideoUrl = (url = "") => {
+    const value = String(url).toLowerCase();
+    return /(\.mp4|\.mov|\.webm|\.m4v|\.ogg)(\?|$)/.test(value);
+  };
+
+  const normalizeSlide = (slide, index = 0) => {
+    const url = typeof slide?.url === "string" ? slide.url : "";
+    const rawType = String(slide?.type || "").toLowerCase();
+    const inferredType =
+      rawType.includes("video") || isVideoUrl(url) ? "video" : "image";
+
+    return {
+      id: slide?.id ? String(slide.id) : `${Date.now()}-${index}`,
+      type: inferredType,
+      url,
+      duration: Number(slide?.duration) > 0 ? Number(slide.duration) : 5000,
+      order: Number.isFinite(Number(slide?.order))
+        ? Number(slide.order)
+        : index,
+      title: typeof slide?.title === "string" ? slide.title : "",
+      caption: typeof slide?.caption === "string" ? slide.caption : "",
+      ctaLabel: typeof slide?.ctaLabel === "string" ? slide.ctaLabel : "",
+      ctaLink: typeof slide?.ctaLink === "string" ? slide.ctaLink : "",
+      sourceType: typeof slide?.sourceType === "string" ? slide.sourceType : "",
+      organizerId: slide?.organizerId != null ? String(slide.organizerId) : "",
+      blogId: slide?.blogId != null ? String(slide.blogId) : "",
+      // Text styling properties
+      textColor:
+        typeof slide?.textColor === "string" ? slide.textColor : "#ffffff",
+      textSize: typeof slide?.textSize === "string" ? slide.textSize : "normal",
+      textPosition:
+        typeof slide?.textPosition === "string"
+          ? slide.textPosition
+          : "bottom-left",
+      overlayOpacity:
+        typeof slide?.overlayOpacity === "string" ? slide.overlayOpacity : "30",
+      ctaBgColor:
+        typeof slide?.ctaBgColor === "string" ? slide.ctaBgColor : "#ef4444",
+      ctaTextColor:
+        typeof slide?.ctaTextColor === "string"
+          ? slide.ctaTextColor
+          : "#ffffff",
+    };
+  };
+
   useEffect(() => {
     fetchHomePageSettings();
   }, []);
@@ -45,7 +90,9 @@ export default function HomePage() {
         try {
           const slideshow = JSON.parse(settings.heroSlideshow);
           if (Array.isArray(slideshow) && slideshow.length > 0) {
-            setHeroSlideshow(slideshow);
+            setHeroSlideshow(
+              slideshow.map((slide, index) => normalizeSlide(slide, index)),
+            );
           }
         } catch (e) {
           console.error("Error parsing hero slideshow:", e);

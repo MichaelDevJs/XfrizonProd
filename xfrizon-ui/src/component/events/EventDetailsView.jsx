@@ -1,5 +1,4 @@
 import {
-  FaArrowLeft,
   FaMapMarkerAlt,
   FaCalendarAlt,
   FaClock,
@@ -162,7 +161,8 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   const currencySymbol = getCurrencySymbol();
 
   const parseOrganizerMedia = () => {
-    const raw = organizer?.media || organizer?.mediaGallery || organizer?.gallery;
+    const raw =
+      organizer?.media || organizer?.mediaGallery || organizer?.gallery;
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
     if (typeof raw === "string") {
@@ -215,69 +215,77 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   return (
     <>
       <div className="min-h-screen bg-black text-white">
-        {/* Minimal Header */}
-        <div className="sticky top-0 bg-black/95 backdrop-blur-sm z-20 border-b border-gray-800/50">
-          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
-              aria-label="Back"
-            >
-              <FaArrowLeft size={18} />
-              <span className="font-medium text-sm">Back</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Main Content - Clean Layout */}
-        <div className="max-w-3xl mx-auto px-4 pb-12">
-          {activeTab === "overview" && (
-            <>
-              {/* Flyer & Title */}
-              <div className="mb-8">
-                <img
-                  src={
-                    resolveFlyerUrl(
-                      event.flyerUrl || event.flyer_url || event.image,
-                    ) ||
-                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='500'%3E%3Crect fill='%23111111' width='1200' height='500'/%3E%3C/svg%3E"
-                  }
-                  alt={event.title}
-                  onError={(e) =>
-                    (e.target.src =
-                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='500'%3E%3Crect fill='%23111111' width='1200' height='500'/%3E%3C/svg%3E")
-                  }
-                  className="w-full h-48 object-cover rounded-lg mb-6"
-                />
-                <div className="space-y-3 mb-6">
-                  <h1 className="text-4xl font-bold tracking-tight">
-                    {event.title}
-                  </h1>
+        {/* Hero Flyer Section - Full Width */}
+        <section className="relative w-full h-125 bg-black overflow-hidden">
+          <img
+            src={
+              resolveFlyerUrl(
+                event.flyerUrl || event.flyer_url || event.image,
+              ) ||
+              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='500'%3E%3Crect fill='%23111111' width='1200' height='500'/%3E%3C/svg%3E"
+            }
+            alt={event.title}
+            onError={(e) =>
+              (e.target.src =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='500'%3E%3Crect fill='%23111111' width='1200' height='500'/%3E%3C/svg%3E")
+            }
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent"></div>
+          <div className="absolute inset-0">
+            <div className="max-w-5xl mx-auto px-6 h-full flex items-end pb-8">
+              <div className="max-w-3xl">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-gray-200 mb-2 block">
+                  {event.genre || event.category || "Event"}
+                </span>
+                <h1
+                  className="text-3xl md:text-5xl font-extrabold text-white leading-tight"
+                  style={{
+                    fontFamily:
+                      "'Bebas Neue', 'Oswald', 'Arial Narrow', sans-serif",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {event.title}
+                </h1>
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px]">
                   {event.ageLimit && (
-                    <span className="inline-block bg-gray-900 px-3 py-1 rounded text-xs font-medium text-gray-300 border border-gray-800">
+                    <span className="inline-block bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded text-gray-200 border border-gray-700 uppercase tracking-[0.15em]">
                       {event.ageLimit}+
                     </span>
                   )}
+                  <span className="text-gray-200 uppercase tracking-[0.15em]">
+                    {event.venueName}
+                  </span>
+                  <span className="text-gray-200 uppercase tracking-[0.15em]">
+                    {event.city}, {event.country}
+                  </span>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
 
-              {/* Navigation Tabs - Below Age Limit */}
-              <div className="flex gap-6 mb-8 border-b border-gray-800/50">
-                <button
-                  className={`pb-3 font-medium text-sm transition-colors duration-200 ${activeTab === "overview" ? "text-red-400 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
-                  onClick={() => setActiveTab("overview")}
-                >
-                  Overview
-                </button>
-                <button
-                  className={`pb-3 font-medium text-sm transition-colors duration-200 ${activeTab === "info" ? "text-red-400 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
-                  onClick={() => setActiveTab("info")}
-                >
-                  Info
-                </button>
-              </div>
+        {/* Main Content - Clean Layout */}
+        <div className="max-w-3xl mx-auto px-4 pb-12">
+          {/* Navigation Tabs */}
+          <div className="flex gap-6 mb-8 pt-8 border-b border-gray-800/50">
+            <button
+              className={`pb-3 font-medium text-sm transition-colors duration-200 ${activeTab === "overview" ? "text-red-400 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
+              onClick={() => setActiveTab("overview")}
+            >
+              Overview
+            </button>
+            <button
+              className={`pb-3 font-medium text-sm transition-colors duration-200 ${activeTab === "info" ? "text-red-400 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
+              onClick={() => setActiveTab("info")}
+            >
+              Info
+            </button>
+          </div>
 
-              {/* Info Row - Clean, readable */}
+          {activeTab === "overview" && (
+            <>
               <div className="space-y-3 mb-8 text-sm text-gray-400 pb-8 border-b border-gray-800/50">
                 <div className="flex items-center gap-3">
                   <FaCalendarAlt size={16} className="text-gray-500 shrink-0" />
@@ -499,19 +507,17 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                       : "Select Tickets"}
                   </button>
                 </div>
-
               </div>
+            </>
+          )}
 
+          {activeTab === "info" && (
+            <div className="space-y-8">
               {/* Night With Us Video */}
               {organizer && nightWithUsVideoUrl && (
-                <div className="w-full mt-5 flex justify-center">
-                  <div className="w-full max-w-md overflow-hidden">
-                    <div className="px-4 pt-4 pb-2 text-center">
-                      <h3 className="text-sm font-light text-gray-300 tracking-wide">
-                        Night with Us
-                      </h3>
-                    </div>
-
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">Night with Us</h2>
+                  <div className="w-full overflow-hidden rounded-lg">
                     <video
                       src={nightWithUsVideoUrl}
                       className="w-full aspect-video object-cover"
@@ -521,52 +527,6 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                       playsInline
                       preload="metadata"
                     />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTab === "info" && (
-            <div className="space-y-8">
-              {/* Recently Purchased */}
-              {event.attendees && event.attendees.length > 0 && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">
-                    Recently Purchased ({event.attendees.length})
-                  </h2>
-                  <div className="flex flex-wrap gap-6">
-                    {event.attendees.map((attendee) => (
-                      <button
-                        key={attendee.id}
-                        onClick={() => navigate(`/user/${attendee.id}`)}
-                        className="flex flex-col items-center gap-2 group hover:opacity-70 transition-opacity duration-200"
-                        title={`${attendee.firstName} ${attendee.lastName}`}
-                      >
-                        <div className="relative">
-                          {attendee.profilePicture ? (
-                            <img
-                              src={resolveFlyerUrl(attendee.profilePicture)}
-                              alt={`${attendee.firstName} ${attendee.lastName}`}
-                              className="w-12 h-12 rounded-full object-cover"
-                              onError={(e) =>
-                                (e.target.style.display = "none") ||
-                                (e.target.nextElementSibling &&
-                                  (e.target.nextElementSibling.style.display =
-                                    "flex"))
-                              }
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white font-medium text-sm">
-                              {attendee.firstName?.charAt(0)?.toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs text-center text-gray-400 max-w-16 truncate">
-                          {attendee.firstName}
-                        </p>
-                      </button>
-                    ))}
                   </div>
                 </div>
               )}

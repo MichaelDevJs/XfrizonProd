@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -31,6 +32,24 @@ public class OrganizerController {
     private final StripeConnectService stripeConnectService;
     private final TicketService ticketService;
     private final ObjectMapper objectMapper;
+
+    /**
+     * List all organizers, optionally filtered by country
+     * GET /api/v1/organizers?country=Germany
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserResponse>>> listOrganizers(
+            @RequestParam(required = false) String country) {
+        try {
+            log.info("Fetching organizers with country filter: {}", country);
+            List<UserResponse> organizers = organizerService.listOrganizers(country);
+            return ResponseEntity.ok(ApiResponse.success(organizers, "Organizers fetched successfully"));
+        } catch (Exception e) {
+            log.error("Error fetching organizers: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch organizers"));
+        }
+    }
 
     /**
      * Create Stripe Connect account for organizer (or get existing)

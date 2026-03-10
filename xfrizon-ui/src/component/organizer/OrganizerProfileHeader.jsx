@@ -113,13 +113,21 @@ const OrganizerProfileHeader = ({
 
   return (
     <div className="relative">
-      {/* Cover Image */}
-      <div className="relative h-48 sm:h-64 bg-linear-to-br from-zinc-900 via-black to-zinc-900 overflow-hidden">
+      {/* Cover Image with Nightclub Lighting Effects */}
+      <div className="relative h-48 sm:h-64 overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-linear-to-br from-purple-900/60 via-pink-900/40 to-blue-900/60 animate-pulse" style={{animationDuration: '3s'}} />
+        
+        {/* Spotlight effects */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-500/30 rounded-full blur-3xl animate-pulse" style={{animationDuration: '2s', animationDelay: '0s'}} />
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse" style={{animationDuration: '2.5s', animationDelay: '0.5s'}} />
+        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" style={{animationDuration: '3s', animationDelay: '1s'}} />
+        
         {coverUrl ? (
           <img
             src={coverUrl}
             alt="Cover"
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover opacity-30 mix-blend-overlay"
             onError={(e) => {
               e.target.src =
                 "https://i.pinimg.com/736x/8a/b8/9d/8ab89dc4611d0276369f955c193270af.jpg";
@@ -128,24 +136,26 @@ const OrganizerProfileHeader = ({
         ) : (
           <div className="absolute inset-0" />
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-transparent" />
       </div>
 
       {/* Profile Content */}
-      <div className="bg-black px-4 sm:px-6 pb-12">
+      <div className="bg-linear-to-b from-black via-zinc-950 to-black px-4 sm:px-6 pb-12">
         <div className="max-w-4xl mx-auto -mt-20 sm:-mt-24 relative z-10">
-          {/* Profile Picture - Centered */}
+          {/* Profile Picture - Centered with Glow */}
           <div className="flex justify-center mb-6">
             <div className="relative">
+              {/* Glowing ring effect */}
+              <div className="absolute inset-0 rounded-full bg-linear-to-r from-red-500 via-purple-500 to-blue-500 blur-xl opacity-60 animate-pulse" style={{animationDuration: '2s'}} />
               {!profileImageError && profilePictureUrl ? (
                 <img
                   src={profilePictureUrl}
                   alt={organizerName}
-                  className="w-40 h-40 sm:w-48 sm:h-48 rounded-full ring-4 ring-xf-accent object-cover bg-black shadow-2xl"
+                  className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full ring-4 ring-xf-accent object-cover bg-black shadow-2xl"
                   onError={() => setProfileImageError(true)}
                 />
               ) : (
-                <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-full ring-4 ring-xf-accent bg-linear-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white text-6xl font-bold tracking-tight shadow-2xl">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full ring-4 ring-xf-accent bg-linear-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white text-6xl font-bold tracking-tight shadow-2xl">
                   {organizerName[0].toUpperCase()}
                 </div>
               )}

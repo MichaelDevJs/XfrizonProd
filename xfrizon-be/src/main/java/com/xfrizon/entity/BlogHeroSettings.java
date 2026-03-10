@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "homepage_settings")
+@Table(name = "blog_hero_settings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class HomePageSettings {
+public class BlogHeroSettings {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,7 @@ public class HomePageSettings {
     private String settingValue;
     
     @Column(name = "setting_type")
-    private String settingType; // VIDEO_URL, BANNER_TEXTS, BLOCK_ORDER, etc.
+    private String settingType; // SLIDESHOW, etc.
     
     @Column(name = "updated_at")
     private java.time.LocalDateTime updatedAt;

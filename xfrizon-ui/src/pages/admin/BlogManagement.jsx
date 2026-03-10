@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import blogApi from "../../api/blogApi";
 import BlogEditor from "./blog/BlogEditor";
 import BlogList from "./blog/BlogList";
 
 export default function BlogManagement() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [blogs, setBlogs] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
@@ -235,6 +238,39 @@ export default function BlogManagement() {
     }
   };
 
+  // Duplicate blog
+  const handleDuplicate = async (blog) => {
+    try {
+      // Create a copy of the blog data
+      const duplicatedBlog = {
+        title: `${blog.title} (Copy)`,
+        author: blog.author,
+        category: blog.category,
+        location: blog.location || "",
+        genre: blog.genre || "",
+        coverImage: blog.coverImage,
+        excerpt: blog.excerpt,
+        content: blog.content,
+        blocks: blog.blocks || [],
+        images: blog.images || [],
+        videos: blog.videos || [],
+        youtubeLinks: blog.youtubeLinks || [],
+        audioTracks: blog.audioTracks || [],
+        tags: blog.tags || [],
+        titleStyle: blog.titleStyle || {},
+        status: "DRAFT",
+      };
+
+      const response = await blogApi.createBlog(duplicatedBlog);
+      const newBlog = response.data || response;
+      setBlogs([newBlog, ...blogs]);
+      toast.success("Blog duplicated successfully");
+    } catch (error) {
+      console.error("Failed to duplicate blog:", error);
+      toast.error("Failed to duplicate blog");
+    }
+  };
+
   // Cancel editing
   const handleCancel = () => {
     setIsCreating(false);
@@ -255,6 +291,30 @@ export default function BlogManagement() {
 
   return (
     <div className="space-y-4">
+      {/* Navigation Tabs */}
+      <div className="bg-zinc-950 rounded-lg p-2 flex gap-2">
+        <button
+          onClick={() => navigate("/admin/blogs")}
+          className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+            location.pathname === "/admin/blogs"
+              ? "bg-[#403838] text-white"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+          }`}
+        >
+          Blog Posts
+        </button>
+        <button
+          onClick={() => navigate("/admin/blog-hero-blocks")}
+          className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+            location.pathname === "/admin/blog-hero-blocks"
+              ? "bg-[#403838] text-white"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+          }`}
+        >
+          Hero Slideshow
+        </button>
+      </div>
+
       {/* Header with New Button */}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-zinc-950 text-white p-3 sm:p-4 rounded-lg">
         <div className="min-w-0">
@@ -307,6 +367,7 @@ export default function BlogManagement() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onPublish={handlePublish}
+          onDuplicate={handleDuplicate}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           isDeleting={isDeleting}

@@ -145,7 +145,6 @@ const TicketScanner = () => {
       };
 
       setScanHistory((prev) => [newEntry, ...prev.slice(0, 9)]); // Keep last 10
-      toast.success(`Ticket ${ticketCode} validated successfully!`);
       setScanResult(null);
       setManualCode("");
     } catch (error) {
@@ -156,10 +155,6 @@ const TicketScanner = () => {
       };
 
       setScanHistory((prev) => [errorEntry, ...prev.slice(0, 9)]);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to validate ticket. Please try again.",
-      );
       setScanResult(null);
       setManualCode("");
     } finally {

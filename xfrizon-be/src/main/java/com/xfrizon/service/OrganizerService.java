@@ -113,6 +113,29 @@ public class OrganizerService {
     }
 
     /**
+     * List all organizers, optionally filtered by country (location field)
+     */
+    public List<UserResponse> listOrganizers(String country) {
+        log.info("Listing organizers with country filter: {}", country);
+        
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() == User.UserRole.ORGANIZER)
+                .filter(User::getIsActive)
+                .filter(user -> {
+                    // If no country filter, include all
+                    if (country == null || country.isBlank()) {
+                        return true;
+                    }
+                    // Filter by location field (case-insensitive match)
+                    String userLocation = user.getLocation();
+                    return userLocation != null && userLocation.equalsIgnoreCase(country.trim());
+                })
+                .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Get organizer profile
      */
     public UserResponse getOrganizerProfile(Long organizerId) {

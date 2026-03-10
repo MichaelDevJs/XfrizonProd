@@ -4,7 +4,7 @@ export default function HeroSection({
   videoUrl = "/assets/Xfrizon-Hero-Vid.mp4",
 }) {
   return (
-    <section className="relative h-75 sm:h-95 lg:h-112.5 w-full overflow-hidden px-4 sm:px-6 py-4 sm:py-6 bg-black rounded-b-2xl shadow-xl">
+    <section className="relative w-full aspect-16/7 sm:aspect-16/6 lg:aspect-21/8 overflow-hidden bg-black rounded-b-2xl shadow-xl">
       <video
         className="absolute inset-0 w-full h-full object-cover"
         src={videoUrl}
