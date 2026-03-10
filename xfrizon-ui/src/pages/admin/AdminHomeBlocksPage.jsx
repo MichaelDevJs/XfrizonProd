@@ -1389,11 +1389,11 @@ export default function AdminHomeBlocksPage() {
                   </div>
 
                   {/* Preview */}
-                  <div className="shrink-0 w-full md:w-auto">
+                  <div className="shrink-0 w-24 h-16 bg-zinc-950 rounded border border-zinc-600 flex items-center justify-center overflow-hidden">
                     {isVideoSlide(slide) ? (
                       <video
                         src={resolveMediaUrl(slide.url)}
-                        className="w-full md:w-24 h-16 md:h-16 object-cover rounded border border-zinc-600"
+                        className="w-full h-full object-contain"
                         muted
                         playsInline
                       />
@@ -1401,7 +1401,7 @@ export default function AdminHomeBlocksPage() {
                       <img
                         src={resolveMediaUrl(slide.url)}
                         alt={`Slide ${index + 1}`}
-                        className="w-full md:w-24 h-16 md:h-16 object-cover rounded border border-zinc-600"
+                        className="w-full h-full object-contain"
                       />
                     )}
                   </div>
