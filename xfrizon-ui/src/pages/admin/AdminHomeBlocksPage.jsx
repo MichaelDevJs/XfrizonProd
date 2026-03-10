@@ -1367,7 +1367,7 @@ export default function AdminHomeBlocksPage() {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
                 onDragEnd={handleDragEnd}
-                className={`flex items-start gap-3 p-4 rounded-lg border transition-all cursor-move ${
+                className={`flex flex-col md:flex-row md:items-start gap-3 p-3 md:p-4 rounded-lg border transition-all cursor-move ${
                   draggedSlideId === slide.id
                     ? "opacity-50 bg-zinc-700 border-red-500"
                     : dragOverIndex === index
@@ -1375,46 +1375,49 @@ export default function AdminHomeBlocksPage() {
                       : "bg-zinc-800 border-zinc-700 hover:border-zinc-600"
                 }`}
               >
-                {/* Drag Handle */}
-                <div className="shrink-0 flex items-center justify-center w-6 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing">
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M8 5a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zM8 15a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
+                {/* Drag Handle & Preview - Top Section */}
+                <div className="flex gap-3 w-full md:w-auto md:flex-col md:items-start">
+                  {/* Drag Handle */}
+                  <div className="shrink-0 flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing">
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M8 5a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zM8 15a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
 
-                {/* Preview */}
-                <div className="shrink-0">
-                  {isVideoSlide(slide) ? (
-                    <video
-                      src={resolveMediaUrl(slide.url)}
-                      className="w-32 h-20 object-cover rounded border border-zinc-600"
-                      muted
-                      playsInline
-                    />
-                  ) : (
-                    <img
-                      src={resolveMediaUrl(slide.url)}
-                      alt={`Slide ${index + 1}`}
-                      className="w-32 h-20 object-cover rounded border border-zinc-600"
-                    />
-                  )}
+                  {/* Preview */}
+                  <div className="shrink-0 w-full md:w-auto">
+                    {isVideoSlide(slide) ? (
+                      <video
+                        src={resolveMediaUrl(slide.url)}
+                        className="w-full md:w-24 h-16 md:h-16 object-cover rounded border border-zinc-600"
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={resolveMediaUrl(slide.url)}
+                        alt={`Slide ${index + 1}`}
+                        className="w-full md:w-24 h-16 md:h-16 object-cover rounded border border-zinc-600"
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 bg-zinc-900 text-xs text-gray-400 rounded">
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="flex items-center gap-2 mb-2 text-xs">
+                    <span className="px-2 py-0.5 bg-zinc-900 text-gray-400 rounded">
                       {slide.type}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-gray-500">
                       Slide {index + 1}
                     </span>
                   </div>
-                  <p className="text-sm text-white truncate mb-2">
+                  <p className="text-xs text-white truncate mb-2">
                     {slide.url}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
@@ -1445,7 +1448,7 @@ export default function AdminHomeBlocksPage() {
                       className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-2 mb-2">
                     <input
                       type="text"
                       value={slide.ctaLabel || ""}
@@ -1475,12 +1478,12 @@ export default function AdminHomeBlocksPage() {
                   </div>
 
                   {/* Text Styling Options */}
-                  <details className="mb-2 border border-zinc-700 rounded p-2">
+                  <details className="mb-2 border border-zinc-700 rounded p-2 text-xs">
                     <summary className="text-xs text-gray-300 cursor-pointer hover:text-white mb-2 font-medium">
                       🎨 Text & CTA Styling
                     </summary>
                     <div className="space-y-2 mt-2">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs text-gray-400 block mb-1">
                             Text Color
@@ -1535,7 +1538,7 @@ export default function AdminHomeBlocksPage() {
                           </select>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs text-gray-400 block mb-1">
                             Text Position
@@ -1586,7 +1589,7 @@ export default function AdminHomeBlocksPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs text-gray-400 block mb-1">
                             CTA Button BG
