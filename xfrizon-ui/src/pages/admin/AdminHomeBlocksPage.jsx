@@ -879,22 +879,22 @@ export default function AdminHomeBlocksPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-xl md:text-2xl font-bold text-white">
           HomePage Configuration
         </h1>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 transition-colors"
+            className="px-3 py-2 text-sm bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 transition-colors"
           >
             {showPreview ? "Hide Preview" : "Show Preview"}
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "Saving..." : "Save All Changes"}
           </button>
@@ -903,21 +903,21 @@ export default function AdminHomeBlocksPage() {
 
       {/* Live Preview Section */}
       {showPreview && (
-        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-white">Live Preview</h2>
-              <p className="text-sm text-gray-400 mt-1">
+              <h2 className="text-lg md:text-xl font-semibold text-white">Live Preview</h2>
+              <p className="text-xs md:text-sm text-gray-400 mt-1">
                 This is how your carousel will appear on the homepage
               </p>
             </div>
             <button
               onClick={() => setShowPreview(false)}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-white transition-colors self-end sm:self-auto"
               title="Close preview"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5 md:w-6 md:h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -931,7 +931,7 @@ export default function AdminHomeBlocksPage() {
               </svg>
             </button>
           </div>
-          <div className="border-2 border-dashed border-zinc-700 rounded-lg overflow-hidden">
+          <div className="border-2 border-dashed border-zinc-700 rounded-lg overflow-hidden max-w-4xl mx-auto">
             <HeroSlideshow
               items={heroSlideshow}
               title={heroTitle}
@@ -946,11 +946,11 @@ export default function AdminHomeBlocksPage() {
       )}
 
       {/* Hero Slideshow Manager */}
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <h2 className="text-xl font-semibold text-white mb-4">
+      <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
+        <h2 className="text-lg md:text-xl font-semibold text-white mb-4">
           Hero Slideshow (Billboard)
         </h2>
-        <p className="text-sm text-gray-400 mb-4">
+        <p className="text-xs md:text-sm text-gray-400 mb-4">
           Add multiple images or videos that will rotate automatically with
           custom durations
         </p>
@@ -1025,7 +1025,7 @@ export default function AdminHomeBlocksPage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={addNightWithUsFromSelectedOrganizer}
@@ -1128,7 +1128,7 @@ export default function AdminHomeBlocksPage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={addBlogHighlightFromSelectedBlog}
