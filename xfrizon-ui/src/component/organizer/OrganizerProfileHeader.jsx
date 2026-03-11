@@ -1,17 +1,17 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  FaEdit,
-  FaHeart,
-  FaMapMarkerAlt,
-  FaGlobe,
-  FaInstagram,
-  FaEnvelope,
-  FaPhone,
-  FaCalendarAlt,
-  FaTwitter,
-  FaUsers,
-} from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaHeart, FaGlobe, FaInstagram, FaTwitter } from "react-icons/fa";
+import OrganizerCoverSlideshow from "./OrganizerCoverSlideshow";
+
+const VIDEO_EXTENSIONS = [
+  ".mp4",
+  ".webm",
+  ".ogg",
+  ".mov",
+  ".m4v",
+  ".avi",
+  ".mkv",
+];
 
 const normalizeUrl = (value) => {
   if (!value) return null;
@@ -45,8 +45,25 @@ const toAbsoluteMediaUrl = (rawUrl) => {
   }
   const base =
     import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8081/api/v1";
+  // /uploads/* is served from API origin root, not /api/v1.
+  if (value.startsWith("/uploads/")) {
+    const origin = base.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
+    return `${origin}${value}`;
+  }
   if (value.startsWith("/")) return `${base}${value}`;
   return `${base}/${value}`;
+};
+
+const isLikelyVideoUrl = (url) => {
+  if (!url) return false;
+  const value = String(url).toLowerCase();
+
+  if (value.startsWith("data:video/")) return true;
+  if (value.includes("content-type=video") || value.includes("mime=video")) {
+    return true;
+  }
+
+  return VIDEO_EXTENSIONS.some((ext) => value.includes(ext));
 };
 
 const OrganizerProfileHeader = ({
@@ -56,16 +73,9 @@ const OrganizerProfileHeader = ({
   profileImageError,
   setProfileImageError,
   coverImageUrl,
+  belowCoverContent,
 }) => {
-  const navigate = useNavigate();
-
   const organizerName = organizer?.name || organizer?.firstName || "Organizer";
-  const username = organizer?.email?.split("@")[0] || "organizer";
-  const aboutText = firstNonEmpty(
-    organizer?.bio,
-    organizer?.description,
-    organizer?.about,
-  );
   const locationText = firstNonEmpty(
     organizer?.location,
     organizer?.city,
@@ -78,11 +88,6 @@ const OrganizerProfileHeader = ({
         month: "short",
       })
     : null;
-
-  const coverUrl =
-    toAbsoluteMediaUrl(organizer?.coverPhoto) ||
-    coverImageUrl ||
-    "https://i.pinimg.com/736x/8a/b8/9d/8ab89dc4611d0276369f955c193270af.jpg";
 
   const socialLinks = [
     {
@@ -103,157 +108,58 @@ const OrganizerProfileHeader = ({
       Icon: FaTwitter,
       label: "Twitter/X",
     },
-    {
-      id: "email",
-      href: organizer?.email ? `mailto:${organizer.email}` : null,
-      Icon: FaEnvelope,
-      label: "Email",
-    },
   ].filter((l) => Boolean(l.href));
 
+  const coverUrl =
+    toAbsoluteMediaUrl(organizer?.coverPhoto) || coverImageUrl || null;
+  const coverIsVideo = isLikelyVideoUrl(coverUrl);
+
+  // Build slides array — prefer coverMedia JSON array, fallback to single coverPhoto
+  const coverSlides = (() => {
+    if (organizer?.coverMedia) {
+      try {
+        const parsed =
+          typeof organizer.coverMedia === "string"
+            ? JSON.parse(organizer.coverMedia)
+            : organizer.coverMedia;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item, i) => {
+            const url = toAbsoluteMediaUrl(
+              typeof item === "string" ? item : item.url,
+            );
+            const type =
+              typeof item === "string"
+                ? isLikelyVideoUrl(item)
+                  ? "video"
+                  : "image"
+                : item.type || (isLikelyVideoUrl(item.url) ? "video" : "image");
+            return { id: `cm-${i}`, url, type };
+          });
+        }
+      } catch (_) {}
+    }
+    // fallback single slide
+    if (coverUrl) {
+      return [
+        {
+          id: "cover-0",
+          url: coverUrl,
+          type: coverIsVideo ? "video" : "image",
+        },
+      ];
+    }
+    return [];
+  })();
+
   return (
-    <div className="relative">
-      {/* Cover Image with Nightclub Lighting Effects */}
-      <div className="relative h-48 sm:h-64 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-linear-to-br from-purple-900/60 via-pink-900/40 to-blue-900/60 animate-pulse" style={{animationDuration: '3s'}} />
-        
-        {/* Spotlight effects */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-500/30 rounded-full blur-3xl animate-pulse" style={{animationDuration: '2s', animationDelay: '0s'}} />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse" style={{animationDuration: '2.5s', animationDelay: '0.5s'}} />
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" style={{animationDuration: '3s', animationDelay: '1s'}} />
-        
-        {coverUrl ? (
-          <img
-            src={coverUrl}
-            alt="Cover"
-            className="w-full h-full object-cover opacity-30 mix-blend-overlay"
-            onError={(e) => {
-              e.target.src =
-                "https://i.pinimg.com/736x/8a/b8/9d/8ab89dc4611d0276369f955c193270af.jpg";
-            }}
-          />
-        ) : (
-          <div className="absolute inset-0" />
-        )}
-        <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-transparent" />
+    <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+      {/* Cover Block */}
+      <div className="relative w-full aspect-video sm:aspect-2/1 lg:aspect-3/1 xl:aspect-10/3 bg-black overflow-hidden">
+        <OrganizerCoverSlideshow slides={coverSlides} />
       </div>
 
-      {/* Profile Content */}
-      <div className="bg-linear-to-b from-black via-zinc-950 to-black px-4 sm:px-6 pb-12">
-        <div className="max-w-4xl mx-auto -mt-20 sm:-mt-24 relative z-10">
-          {/* Profile Picture - Centered with Glow */}
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              {/* Glowing ring effect */}
-              <div className="absolute inset-0 rounded-full bg-linear-to-r from-red-500 via-purple-500 to-blue-500 blur-xl opacity-60 animate-pulse" style={{animationDuration: '2s'}} />
-              {!profileImageError && profilePictureUrl ? (
-                <img
-                  src={profilePictureUrl}
-                  alt={organizerName}
-                  className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full ring-4 ring-xf-accent object-cover bg-black shadow-2xl"
-                  onError={() => setProfileImageError(true)}
-                />
-              ) : (
-                <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full ring-4 ring-xf-accent bg-linear-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white text-6xl font-bold tracking-tight shadow-2xl">
-                  {organizerName[0].toUpperCase()}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Organizer Info - Centered */}
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-              {organizerName}
-            </h1>
-            <p className="text-gray-400 text-base sm:text-lg mb-6">
-              @{username}
-            </p>
-
-            <p className="text-gray-400 text-base sm:text-lg mb-6">
-              @{username}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="mb-8 flex justify-center gap-4">
-              {isOwnProfile ? (
-                <button
-                  onClick={() => navigate("/organizer/profile-edit")}
-                  className="px-8 py-2.5 bg-xf-accent text-white hover:brightness-110 rounded-full font-semibold transition flex items-center gap-2"
-                >
-                  <FaEdit />
-                  Edit Profile
-                </button>
-              ) : (
-                <button className="px-8 py-2.5 bg-xf-accent text-white hover:brightness-110 rounded-full font-semibold transition flex items-center gap-2">
-                  <FaHeart />
-                  Follow
-                </button>
-              )}
-            </div>
-
-            {/* Basic Info */}
-            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 text-sm text-gray-300 mb-8">
-              {locationText && (
-                <span className="inline-flex items-center gap-2">
-                  <FaMapMarkerAlt className="text-xf-accent" />
-                  <span>{locationText}</span>
-                </span>
-              )}
-              {joinedText && (
-                <span className="inline-flex items-center gap-2">
-                  <FaCalendarAlt className="text-xf-accent" />
-                  <span>Joined {joinedText}</span>
-                </span>
-              )}
-              {organizer?.email && (
-                <span className="inline-flex items-center gap-2">
-                  <FaEnvelope className="text-xf-accent" />
-                  <span>{organizer.email}</span>
-                </span>
-              )}
-              {organizer?.phone && (
-                <span className="inline-flex items-center gap-2">
-                  <FaPhone className="text-xf-accent" />
-                  <span>{organizer.phone}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Social Links */}
-            {socialLinks.length > 0 && (
-              <div className="flex justify-center items-center gap-4 mb-8">
-                {socialLinks.map(({ id, href, Icon, label }) => (
-                  <a
-                    key={id}
-                    href={href}
-                    target={href.startsWith("mailto:") ? undefined : "_blank"}
-                    rel={href.startsWith("mailto:") ? undefined : "noreferrer"}
-                    className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-900 text-gray-300 hover:text-white hover:bg-xf-accent transition-all duration-300 border border-zinc-800 hover:border-xf-accent"
-                    aria-label={label}
-                    title={label}
-                  >
-                    <Icon size={20} />
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {/* About */}
-            {aboutText && (
-              <div className="mt-8 max-w-2xl mx-auto">
-                <div className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
-                  About
-                </div>
-                <p className="text-gray-300 leading-relaxed text-sm sm:text-base whitespace-pre-line">
-                  {aboutText}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Nav Block */}
+      {belowCoverContent && <div>{belowCoverContent}</div>}
     </div>
   );
 };

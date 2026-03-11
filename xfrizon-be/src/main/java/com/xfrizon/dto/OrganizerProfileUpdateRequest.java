@@ -23,6 +23,12 @@ public class OrganizerProfileUpdateRequest {
 
     private String address;
 
+    private String website;
+
+    private String instagram;
+
+    private String twitter;
+
     private String description;
 
     private String logo;

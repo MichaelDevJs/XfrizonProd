@@ -1,5 +1,6 @@
 import { useContext, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   FaArrowLeft,
   FaCamera,
@@ -70,7 +71,17 @@ export default function OrganizerProfileEdit() {
     currentOrganizer?.address,
   ]);
 
-  // Helper function to construct image URLs
+  const COVER_VIDEO_EXTENSIONS = [
+    ".mp4",
+    ".webm",
+    ".ogg",
+    ".mov",
+    ".m4v",
+    ".avi",
+    ".mkv",
+  ];
+
+  // Helper function to construct image/media URLs
   const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
@@ -81,6 +92,13 @@ export default function OrganizerProfileEdit() {
       return `http://localhost:8081${normalized}`;
     }
     return `http://localhost:8081/api/v1${normalized}`;
+  };
+
+  const isVideoMedia = (value) => {
+    if (!value) return false;
+    const normalized = String(value).toLowerCase();
+    if (normalized.startsWith("data:video/")) return true;
+    return COVER_VIDEO_EXTENSIONS.some((ext) => normalized.includes(ext));
   };
 
   const postUploadWithFallback = async (endpoints, file) => {
@@ -100,26 +118,34 @@ export default function OrganizerProfileEdit() {
 
     const candidates = [];
     endpoints.forEach((endpoint) => {
-      candidates.push(endpoint);
-      if (endpoint.startsWith("/")) {
-        originCandidates.forEach((candidateOrigin) => {
-          if (candidateOrigin) {
-            candidates.push(`${candidateOrigin}${endpoint}`);
-          }
-        });
-      }
+      // Add absolute URL candidates only (no relative paths)
+      originCandidates.forEach((candidateOrigin) => {
+        if (candidateOrigin) {
+          candidates.push(`${candidateOrigin}${endpoint}`);
+        }
+      });
     });
 
     const uniqueCandidates = [...new Set(candidates)];
     let lastError = null;
+
+    // Get auth token from localStorage
+    const token =
+      localStorage.getItem("userToken") || localStorage.getItem("adminToken");
 
     for (const url of uniqueCandidates) {
       try {
         const formDataToSend = new FormData();
         formDataToSend.append("file", file);
 
-        const response = await api.post(url, formDataToSend, {
-          headers: { "Content-Type": "multipart/form-data" },
+        // Use axios directly with auth header
+        const headers = { "Content-Type": "multipart/form-data" };
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await axios.post(url, formDataToSend, {
+          headers,
           timeout: 30000,
         });
 
@@ -165,16 +191,16 @@ export default function OrganizerProfileEdit() {
     }
   };
 
-  // Handle cover photo upload
+  // Handle cover media upload (image or video)
   const handleCoverPhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Cover photo must be smaller than 10MB");
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error("Cover media must be smaller than 20MB");
         return;
       }
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+        toast.error("Please select an image or video file");
         return;
       }
 
@@ -246,18 +272,19 @@ export default function OrganizerProfileEdit() {
     }
   };
 
-  // Upload cover photo
+  // Upload cover media (image or video)
   const uploadCoverPhoto = async () => {
     if (!coverPhotoFile) return null;
 
     try {
-      return await postUploadWithFallback(
-        ["/uploads/cover-photo"],
-        coverPhotoFile,
-      );
+      // Use different endpoints for videos vs images
+      const endpoint = coverPhotoFile.type.startsWith("video/")
+        ? "/uploads/upload"
+        : "/uploads/cover-photo";
+      return await postUploadWithFallback([endpoint], coverPhotoFile);
     } catch (error) {
-      console.error("Cover photo upload failed:", error);
-      throw new Error("Failed to upload cover photo");
+      console.error("Cover media upload failed:", error);
+      throw new Error("Failed to upload cover media");
     }
   };
 
@@ -484,7 +511,7 @@ export default function OrganizerProfileEdit() {
 
             <div className="flex flex-col md:flex-row gap-6 items-center">
               {/* Logo Preview */}
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {logoPreview ? (
                   <img
                     src={getImageUrl(logoPreview) || logoPreview}
@@ -504,7 +531,7 @@ export default function OrganizerProfileEdit() {
                     onError={(e) => (e.target.style.display = "none")}
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center text-white text-4xl font-bold border-2 border-indigo-500/50 shadow-lg">
+                  <div className="w-32 h-32 rounded-lg bg-linear-to-br from-indigo-600 to-indigo-700 flex items-center justify-center text-white text-4xl font-bold border-2 border-indigo-500/50 shadow-lg">
                     {currentOrganizer?.name?.charAt(0)?.toUpperCase() ||
                       currentOrganizer?.firstName?.charAt(0)?.toUpperCase()}
                   </div>
@@ -536,37 +563,57 @@ export default function OrganizerProfileEdit() {
             </div>
           </div>
 
-          {/* Cover Photo Section */}
+          {/* Cover Media Section */}
           <div className="bg-[#1a1a1a] border border-gray-700/50 rounded-lg p-6">
             <h2 className="text-lg font-bold mb-6 flex items-center gap-3">
-              <FaCamera className="text-indigo-500" size={20} /> Cover Photo
+              <FaCamera className="text-indigo-500" size={20} /> Cover Media
             </h2>
 
             <div>
               {coverPhotoPreview ? (
-                <img
-                  src={getImageUrl(coverPhotoPreview) || coverPhotoPreview}
-                  alt="Cover preview"
-                  className="w-full h-40 object-cover rounded-lg border border-indigo-600/50 mb-4"
-                  onError={(e) => (e.target.src = "")}
-                />
+                isVideoMedia(coverPhotoPreview) ? (
+                  <video
+                    src={getImageUrl(coverPhotoPreview) || coverPhotoPreview}
+                    className="w-full h-40 object-cover rounded-lg border border-indigo-600/50 mb-4"
+                    controls
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={getImageUrl(coverPhotoPreview) || coverPhotoPreview}
+                    alt="Cover preview"
+                    className="w-full h-40 object-cover rounded-lg border border-indigo-600/50 mb-4"
+                    onError={(e) => (e.target.src = "")}
+                  />
+                )
               ) : currentOrganizer?.coverPhoto ? (
-                <img
-                  src={getImageUrl(currentOrganizer?.coverPhoto)}
-                  alt="Cover"
-                  className="w-full h-40 object-cover rounded-lg border border-indigo-600/50 mb-4"
-                  onError={(e) => (e.target.style.display = "none")}
-                />
+                isVideoMedia(currentOrganizer?.coverPhoto) ? (
+                  <video
+                    src={getImageUrl(currentOrganizer?.coverPhoto)}
+                    className="w-full h-40 object-cover rounded-lg border border-indigo-600/50 mb-4"
+                    controls
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={getImageUrl(currentOrganizer?.coverPhoto)}
+                    alt="Cover"
+                    className="w-full h-40 object-cover rounded-lg border border-indigo-600/50 mb-4"
+                    onError={(e) => (e.target.style.display = "none")}
+                  />
+                )
               ) : (
-                <div className="w-full h-40 bg-gradient-to-r from-indigo-600/20 to-indigo-900/20 rounded-lg border border-indigo-600/30 mb-4 flex items-center justify-center text-gray-400">
-                  No cover photo
+                <div className="w-full h-40 bg-linear-to-r from-indigo-600/20 to-indigo-900/20 rounded-lg border border-indigo-600/30 mb-4 flex items-center justify-center text-gray-400">
+                  No cover media
                 </div>
               )}
               <input
                 type="file"
                 ref={coverPhotoInputRef}
                 onChange={handleCoverPhotoUpload}
-                accept="image/*"
+                accept="image/*,video/*"
                 className="hidden"
               />
               <button
@@ -575,11 +622,97 @@ export default function OrganizerProfileEdit() {
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-all text-sm"
               >
                 {coverPhotoPreview
-                  ? "Change Cover Photo"
-                  : "Upload Cover Photo"}
+                  ? "Change Cover Media"
+                  : "Upload Cover Media"}
               </button>
+              <p className="mt-2 text-xs text-gray-500">
+                Supports image or video (max 20MB).
+              </p>
             </div>
           </div>
+
+          {/* Branding Media Section */}
+          <div className="bg-[#1a1a1a] border border-gray-700/50 rounded-lg p-6">
+            <h2 className="text-lg font-bold mb-6 flex items-center gap-3">
+              <FaPlus className="text-indigo-500" /> Branding Media
+            </h2>
+
+            {import.meta.env.DEV && (
+              <p className="text-xs text-amber-400 mb-4">
+                DEV: Saved media = {persistedMediaCount}, queued upload ={" "}
+                {mediaUpload.length}, queued videos = {queuedVideoCount}
+              </p>
+            )}
+
+            {/* Upload Button */}
+            <input
+              type="file"
+              ref={mediaInputRef}
+              onChange={handleMediaUpload}
+              accept="image/*,video/*"
+              multiple
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => mediaInputRef.current?.click()}
+              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all text-sm mb-6"
+            >
+              <FaPlus size={14} className="inline mr-2" />
+              Add Media Files (Image or Video)
+            </button>
+
+            {/* Media Preview */}
+            {mediaUpload.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-300">
+                  Files to Upload ({mediaUpload.length})
+                </h3>
+                {mediaUpload.map((media) => (
+                  <div
+                    key={media.id}
+                    className="bg-[#0f0f0f] border border-gray-700/50 rounded-lg p-4"
+                  >
+                    <div className="flex gap-4">
+                      {media.type === "video" ? (
+                        <video
+                          src={media.preview}
+                          className="w-20 h-20 rounded object-cover"
+                          muted
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={media.preview}
+                          alt="media"
+                          className="w-20 h-20 rounded object-cover"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={media.caption}
+                          onChange={(e) =>
+                            updateMediaCaption(media.id, e.target.value)
+                          }
+                          placeholder="Add caption..."
+                          className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700/50 rounded text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/50 mb-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeMediaFile(media.id)}
+                          className="flex items-center gap-2 px-3 py-1 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded text-xs"
+                        >
+                          <FaTrash size={12} /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="bg-[#1a1a1a] border border-gray-700/50 rounded-lg p-6">
             <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
               <span className="text-indigo-500">▪</span>
@@ -682,87 +815,6 @@ export default function OrganizerProfileEdit() {
             </div>
           </div>
 
-          {/* Media Upload Section */}
-          <div className="bg-[#1a1a1a] border border-gray-700/50 rounded-lg p-6">
-            <h2 className="text-lg font-bold mb-6 flex items-center gap-3">
-              <FaPlus className="text-indigo-500" /> Upload Media
-            </h2>
-
-            {import.meta.env.DEV && (
-              <p className="text-xs text-amber-400 mb-4">
-                DEV: Saved media = {persistedMediaCount}, queued upload ={" "}
-                {mediaUpload.length}, queued videos = {queuedVideoCount}
-              </p>
-            )}
-
-            {/* Upload Button */}
-            <input
-              type="file"
-              ref={mediaInputRef}
-              onChange={handleMediaUpload}
-              accept="image/*,video/*"
-              multiple
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => mediaInputRef.current?.click()}
-              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all text-sm mb-6"
-            >
-              <FaPlus size={14} className="inline mr-2" />
-              Add Media Files (Image or Video)
-            </button>
-
-            {/* Media Preview */}
-            {mediaUpload.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-300">
-                  Files to Upload ({mediaUpload.length})
-                </h3>
-                {mediaUpload.map((media) => (
-                  <div
-                    key={media.id}
-                    className="bg-[#0f0f0f] border border-gray-700/50 rounded-lg p-4"
-                  >
-                    <div className="flex gap-4">
-                      {media.type === "video" ? (
-                        <video
-                          src={media.preview}
-                          className="w-20 h-20 rounded object-cover"
-                          muted
-                          playsInline
-                        />
-                      ) : (
-                        <img
-                          src={media.preview}
-                          alt="media"
-                          className="w-20 h-20 rounded object-cover"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          value={media.caption}
-                          onChange={(e) =>
-                            updateMediaCaption(media.id, e.target.value)
-                          }
-                          placeholder="Add caption..."
-                          className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-700/50 rounded text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/50 mb-2"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeMediaFile(media.id)}
-                          className="flex items-center gap-2 px-3 py-1 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded text-xs"
-                        >
-                          <FaTrash size={12} /> Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
           <div className="flex gap-4 justify-end pt-4 border-t border-gray-700/50">
             <button
               type="button"

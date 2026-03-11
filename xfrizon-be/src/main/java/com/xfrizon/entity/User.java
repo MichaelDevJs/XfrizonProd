@@ -57,6 +57,12 @@ public class User {
 
     private String address;
 
+    private String website;
+
+    private String instagram;
+
+    private String twitter;
+
     @Column(length = 500)
     private String bio;
 

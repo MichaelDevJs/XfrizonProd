@@ -324,7 +324,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
               )}
 
               {/* Tickets Section - Clean and Minimal */}
-              <div className="w-full max-w-lg mx-auto space-y-2 bg-black/20 border-r border-b border-emerald-500/70 shadow-sm shadow-black/20 p-2.5 text-xs">
+              <div className="w-full max-w-lg mx-auto mt-12 space-y-2 bg-black/20 border-r border-b border-emerald-500/70 shadow-sm shadow-black/20 p-2.5 text-xs">
                 {(event.ticketTiers && event.ticketTiers.length > 0) ||
                 (event.tickets && event.tickets.length > 0) ? (
                   <div className="space-y-2 mb-5">
@@ -502,7 +502,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                 </div>
               </div>
 
-              <div className="w-full max-w-lg mx-auto mt-6">
+              <div className="w-full max-w-lg mx-auto mt-12">
                 <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
                   Blog Headline
                 </h3>
@@ -513,7 +513,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
               </div>
 
               {organizer && (
-                <div className="w-full max-w-lg mx-auto mt-6">
+                <div className="w-full max-w-lg mx-auto mt-12">
                   <h4 className="text-[11px] font-medium tracking-wide uppercase text-gray-300 mb-2 text-left">
                     About Org
                   </h4>

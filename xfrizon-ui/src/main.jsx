@@ -30,6 +30,7 @@ import EditEvent from "./pages/organizer/EditEvent";
 import PreviewEvent from "./pages/organizer/PreviewEvents";
 import OrganizerProfile from "./pages/organizer/OrganizerProfile";
 import OrganizerProfileEdit from "./pages/organizer/OrganizerProfileEdit";
+import OrganizerProfileConfig from "./pages/organizer/OrganizerProfileConfig";
 import OrganizerLayout from "./pages/organizer/OrganizerLayout";
 import OrganizerMessages from "./pages/organizer/OrganizerMessages";
 import OrganizerFinance from "./pages/organizer/OrganizerFinance";
@@ -172,6 +173,10 @@ function RootApp() {
                 element={<OrganizerProfile />}
               />
               <Route path="profile-edit" element={<OrganizerProfileEdit />} />
+              <Route
+                path="profile-config"
+                element={<OrganizerProfileConfig />}
+              />
               <Route path="messages" element={<OrganizerMessages />} />
               <Route path="finance" element={<OrganizerFinance />} />
               <Route path="support" element={<OrganizerSupport />} />
@@ -192,7 +197,10 @@ function RootApp() {
             >
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="blogs" element={<BlogManagement />} />
-              <Route path="blog-hero-blocks" element={<AdminBlogHeroBlocksPage />} />
+              <Route
+                path="blog-hero-blocks"
+                element={<AdminBlogHeroBlocksPage />}
+              />
               <Route path="users" element={<UsersManagement />} />
               <Route path="organizers" element={<OrganizersManagement />} />
               <Route path="home-blocks" element={<AdminHomeBlocksPage />} />

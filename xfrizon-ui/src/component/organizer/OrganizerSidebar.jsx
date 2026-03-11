@@ -10,6 +10,7 @@ import {
   FaSignOutAlt,
   FaQrcode,
   FaChartLine,
+  FaSlidersH,
 } from "react-icons/fa";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
@@ -68,6 +69,11 @@ const OrganizerSidebar = ({ className = "", onNavigate = () => {} }) => {
       path: organizerProfilePath,
       label: "Profile",
       icon: <FaUser className="w-4 h-4" />,
+    },
+    {
+      path: "/organizer/profile-config",
+      label: "Profile Config",
+      icon: <FaSlidersH className="w-4 h-4" />,
     },
   ];
 

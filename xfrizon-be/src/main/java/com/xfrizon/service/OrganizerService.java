@@ -186,6 +186,15 @@ public class OrganizerService {
         if (updateData.getAddress() != null && !updateData.getAddress().isEmpty()) {
             user.setAddress(updateData.getAddress());
         }
+        if (updateData.getWebsite() != null) {
+            user.setWebsite(updateData.getWebsite());
+        }
+        if (updateData.getInstagram() != null) {
+            user.setInstagram(updateData.getInstagram());
+        }
+        if (updateData.getTwitter() != null) {
+            user.setTwitter(updateData.getTwitter());
+        }
         if (updateData.getDescription() != null && !updateData.getDescription().isEmpty()) {
             user.setBio(updateData.getDescription());
         }
@@ -197,7 +206,7 @@ public class OrganizerService {
             user.setCoverPhoto(updateData.getCoverPhoto());
         }
 
-        if (updateData.getMedia() != null && !updateData.getMedia().isEmpty()) {
+        if (updateData.getMedia() != null) {
             try {
                 user.setMedia(objectMapper.writeValueAsString(updateData.getMedia()));
             } catch (Exception e) {
@@ -375,6 +384,9 @@ public class OrganizerService {
                 .phoneNumber(user.getPhoneNumber())
                 .location(user.getLocation())
                 .address(user.getAddress())
+                .website(user.getWebsite())
+                .instagram(user.getInstagram())
+                .twitter(user.getTwitter())
                 .profilePicture(user.getProfilePicture())
                 .logo(user.getLogo() != null ? user.getLogo() : user.getProfilePicture())
                 .bio(user.getBio() != null ? user.getBio() : "")
