@@ -99,6 +99,9 @@ const OrganizerProfile = () => {
           coverPhoto: mergedData.coverPhoto,
           coverMedia: resolveCoverMedia(mergedData),
           name: mergedData.name || mergedData.firstName || "",
+          website: mergedData.website || response.data?.website || "",
+          instagram: mergedData.instagram || response.data?.instagram || "",
+          twitter: mergedData.twitter || response.data?.twitter || "",
         };
         setOrganizer(normalizedData);
       } else if (currentUser && currentUser?.role === "ORGANIZER") {
@@ -126,6 +129,9 @@ const OrganizerProfile = () => {
             coverPhoto: mergedData.coverPhoto,
             coverMedia: resolveCoverMedia(mergedData),
             name: mergedData.name || mergedData.firstName || "",
+            website: mergedData.website || response.data?.website || "",
+            instagram: mergedData.instagram || response.data?.instagram || "",
+            twitter: mergedData.twitter || response.data?.twitter || "",
           };
           setOrganizer(normalizedData);
         } catch (fetchError) {
@@ -191,6 +197,13 @@ const OrganizerProfile = () => {
     // Ensure path starts with /
     const normalized = path.startsWith("/") ? path : `/${path}`;
     // Don't add /api/v1 to paths that already start with /api or /uploads
+    // In production, use relative paths; in dev, prepend API base
+    if (import.meta.env.PROD) {
+      // Production: return relative path for front-end served with backend
+      return normalized;
+    }
+    
+    // Development: prepend localhost
     if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
       return `http://localhost:8081${normalized}`;
     }
@@ -336,63 +349,12 @@ const OrganizerProfile = () => {
         profileImageError={profileImageError}
         setProfileImageError={setProfileImageError}
         coverImageUrl={coverImageUrl}
-        belowCoverContent={
-          <div className="flex justify-center gap-1.5 sm:gap-4 pt-4 sm:pt-6 pb-1 sm:pb-2">
-            <button
-              className={`pb-1 sm:pb-2 font-bold text-[9px] sm:text-xs transition-colors duration-200 antialiased uppercase tracking-wide ${
-                activeTab === "overview"
-                  ? "text-gray-200 border-b border-red-400 sm:border-b-2"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-              onClick={() => setActiveTab("overview")}
-            >
-              Overview
-            </button>
-            <button
-              className={`pb-1 sm:pb-2 font-bold text-[9px] sm:text-xs transition-colors duration-200 antialiased uppercase tracking-wide ${
-                activeTab === "upcoming"
-                  ? "text-gray-200 border-b border-red-400 sm:border-b-2"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-              onClick={() => setActiveTab("upcoming")}
-            >
-              Upcoming Events
-            </button>
-            <button
-              className={`pb-1 sm:pb-2 font-bold text-[9px] sm:text-xs transition-colors duration-200 antialiased uppercase tracking-wide ${
-                activeTab === "past"
-                  ? "text-gray-200 border-b border-red-400 sm:border-b-2"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-              onClick={() => setActiveTab("past")}
-            >
-              Past Events
-            </button>
-          </div>
-        }
       />
 
       {/* About Org Block */}
       <div className="px-4 sm:px-6 py-6 sm:py-8">
         <div className="w-full max-w-4xl mx-auto">
-          <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
-            About Org
-          </h3>
           <div className="rounded-lg p-4 sm:p-5 text-center">
-            <div className="mb-4 flex justify-center">
-              {!profileImageError && profilePictureUrl ? (
-                <img
-                  src={profilePictureUrl}
-                  alt={organizer?.name || "Organizer"}
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover bg-black shadow-2xl"
-                  onError={() => setProfileImageError(true)}
-                />
-              ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-linear-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white text-3xl sm:text-4xl font-bold tracking-tight shadow-2xl">
-                  {(organizer?.name || organizer?.organizerName || "O")[0]?.toUpperCase()}
-                </div>
-              )}
-            </div>
             <p className="text-sm font-medium text-white">
               {organizer?.name || organizer?.organizerName || "Organizer"}
             </p>
@@ -454,6 +416,38 @@ const OrganizerProfile = () => {
                 organizer?.address && <span className="text-gray-500">|</span>}
               {organizer?.address && <span>{organizer.address}</span>}
             </div>
+          </div>
+          <div className="flex justify-center gap-5 mb-6 pt-6">
+            <button
+              className={`pb-2.5 font-medium text-xs transition-colors duration-200 ${
+                activeTab === "overview"
+                  ? "text-gray-200 border-b-2 border-red-400"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+              onClick={() => setActiveTab("overview")}
+            >
+              Overview
+            </button>
+            <button
+              className={`pb-2.5 font-medium text-xs transition-colors duration-200 ${
+                activeTab === "upcoming"
+                  ? "text-gray-200 border-b-2 border-red-400"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+              onClick={() => setActiveTab("upcoming")}
+            >
+              Upcoming Events
+            </button>
+            <button
+              className={`pb-2.5 font-medium text-xs transition-colors duration-200 ${
+                activeTab === "past"
+                  ? "text-gray-200 border-b-2 border-red-400"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+              onClick={() => setActiveTab("past")}
+            >
+              Past Events
+            </button>
           </div>
         </div>
       </div>
@@ -533,9 +527,6 @@ const OrganizerProfile = () => {
               </div>
 
               <div className="w-full max-w-4xl mx-auto mt-8">
-                <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
-                  About Org
-                </h3>
                 <div className="rounded-lg p-4 sm:p-5 text-center">
                   <div className="mb-4 flex justify-center">
                     {!profileImageError && profilePictureUrl ? (

@@ -26,6 +26,9 @@ export default function UserProfileEdit() {
     // Ensure path starts with /
     const normalized = path.startsWith("/") ? path : `/${path}`;
     // Don't add /api/v1 to paths that already start with /api or /uploads
+    if (import.meta.env.PROD) {
+      return normalized;
+    }
     if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
       return `http://localhost:8081${normalized}`;
     }

@@ -29,18 +29,26 @@ const VIDEO_EXTENSIONS = [
 ];
 
 const getMediaUrl = (path) => {
-  if (!path) return null;
-  if (String(path).startsWith("http") || String(path).startsWith("data:")) {
-    return path;
-  }
-
-  const normalized = String(path).startsWith("/") ? path : `/${path}`;
-  if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
-    return `http://localhost:8081${normalized}`;
-  }
-
-  return `http://localhost:8081/api/v1${normalized}`;
-};
+    if (!path) return null;
+    // If already a full URL or data URL, return as-is
+    if (String(path).startsWith("http") || String(path).startsWith("data:")) {
+      return path;
+    }
+  
+    const normalized = String(path).startsWith("/") ? path : `/${path}`;
+    
+    // In production, use relative paths; in dev, prepend API base
+    if (import.meta.env.PROD) {
+      // Production: return relative path for front-end served with backend
+      return normalized;
+    }
+    
+    // Development: prepend localhost
+    if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
+      return `http://localhost:8081${normalized}`;
+    }
+    return `http://localhost:8081/api/v1${normalized}`;
+  };
 
 const isVideoMedia = (value) => {
   if (!value) return false;
@@ -74,6 +82,8 @@ const OrganizerProfileConfig = () => {
     instagram: currentOrganizer?.instagram || "",
     twitter: currentOrganizer?.twitter || currentOrganizer?.x || "",
   });
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
   useEffect(() => {
     if (!currentOrganizer) return;
@@ -477,13 +487,23 @@ const OrganizerProfileConfig = () => {
       </div>
 
       {/* ─── Live Preview ─── */}
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 overflow-hidden">
-        <p className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-red-300/90 border-b border-zinc-800 bg-zinc-900/60">
-          Live Preview
-        </p>
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 overflow-hidden transition-colors">
+        <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/60 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-300/90">
+            Live Preview
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsPreviewOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-700 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-200 transition-colors hover:border-zinc-500 hover:text-white"
+          >
+            {isPreviewOpen ? "Close Preview" : "Open Preview"}
+          </button>
+        </div>
 
         {/* scrollable preview — hero always visible, rest revealed by scroll */}
-        <div className="overflow-y-auto hide-scrollbar max-h-105 sm:max-h-130 lg:max-h-145">
+        {isPreviewOpen && (
+        <div className="overflow-y-auto hide-scrollbar max-h-105 sm:max-h-130 lg:max-h-145 pointer-events-none">
 
           {/* Cover Slideshow */}
           <div className="relative w-full h-40 sm:h-52 lg:h-60 overflow-hidden bg-black">
@@ -496,39 +516,10 @@ const OrganizerProfileConfig = () => {
             />
           </div>
 
-          {/* Tab Row */}
-          <div className="flex justify-center gap-1.5 sm:gap-4 pt-3 sm:pt-5 pb-1 border-b border-zinc-800">
-            <span className="pb-1 sm:pb-2 font-bold text-[9px] sm:text-xs uppercase tracking-wide text-gray-200 border-b-2 border-red-400">
-              Overview
-            </span>
-            <span className="pb-1 sm:pb-2 font-bold text-[9px] sm:text-xs uppercase tracking-wide text-gray-500">
-              Upcoming Events
-            </span>
-            <span className="pb-1 sm:pb-2 font-bold text-[9px] sm:text-xs uppercase tracking-wide text-gray-500">
-              Past Events
-            </span>
-          </div>
-
           {/* Top About Org (no bio) */}
           <div className="px-3 sm:px-4 py-4 sm:py-6">
             <div className="w-full max-w-4xl mx-auto">
-              <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
-                About Org
-              </h3>
               <div className="rounded-lg p-3 sm:p-4 text-center">
-                <div className="mb-3 flex justify-center">
-                  {logoPreview ? (
-                    <img
-                      src={getMediaUrl(logoPreview) || logoPreview}
-                      alt="Organizer"
-                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover bg-black shadow-2xl"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold tracking-tight shadow-2xl">
-                      {(formData.name || "O")[0]?.toUpperCase()}
-                    </div>
-                  )}
-                </div>
                 <p className="text-sm font-medium text-white">{formData.name || "Organizer"}</p>
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light text-gray-200/90">
                   {formData.location && <span>{formData.location}</span>}
@@ -547,6 +538,19 @@ const OrganizerProfileConfig = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Tab Row */}
+          <div className="flex justify-center gap-5 mb-6 pt-6">
+            <span className="pb-2.5 font-medium text-xs text-gray-200 border-b-2 border-red-400">
+              Overview
+            </span>
+            <span className="pb-2.5 font-medium text-xs text-gray-400">
+              Upcoming Events
+            </span>
+            <span className="pb-2.5 font-medium text-xs text-gray-400">
+              Past Events
+            </span>
           </div>
 
           {/* Overview tab content */}
@@ -594,7 +598,8 @@ const OrganizerProfileConfig = () => {
             </div>
 
           </div>
-        </div>{/* end scroll wrapper */}
+        </div>
+        )}{/* end scroll wrapper */}
       </section>
 
       <form onSubmit={handleSave} className="space-y-4 sm:space-y-6">

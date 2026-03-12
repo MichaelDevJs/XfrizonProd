@@ -18,7 +18,13 @@ const resolveFlyerUrl = (path) => {
   if (path.startsWith("http")) return path;
   // Ensure path starts with /
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  // Don't add /api/v1 to paths that already start with /api or /uploads
+  
+  // In production, use relative paths; in dev, prepend API base
+  if (import.meta.env.PROD) {
+    return normalized;
+  }
+  
+  // Development: prepend localhost
   if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
     return `http://localhost:8081${normalized}`;
   }

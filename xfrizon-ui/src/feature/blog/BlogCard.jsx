@@ -9,6 +9,9 @@ const resolveImage = (path) => {
   if (path.startsWith("data:")) return path;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const normalized = path.startsWith("/") ? path : `/${path}`;
+  if (import.meta.env.PROD) {
+    return normalized;
+  }
   if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
     return `http://localhost:8081${normalized}`;
   }
