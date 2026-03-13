@@ -83,6 +83,24 @@ export default function BlogDetailPage() {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const shareMenuRef = useRef(null);
 
+  // Defensive fallback for blog fields
+  const safeBlog = blog || {};
+  const safeTitle = safeBlog.title || "Untitled Blog";
+  const safeBlocks = Array.isArray(safeBlog.blocks) ? safeBlog.blocks : [];
+  const safeImages = Array.isArray(safeBlog.images) ? safeBlog.images : [];
+  const safeCoverImage = safeBlog.coverImage || (safeImages[0]?.src || "");
+  const safeExcerpt = safeBlog.excerpt || safeBlog.content || "No description available.";
+  const safeCategory = safeBlog.category || "General";
+  const safeAuthor = safeBlog.author || "Unknown";
+  const safePublishedAt = safeBlog.publishedAt || safeBlog.createdAt || "";
+  const safeTitleStyle = typeof safeBlog.titleStyle === "object" && safeBlog.titleStyle !== null ? safeBlog.titleStyle : {};
+
+  // Log blog data for debugging
+  if (typeof window !== "undefined" && window.location && window.location.hostname !== "localhost") {
+    // Only log in production
+    console.log("BlogDetailPage blog data:", safeBlog);
+  }
+
   const getAbsoluteMediaUrl = (path) => {
     if (!path) return "";
     if (String(path).startsWith("http")) return String(path);
@@ -851,7 +869,7 @@ export default function BlogDetailPage() {
           </div>
         </div>
         <div className="max-w-4xl mx-auto px-6 py-12 text-center">
-          <p className="text-gray-400">{error || "Blog not found"}</p>
+          <p className="text-gray-400">{error || "Blog not found or invalid data"}</p>
         </div>
       </div>
     );
@@ -859,9 +877,9 @@ export default function BlogDetailPage() {
 
   // Extract featured image from blocks or images array
   let featuredImage = null;
-  if (blog.blocks && blog.blocks.length > 0) {
+  if (safeBlocks.length > 0) {
     // Look for first image block
-    const imageBlock = blog.blocks.find(
+    const imageBlock = safeBlocks.find(
       (b) => b.type === "image" && b.images && b.images.length > 0,
     );
     if (imageBlock) {
@@ -869,8 +887,8 @@ export default function BlogDetailPage() {
     }
   }
   // Fallback to images array
-  if (!featuredImage && blog.images && blog.images.length > 0) {
-    featuredImage = blog.images[0].src;
+  if (!featuredImage && safeImages.length > 0) {
+    featuredImage = safeImages[0].src;
   }
 
   // Build content from blocks
@@ -1187,13 +1205,14 @@ export default function BlogDetailPage() {
     });
   };
 
-  const heroImage = blog.coverImage || featuredImage;
+  // Declare heroImage only once using defensive fallback
+  const heroImage = safeCoverImage || featuredImage;
   const showHero = Boolean(heroImage);
 
   useSeo({
-    title: blog?.title ? `${blog.title} | Xfrizon Blog` : "Xfrizon Blog",
+    title: safeTitle ? `${safeTitle} | Xfrizon Blog` : "Xfrizon Blog",
     description:
-      (blog?.excerpt || shareSnippet || "Read the latest stories on Xfrizon.").slice(0, 160),
+      (safeExcerpt || shareSnippet || "Read the latest stories on Xfrizon.").slice(0, 160),
     image: getAbsoluteMediaUrl(heroImage),
     type: "article",
     url:
@@ -1202,18 +1221,18 @@ export default function BlogDetailPage() {
         : `https://xfrizon.up.railway.app/blog/${id}`,
     keywords:
       "music blog, culture blog, nightlife, events, article, Xfrizon",
-    jsonLd: blog
+    jsonLd: safeBlog && safeTitle
       ? {
           "@context": "https://schema.org",
           "@type": "BlogPosting",
-          headline: blog.title,
-          description: (blog.excerpt || shareSnippet || "").slice(0, 200),
+          headline: safeTitle,
+          description: (safeExcerpt || shareSnippet || "").slice(0, 200),
           image: getAbsoluteMediaUrl(heroImage),
-          datePublished: blog.publishedAt || blog.createdAt,
-          dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
+          datePublished: safePublishedAt,
+          dateModified: safeBlog.updatedAt || safePublishedAt,
           author: {
             "@type": "Person",
-            name: blog.author || "Xfrizon",
+            name: safeAuthor,
           },
           publisher: {
             "@type": "Organization",
