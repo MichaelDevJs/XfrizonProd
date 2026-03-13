@@ -11,9 +11,7 @@ export default function UnauthorizedRedirectListener() {
         event?.detail?.loginPath ||
         (location.pathname.startsWith("/admin")
           ? "/admin-login"
-          : location.pathname.startsWith("/organizer")
-            ? "/organizer/login"
-            : "/auth/login");
+          : "/auth/login");
 
       if (location.pathname === loginPath) return;
 

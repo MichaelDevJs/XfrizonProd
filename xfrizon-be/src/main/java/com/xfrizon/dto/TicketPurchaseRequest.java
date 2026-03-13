@@ -43,4 +43,8 @@ public class TicketPurchaseRequest {
 
     @JsonProperty("currency")
     private String currency;
+
+    @JsonProperty("referral_code")
+    @JsonAlias({"referralCode", "ref"})
+    private String referralCode;
 }

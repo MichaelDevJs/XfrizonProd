@@ -19,17 +19,12 @@ public class FileUploadUtil {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private static final String[] ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"};
 
     public String uploadFlyerImage(MultipartFile file) throws IOException {
         // Validate file
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
-        }
-
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds 10MB limit");
         }
 
         String originalFilename = file.getOriginalFilename();

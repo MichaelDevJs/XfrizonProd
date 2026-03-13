@@ -8,9 +8,13 @@ import {
   FaHeart,
   FaRegHeart,
   FaReply,
+  FaInstagram,
+  FaShareAlt,
+  FaWhatsapp,
 } from "react-icons/fa";
 import { LuSendHorizontal } from "react-icons/lu";
 import blogApi from "../../../api/blogApi";
+import useSeo from "../../../hooks/useSeo";
 
 function ReplyBlock({ commentId, value, submittingId, onChange, onSubmit, onClose }) {
   const ref = React.useRef(null);
@@ -31,24 +35,24 @@ function ReplyBlock({ commentId, value, submittingId, onChange, onSubmit, onClos
   }, [onClose]);
 
   return (
-    <div ref={ref} className="mt-3 border border-gray-700 bg-[#1f1f1f] p-3">
-      <textarea
-        value={value}
-        onChange={(e) => onChange(commentId, e.target.value)}
-        rows={2}
-        maxLength={1000}
-        placeholder="Write a reply..."
-        autoFocus
-        className="w-full bg-[#2a2a2a] border border-gray-600 text-gray-100 px-3 py-2 text-sm focus:outline-none focus:border-red-500"
-      />
-      <div className="mt-2 flex justify-end">
+    <div ref={ref} className="mt-3">
+      <div className="flex items-center gap-2 border-b border-gray-600">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(commentId, e.target.value)}
+          rows={1}
+          maxLength={1000}
+          placeholder="Write a reply..."
+          autoFocus
+          className="flex-1 bg-transparent border-0 text-gray-100 px-1 pb-1.5 pt-0 text-sm focus:outline-none resize-none leading-tight"
+        />
         <button
           type="button"
           onClick={() => onSubmit(commentId)}
           disabled={submittingId === commentId || !value.trim()}
-          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[11px] uppercase tracking-wider rounded"
+          className="inline-flex items-center justify-center pb-1.5 text-red-400 hover:text-red-300 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {submittingId === commentId ? "Posting..." : "Reply"}
+          {submittingId === commentId ? "Posting..." : <LuSendHorizontal className="text-sm" />}
         </button>
       </div>
     </div>
@@ -74,6 +78,20 @@ export default function BlogDetailPage() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const shareMenuRef = useRef(null);
+
+  const getAbsoluteMediaUrl = (path) => {
+    if (!path) return "";
+    if (String(path).startsWith("http")) return String(path);
+    const normalized = String(path).startsWith("/") ? String(path) : `/${String(path)}`;
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${normalized}`;
+    }
+    return `https://xfrizon.up.railway.app${normalized}`;
+  };
 
   useEffect(() => {
     fetchBlogDetail();
@@ -88,6 +106,16 @@ export default function BlogDetailPage() {
     if (!token) return;
     fetchCommentNotifications();
   }, [id]);
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target)) {
+        setShareMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   // Load embed scripts and process embeds after blog data is loaded
   useEffect(() => {
@@ -444,6 +472,249 @@ export default function BlogDetailPage() {
     } catch {
       return null;
     }
+  };
+
+  const shareSnippetSource =
+    (blog?.excerpt || "").trim() ||
+    String(blog?.content || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const shareSnippet = shareSnippetSource
+    ? shareSnippetSource.length > 150
+      ? `${shareSnippetSource.slice(0, 150).trim()}...`
+      : shareSnippetSource
+    : "Tap to read the full story on Xfrizon.";
+
+  const createShareCardBlob = async () => {
+    const width = 1080;
+    const height = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#0f0f0f");
+    gradient.addColorStop(0.55, "#1d1d1d");
+    gradient.addColorStop(1, "#111111");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    const imageUrl = heroImage || blog.coverImage || null;
+    if (imageUrl) {
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const loadedImg = new Image();
+          loadedImg.crossOrigin = "anonymous";
+          loadedImg.onload = () => resolve(loadedImg);
+          loadedImg.onerror = reject;
+          loadedImg.src = imageUrl;
+        });
+
+        const topHeight = 1040;
+        const scale = Math.max(width / img.width, topHeight / img.height);
+        const drawWidth = img.width * scale;
+        const drawHeight = img.height * scale;
+        const dx = (width - drawWidth) / 2;
+        const dy = (topHeight - drawHeight) / 2;
+        ctx.drawImage(img, dx, dy, drawWidth, drawHeight);
+
+        // Dark overlay for contrast
+        ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+        ctx.fillRect(0, 0, width, topHeight);
+
+      } catch {
+        // Continue with gradient background if image loading fails.
+      }
+    }
+
+    // XF Mag stamp on share card (always render)
+    const stampX = width - 330;
+    const stampY = 80;
+    const stampW = 240;
+    const stampH = 82;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(stampX, stampY, stampW, stampH, 14);
+      ctx.fill();
+    } else {
+      ctx.fillRect(stampX, stampY, stampW, stampH);
+    }
+    ctx.font = "700 44px Arial";
+    ctx.fillStyle = "#ef4444";
+    ctx.fillText("XF", stampX + 22, stampY + 53);
+    ctx.font = "600 32px Arial";
+    ctx.fillStyle = "#f3f4f6";
+    ctx.fillText("Mag", stampX + 98, stampY + 52);
+
+    // Lower card area
+    ctx.fillStyle = "rgba(18, 18, 18, 0.92)";
+    ctx.fillRect(60, 980, 960, 830);
+
+    // Accent line
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(60, 980, 960, 12);
+
+    // Category
+    ctx.fillStyle = "#f87171";
+    ctx.font = "600 36px Arial";
+    ctx.fillText((blog.category || "BLOG").toUpperCase(), 100, 1065);
+
+    // Title text wrapping
+    const title = blog.title || "Xfrizon Blog";
+    ctx.fillStyle = "#f3f4f6";
+    ctx.font = "700 68px Arial";
+    const words = title.split(" ");
+    const lines = [];
+    let line = "";
+    const maxWidth = 880;
+    words.forEach((word) => {
+      const testLine = line ? `${line} ${word}` : word;
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = testLine;
+      }
+    });
+    if (line) lines.push(line);
+
+    let y = 1150;
+    lines.slice(0, 4).forEach((titleLine) => {
+      ctx.fillText(titleLine, 100, y);
+      y += 86;
+    });
+
+    // Snippet text wrapping
+    ctx.fillStyle = "#d1d5db";
+    ctx.font = "500 30px Arial";
+    const snippetWords = shareSnippet.split(" ");
+    const snippetLines = [];
+    let snippetLine = "";
+    snippetWords.forEach((word) => {
+      const testLine = snippetLine ? `${snippetLine} ${word}` : word;
+      if (ctx.measureText(testLine).width > maxWidth && snippetLine) {
+        snippetLines.push(snippetLine);
+        snippetLine = word;
+      } else {
+        snippetLine = testLine;
+      }
+    });
+    if (snippetLine) snippetLines.push(snippetLine);
+
+    let snippetY = 1460;
+    snippetLines.slice(0, 3).forEach((lineText) => {
+      ctx.fillText(lineText, 100, snippetY);
+      snippetY += 46;
+    });
+
+    // Details row
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "500 34px Arial";
+    const dateText = formatDate(blog.publishedAt || blog.createdAt);
+    const authorText = blog.author || "Unknown";
+    ctx.fillText(dateText, 100, 1635);
+    ctx.fillText(`by ${authorText}`, 100, 1685);
+
+    // Footer brand + CTA
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 38px Arial";
+    ctx.fillText("XF EVENTS", 100, 1760);
+    ctx.fillStyle = "#f87171";
+    ctx.font = "600 34px Arial";
+    ctx.fillText("Read full story on xfrizon", 100, 1810);
+
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Unable to create share card"));
+      }, "image/png");
+    });
+  };
+
+  const handleShareToInstagramStory = async () => {
+    try {
+      setShareBusy(true);
+      setShareStatus("");
+      const blob = await createShareCardBlob();
+      const file = new File([blob], `xfrizon-blog-${id}.png`, {
+        type: "image/png",
+      });
+
+      const shareText = `${blog.title} - ${window.location.href}`;
+      const canShareFiles =
+        typeof navigator !== "undefined" &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] });
+
+      if (canShareFiles && navigator.share) {
+        await navigator.share({
+          title: blog.title,
+          text: shareText,
+          files: [file],
+        });
+        setShareStatus("Opened share sheet. Choose Instagram to post your story.");
+        return;
+      }
+
+      // Fallback for browsers that cannot share files
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `xfrizon-blog-${id}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+      } catch {
+        // Clipboard may be unavailable in some browsers.
+      }
+
+      setShareStatus(
+        "Story card downloaded. Upload it in Instagram Story and paste the copied blog link.",
+      );
+    } catch (err) {
+      setShareStatus("Unable to create story card right now. Please try again.");
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const handleSharePost = async () => {
+    const url = window.location.href;
+    const text = `${blog.title}\n${shareSnippet}`;
+
+    try {
+      setShareStatus("");
+      if (navigator.share) {
+        await navigator.share({
+          title: blog.title,
+          text,
+          url,
+        });
+        setShareStatus("Post link shared.");
+        return;
+      }
+
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setShareStatus("Post details copied. Paste anywhere to share.");
+    } catch {
+      setShareStatus("Unable to share post right now.");
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    const url = window.location.href;
+    const text = `${blog.title}\n${shareSnippet}\n${url}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    setShareStatus("Opened WhatsApp share.");
   };
 
   const renderCommentItem = (comment, depth = 0) => {
@@ -919,15 +1190,59 @@ export default function BlogDetailPage() {
   const heroImage = blog.coverImage || featuredImage;
   const showHero = Boolean(heroImage);
 
+  useSeo({
+    title: blog?.title ? `${blog.title} | Xfrizon Blog` : "Xfrizon Blog",
+    description:
+      (blog?.excerpt || shareSnippet || "Read the latest stories on Xfrizon.").slice(0, 160),
+    image: getAbsoluteMediaUrl(heroImage),
+    type: "article",
+    url:
+      typeof window !== "undefined"
+        ? window.location.href
+        : `https://xfrizon.up.railway.app/blog/${id}`,
+    keywords:
+      "music blog, culture blog, nightlife, events, article, Xfrizon",
+    jsonLd: blog
+      ? {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: blog.title,
+          description: (blog.excerpt || shareSnippet || "").slice(0, 200),
+          image: getAbsoluteMediaUrl(heroImage),
+          datePublished: blog.publishedAt || blog.createdAt,
+          dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
+          author: {
+            "@type": "Person",
+            name: blog.author || "Xfrizon",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Xfrizon",
+          },
+          mainEntityOfPage:
+            typeof window !== "undefined"
+              ? window.location.href
+              : `https://xfrizon.up.railway.app/blog/${id}`,
+        }
+      : null,
+  });
+
   return (
     <div className="bg-[#1e1e1e] min-h-screen">
       {showHero && (
-        <section className="relative w-full h-130 bg-black overflow-hidden -mt-20">
+        <section className="relative w-full h-130 bg-black -mt-20">
           <img
             src={heroImage}
             alt={blog.title}
             className="w-full h-full object-cover"
           />
+          <div
+            className="absolute top-24 left-6 md:top-20 z-40 pointer-events-none text-shadow"
+            style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif" }}
+          >
+            <span className="text-red-500 font-extrabold text-lg tracking-[0.06em]">XF</span>
+            <span className="text-white font-semibold text-lg tracking-[0.06em] ml-1">Mag</span>
+          </div>
           <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/45 to-black/10"></div>
           <div className="absolute inset-0">
             <div className="max-w-5xl mx-auto px-6 h-full flex items-end pb-12">
@@ -963,8 +1278,53 @@ export default function BlogDetailPage() {
                     {blog.author || "Unknown"}
                   </span>
                   {blog.location && <span>{blog.location}</span>}
+                  <div className="relative" ref={shareMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShareMenuOpen((prev) => !prev)}
+                      className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-gray-300/50 text-gray-100 hover:text-white hover:border-red-300 transition-colors"
+                      aria-label="Share blog"
+                    >
+                      <FaShareAlt className="text-[11px]" />
+                    </button>
+
+                    {shareMenuOpen && (
+                      <div className="absolute right-0 bottom-full mb-2 w-56 rounded-lg border border-gray-800 bg-[#1b1b1b] shadow-xl z-60 overflow-hidden normal-case tracking-normal">
+                        <button
+                          type="button"
+                          onClick={handleSharePost}
+                          className="w-full px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-[#242424] inline-flex items-center gap-2"
+                        >
+                          <FaShareAlt className="text-[12px]" />
+                          Share Post
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleShareToInstagramStory}
+                          disabled={shareBusy}
+                          className="w-full px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-[#242424] disabled:opacity-60 inline-flex items-center gap-2"
+                        >
+                          <FaInstagram className="text-[12px]" />
+                          {shareBusy ? "Preparing Story..." : "Share Story"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleShareWhatsApp}
+                          className="w-full px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-[#242424] inline-flex items-center gap-2"
+                        >
+                          <FaWhatsapp className="text-[12px]" />
+                          WhatsApp
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   {blog.genre && <span>{blog.genre}</span>}
                 </div>
+                {shareStatus && (
+                  <p className="mt-3 text-[11px] normal-case tracking-normal text-gray-300">
+                    {shareStatus}
+                  </p>
+                )}
               </div>
             </div>
           </div>

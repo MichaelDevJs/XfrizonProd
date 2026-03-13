@@ -260,11 +260,6 @@ const OrganizerProfileConfig = () => {
       toast.error("Logo must be an image file");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Logo must be smaller than 5MB");
-      return;
-    }
-
     setLogoFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setLogoPreview(reader.result);
@@ -277,10 +272,6 @@ const OrganizerProfileConfig = () => {
     files.forEach((file) => {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         toast.error(`${file.name}: must be an image or video`);
-        return;
-      }
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error(`${file.name}: must be smaller than 20MB`);
         return;
       }
       const reader = new FileReader();
@@ -310,10 +301,6 @@ const OrganizerProfileConfig = () => {
     files.forEach((file) => {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         toast.error(`${file.name}: must be an image or video`);
-        return;
-      }
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error(`${file.name}: must be smaller than 20MB`);
         return;
       }
 
@@ -655,9 +642,7 @@ const OrganizerProfileConfig = () => {
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
                       Cover Slides
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Image or video, max 20MB each.
-                    </p>
+                    <p className="mt-1 text-xs text-gray-500">Image or video.</p>
                   </div>
                 </div>
 
@@ -805,12 +790,11 @@ const OrganizerProfileConfig = () => {
           </div>
 
           <div className="bg-black/20 p-5">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="mb-3 flex gap-2 overflow-x-auto hide-scrollbar pb-1">
               {galleryItems.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="relative overflow-hidden bg-black"
-                  style={{ aspectRatio: "4/3" }}
+                  className="relative h-24 w-44 shrink-0 overflow-hidden border border-zinc-700 bg-black sm:h-28 sm:w-52"
                 >
                   {item.type === "video" ? (
                     <video
@@ -826,6 +810,9 @@ const OrganizerProfileConfig = () => {
                       className="h-full w-full object-cover"
                     />
                   )}
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                    {idx + 1}
+                  </span>
                   <button
                     type="button"
                     onClick={() => removeGalleryItem(item.id)}
@@ -840,8 +827,7 @@ const OrganizerProfileConfig = () => {
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                style={{ aspectRatio: "4/3" }}
-                className="flex flex-col items-center justify-center text-zinc-500 transition hover:text-red-400"
+                className="flex h-24 w-44 shrink-0 flex-col items-center justify-center border border-dashed border-zinc-600 text-zinc-500 transition hover:border-red-500 hover:text-red-400 sm:h-28 sm:w-52"
               >
                 <FaPlus size={16} />
                 <span className="mt-1 text-xs">Add</span>
@@ -857,9 +843,7 @@ const OrganizerProfileConfig = () => {
               className="hidden"
             />
 
-            <p className="mt-3 text-xs text-gray-500">
-              Add organizer gallery images/videos (max 20MB each).
-            </p>
+            <p className="mt-3 text-xs text-gray-500">Add organizer gallery images/videos.</p>
           </div>
         </section>
 

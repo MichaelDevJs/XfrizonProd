@@ -24,6 +24,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
+    private final ReferralConversionService referralConversionService;
 
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
@@ -56,6 +57,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
         // Generate JWT token
         String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getId());
@@ -104,6 +106,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
         // Generate JWT token
         String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getId());
@@ -161,6 +164,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
         // Generate JWT token
         String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getId());

@@ -138,13 +138,17 @@ export default function BlogsSection() {
 
           <div className="max-w-4xl mx-auto">
             {blogHeroSlideshow.length > 0 ? (
-              <HeroSlideshow items={blogHeroSlideshow} />
+              <HeroSlideshow items={blogHeroSlideshow} showXfMag />
             ) : (
               <Link
                 to={`/blog/${headlineBlog.id}`}
                 className="group block relative overflow-hidden"
               >
                 <div className="relative w-full aspect-video sm:aspect-2/1 lg:aspect-3/1 overflow-hidden">
+                  <div className="absolute left-5 sm:left-6 top-3 z-20 pointer-events-none">
+                    <span className="text-red-500 font-extrabold text-base tracking-wide">XF</span>
+                    <span className="text-white font-semibold text-sm tracking-wide ml-1">Mag</span>
+                  </div>
                   {headlineBlog.coverImage ? (
                     <img
                       src={headlineBlog.coverImage}
@@ -181,19 +185,19 @@ export default function BlogsSection() {
 
           <div className="max-w-4xl mx-auto xl:max-w-none xl:mx-0">
             <div className="flex gap-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory md:block md:space-y-4 md:overflow-visible">
-            {latestBlogs.length > 0 ? (
-              latestBlogs.map((blog) => (
-                <div key={blog.id} className="min-w-full max-w-full shrink-0 snap-start md:min-w-0">
-                  <Link to={`/blog/${blog.id}`} className="block cursor-pointer">
-                    <BlogCard blog={blog} />
-                  </Link>
+              {latestBlogs.length > 0 ? (
+                latestBlogs.map((blog) => (
+                  <div key={blog.id} className="min-w-full max-w-full shrink-0 snap-start md:min-w-0">
+                    <Link to={`/blog/${blog.id}`} className="block cursor-pointer">
+                      <BlogCard blog={blog} />
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-zinc-500 text-sm border border-zinc-800">
+                  No more blogs yet
                 </div>
-              ))
-            ) : (
-              <div className="py-8 text-center text-zinc-500 text-sm border border-zinc-800">
-                No more blogs yet
-              </div>
-            )}
+              )}
             </div>
           </div>
 

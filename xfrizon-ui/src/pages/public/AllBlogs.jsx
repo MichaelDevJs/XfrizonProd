@@ -5,6 +5,7 @@ import BlogCard from "../../feature/blog/BlogCard";
 import HeroSlideshow from "../../component/HeroSlideshow/HeroSlideshow";
 import api from "../../api/axios";
 import { FaSearch } from "react-icons/fa";
+import useSeo from "../../hooks/useSeo";
 
 export default function AllBlogs() {
   const BLOGS_PER_PAGE = 10;
@@ -311,6 +312,41 @@ export default function AllBlogs() {
     if (filters.sortBy !== "newest") count += 1;
     return count;
   }, [filters]);
+
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: paginatedBlogs.map((blog, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url:
+        typeof window !== "undefined"
+          ? `${window.location.origin}/blog/${blog.id}`
+          : `https://xfrizon.up.railway.app/blog/${blog.id}`,
+      name: blog.title,
+    })),
+  };
+
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Xfrizon",
+    url:
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://xfrizon.up.railway.app",
+  };
+
+  useSeo({
+    title: "Xfrizon Blogs | Music, Events and Culture",
+    description: `Browse ${filteredBlogs.length || blogs.length || ""} blogs on music, events, nightlife and culture from Xfrizon.`,
+    keywords: "music blog, event blog, nightlife blog, culture, Xfrizon blogs",
+    url:
+      typeof window !== "undefined"
+        ? window.location.href
+        : "https://xfrizon.up.railway.app/blogs",
+    jsonLd: [organizationJsonLd, itemListJsonLd],
+  });
 
   return (
     <div className="min-h-screen bg-[#1e1e1e] py-8 md:py-12">

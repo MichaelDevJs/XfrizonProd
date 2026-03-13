@@ -61,12 +61,6 @@ export default function UserProfileEdit() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Photo must be smaller than 5MB");
-        return;
-      }
-
       // Validate file type
       if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file");
@@ -85,11 +79,6 @@ export default function UserProfileEdit() {
   const handleCoverPhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Cover photo must be smaller than 10MB");
-        return;
-      }
-
       if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file");
         return;
@@ -309,9 +298,7 @@ export default function UserProfileEdit() {
               accept="image/*"
               className="hidden"
             />
-            <p className="text-xs text-gray-500 p-3">
-              Recommended size: 1200x400px. Max 10MB
-            </p>
+            <p className="text-xs text-gray-500 p-3">Recommended size: 1200x400px.</p>
           </div>
 
           {/* Profile Photo & Basic Info */}
@@ -355,7 +342,7 @@ export default function UserProfileEdit() {
                   <FaCamera size={18} />
                 </button>
                 <p className="text-xs text-gray-500 mt-2 hidden md:block">
-                  JPG, PNG, or GIF. Max 5MB
+                  JPG, PNG, or GIF.
                 </p>
               </div>
             </div>

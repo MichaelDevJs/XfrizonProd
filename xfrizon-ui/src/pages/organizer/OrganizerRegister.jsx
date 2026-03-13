@@ -21,12 +21,6 @@ const OrganizerRegister = () => {
   const handleLogoSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Logo size must be less than 5MB");
-        return;
-      }
-
       // Validate file type
       if (!file.type.startsWith("image/")) {
         toast.error("Please upload a valid image file");
@@ -93,7 +87,7 @@ const OrganizerRegister = () => {
 
       toast.success("Registration successful! Redirecting to login...");
       setTimeout(() => {
-        navigate("/organizer/login");
+        navigate("/auth/login");
       }, 1500);
     } catch (err) {
       setError(err.response?.data || "Registration failed");
@@ -155,7 +149,7 @@ const OrganizerRegister = () => {
             </label>
           </div>
           <p className="text-xs text-gray-500 font-light">
-            PNG, JPG or GIF (max 5MB). Square format recommended.
+            PNG, JPG or GIF. Square format recommended.
           </p>
         </div>
 
@@ -197,7 +191,7 @@ const OrganizerRegister = () => {
         <p className="text-center text-gray-400 text-sm font-light">
           Already have an account?{" "}
           <a
-            href="/organizer/login"
+            href="/auth/login"
             className="text-red-500 hover:text-red-400"
           >
             Login here

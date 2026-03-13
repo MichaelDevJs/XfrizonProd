@@ -7,11 +7,6 @@ export default function AudioManager({ formData, setFormData }) {
   const handleAudioUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      if (file.size > 200 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 200MB)`);
-        return;
-      }
-
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData((prev) => ({

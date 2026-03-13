@@ -61,12 +61,6 @@ export default function Register() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Photo must be smaller than 5MB");
-        return;
-      }
-
       // Validate file type
       if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file");

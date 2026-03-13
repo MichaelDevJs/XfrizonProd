@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const HeroSlideshow = ({ items = [], title = "", subtitle = "" }) => {
+const HeroSlideshow = ({ items = [], title = "", subtitle = "", showXfMag = false }) => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -181,6 +181,13 @@ const HeroSlideshow = ({ items = [], title = "", subtitle = "" }) => {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
+      {showXfMag && (
+        <div className="absolute left-4 sm:left-6 top-4 z-20 pointer-events-none">
+          <span className="text-red-500 font-extrabold text-base tracking-wide">XF</span>
+          <span className="text-white font-semibold text-sm tracking-wide ml-1">Mag</span>
+        </div>
+      )}
+
       {/* Slideshow Items */}
       <div className="relative w-full h-full">
         {slideItems.map((item, index) => (

@@ -1,5 +1,7 @@
 package com.xfrizon.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -17,6 +19,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -28,9 +31,44 @@ public class UploadController {
     @Value("${upload.directory:uploads/}")
     private String uploadDir;
 
+    @Value("${cloudinary.enabled:false}")
+    private boolean cloudinaryEnabled;
+
+    @Value("${cloudinary.cloud-name:}")
+    private String cloudinaryCloudName;
+
+    @Value("${cloudinary.api-key:}")
+    private String cloudinaryApiKey;
+
+    @Value("${cloudinary.api-secret:}")
+    private String cloudinaryApiSecret;
+
+    @Value("${cloudinary.folder:xfrizon}")
+    private String cloudinaryFolder;
+
+    private Cloudinary cloudinary;
+
     @PostConstruct
     public void init() {
         try {
+            if (cloudinaryEnabled
+                    && !cloudinaryCloudName.isBlank()
+                    && !cloudinaryApiKey.isBlank()
+                    && !cloudinaryApiSecret.isBlank()) {
+                this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+                        "cloud_name", cloudinaryCloudName,
+                        "api_key", cloudinaryApiKey,
+                        "api_secret", cloudinaryApiSecret,
+                        "secure", true
+                ));
+                log.info("Cloudinary uploads enabled for cloud '{}'", cloudinaryCloudName);
+                return;
+            }
+
+            if (cloudinaryEnabled) {
+                log.warn("Cloudinary enabled but credentials are incomplete. Falling back to local disk uploads.");
+            }
+
             File uploadDirectory = new File(uploadDir);
             if (!uploadDirectory.exists()) {
                 boolean created = uploadDirectory.mkdirs();
@@ -48,38 +86,62 @@ public class UploadController {
         }
     }
 
-    /**
-     * Upload a file (e.g., event flyer)
-     */
-    @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
-            }
+    private boolean isCloudinaryActive() {
+        return cloudinary != null;
+    }
 
-            // Create upload directory if it doesn't exist
+    private ResponseEntity<?> uploadToCloudinary(MultipartFile file, String prefix) {
+        try {
+            String originalFilename = file.getOriginalFilename();
+            String publicId = prefix + "_" + UUID.randomUUID();
+            Map<?, ?> result = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "resource_type", "auto",
+                            "folder", cloudinaryFolder,
+                            "public_id", publicId,
+                            "use_filename", true,
+                            "unique_filename", true,
+                            "filename_override", originalFilename
+                    )
+            );
+
+            String secureUrl = String.valueOf(result.get("secure_url"));
+            Object publicIdValue = result.get("public_id");
+            String finalName = String.valueOf(publicIdValue != null ? publicIdValue : publicId);
+
+            log.info("File uploaded to Cloudinary successfully: {}", finalName);
+            return ResponseEntity.ok().body(new UploadResponse(
+                    secureUrl,
+                    finalName,
+                    file.getSize()
+            ));
+        } catch (Exception e) {
+            log.error("Cloudinary upload failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload file to Cloudinary: " + e.getMessage());
+        }
+    }
+
+    private ResponseEntity<?> uploadToLocalDisk(MultipartFile file, String prefix) {
+        try {
             File uploadDirectory = new File(uploadDir);
             if (!uploadDirectory.exists()) {
                 uploadDirectory.mkdirs();
                 log.info("Created upload directory: {}", uploadDirectory.getAbsolutePath());
             }
 
-            // Generate unique filename
             String originalFilename = file.getOriginalFilename();
-            String filename = UUID.randomUUID() + "_" + originalFilename;
+            String filename = prefix + "_" + UUID.randomUUID() + "_" + originalFilename;
             Path filePath = Paths.get(uploadDirectory.getAbsolutePath(), filename);
-
-            // Save file
             Files.copy(file.getInputStream(), filePath);
 
             log.info("File uploaded successfully: {} at {}", filename, filePath.toAbsolutePath());
-
-                return ResponseEntity.ok().body(new UploadResponse(
+            return ResponseEntity.ok().body(new UploadResponse(
                     "/uploads/" + filename,
                     filename,
                     file.getSize()
-                ));
+            ));
         } catch (IOException e) {
             log.error("Error uploading file", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -87,49 +149,39 @@ public class UploadController {
         }
     }
 
+    private ResponseEntity<?> uploadWithStorage(MultipartFile file, String prefix) {
+        if (isCloudinaryActive()) {
+            return uploadToCloudinary(file, prefix);
+        }
+        return uploadToLocalDisk(file, prefix);
+    }
+
+    /**
+     * Upload a file (e.g., event flyer)
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
+        }
+        return uploadWithStorage(file, "file");
+    }
+
     /**
      * Upload organizer logo/profile picture
      */
     @PostMapping("/organizer-logo")
     public ResponseEntity<?> uploadOrganizerLogo(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
-            }
-
-            // Validate file is an image
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Please upload a valid image file");
-            }
-
-            // Create upload directory if it doesn't exist
-            File uploadDirectory = new File(uploadDir);
-            if (!uploadDirectory.exists()) {
-                uploadDirectory.mkdirs();
-                log.info("Created upload directory: {}", uploadDirectory.getAbsolutePath());
-            }
-
-            // Generate unique filename with 'logo' prefix
-            String originalFilename = file.getOriginalFilename();
-            String filename = "logo_" + UUID.randomUUID() + "_" + originalFilename;
-            Path filePath = Paths.get(uploadDirectory.getAbsolutePath(), filename);
-
-            // Save file
-            Files.copy(file.getInputStream(), filePath);
-
-            log.info("Organizer logo uploaded successfully: {} at {}", filename, filePath.toAbsolutePath());
-
-                return ResponseEntity.ok().body(new UploadResponse(
-                    "/uploads/" + filename,
-                    filename,
-                    file.getSize()
-                ));
-        } catch (IOException e) {
-            log.error("Error uploading organizer logo", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload logo: " + e.getMessage());
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
         }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body("Please upload a valid image file");
+        }
+
+        return uploadWithStorage(file, "logo");
     }
 
     /**
@@ -137,44 +189,16 @@ public class UploadController {
      */
     @PostMapping("/profile-photo")
     public ResponseEntity<?> uploadProfilePhoto(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
-            }
-
-            // Validate file is an image
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Please upload a valid image file");
-            }
-
-            // Create upload directory if it doesn't exist
-            File uploadDirectory = new File(uploadDir);
-            if (!uploadDirectory.exists()) {
-                uploadDirectory.mkdirs();
-                log.info("Created upload directory: {}", uploadDirectory.getAbsolutePath());
-            }
-
-            // Generate unique filename with 'profile' prefix
-            String originalFilename = file.getOriginalFilename();
-            String filename = "profile_" + UUID.randomUUID() + "_" + originalFilename;
-            Path filePath = Paths.get(uploadDirectory.getAbsolutePath(), filename);
-
-            // Save file
-            Files.copy(file.getInputStream(), filePath);
-
-            log.info("User profile photo uploaded successfully: {} at {}", filename, filePath.toAbsolutePath());
-
-                return ResponseEntity.ok().body(new UploadResponse(
-                    "/uploads/" + filename,
-                    filename,
-                    file.getSize()
-                ));
-        } catch (IOException e) {
-            log.error("Error uploading profile photo", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload profile photo: " + e.getMessage());
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
         }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body("Please upload a valid image file");
+        }
+
+        return uploadWithStorage(file, "profile");
     }
 
     /**
@@ -182,44 +206,16 @@ public class UploadController {
      */
     @PostMapping("/cover-photo")
     public ResponseEntity<?> uploadCoverPhoto(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
-            }
-
-            // Validate file is an image
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Please upload a valid image file");
-            }
-
-            // Create upload directory if it doesn't exist
-            File uploadDirectory = new File(uploadDir);
-            if (!uploadDirectory.exists()) {
-                uploadDirectory.mkdirs();
-                log.info("Created upload directory: {}", uploadDirectory.getAbsolutePath());
-            }
-
-            // Generate unique filename with 'cover' prefix
-            String originalFilename = file.getOriginalFilename();
-            String filename = "cover_" + UUID.randomUUID() + "_" + originalFilename;
-            Path filePath = Paths.get(uploadDirectory.getAbsolutePath(), filename);
-
-            // Save file
-            Files.copy(file.getInputStream(), filePath);
-
-            log.info("Cover photo uploaded successfully: {} at {}", filename, filePath.toAbsolutePath());
-
-                return ResponseEntity.ok().body(new UploadResponse(
-                    "/uploads/" + filename,
-                    filename,
-                    file.getSize()
-                ));
-        } catch (IOException e) {
-            log.error("Error uploading cover photo", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload cover photo: " + e.getMessage());
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
         }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body("Please upload a valid image file");
+        }
+
+        return uploadWithStorage(file, "cover");
     }
 
     /**
@@ -227,44 +223,16 @@ public class UploadController {
      */
     @PostMapping("/media")
     public ResponseEntity<?> uploadMedia(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
-            }
-
-            // Validate file is an image
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Please upload a valid image file");
-            }
-
-            // Create upload directory if it doesn't exist
-            File uploadDirectory = new File(uploadDir);
-            if (!uploadDirectory.exists()) {
-                uploadDirectory.mkdirs();
-                log.info("Created upload directory: {}", uploadDirectory.getAbsolutePath());
-            }
-
-            // Generate unique filename with 'media' prefix
-            String originalFilename = file.getOriginalFilename();
-            String filename = "media_" + UUID.randomUUID() + "_" + originalFilename;
-            Path filePath = Paths.get(uploadDirectory.getAbsolutePath(), filename);
-
-            // Save file
-            Files.copy(file.getInputStream(), filePath);
-
-            log.info("Media file uploaded successfully: {} at {}", filename, filePath.toAbsolutePath());
-
-                return ResponseEntity.ok().body(new UploadResponse(
-                    "/uploads/" + filename,
-                    filename,
-                    file.getSize()
-                ));
-        } catch (IOException e) {
-            log.error("Error uploading media file", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload media file: " + e.getMessage());
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
         }
+
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.startsWith("image/") && !contentType.startsWith("video/"))) {
+            return ResponseEntity.badRequest().body("Please upload a valid image or video file");
+        }
+
+        return uploadWithStorage(file, "media");
     }
 
     /**

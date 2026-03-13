@@ -49,4 +49,7 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
     // Check if blog exists and is not deleted
     @Query("SELECT COUNT(b) > 0 FROM Blog b WHERE b.id = :id AND b.deletedAt IS NULL")
     boolean existsAndNotDeleted(@Param("id") Long id);
+
+    @Query("SELECT COUNT(b) FROM Blog b WHERE b.deletedAt IS NULL")
+    long countActiveBlogs();
 }

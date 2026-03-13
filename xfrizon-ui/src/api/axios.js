@@ -91,9 +91,7 @@ api.interceptors.response.use(
       const pathname = window.location?.pathname || "";
       const loginPath = pathname.startsWith("/admin")
         ? "/admin-login"
-        : pathname.startsWith("/organizer")
-          ? "/organizer/login"
-          : "/auth/login";
+        : "/auth/login";
       window.dispatchEvent(
         new CustomEvent("auth:unauthorized", { detail: { loginPath } }),
       );

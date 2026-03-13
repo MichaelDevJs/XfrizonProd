@@ -3,8 +3,6 @@ import {
   FaCalendarAlt,
   FaClock,
   FaHeart,
-  FaInstagram,
-  FaPaperPlane,
   FaShareAlt,
 } from "react-icons/fa";
 import React, { useState, useContext, useEffect } from "react";
@@ -13,10 +11,7 @@ import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import {
-  copyShareText,
-  getAbsoluteShareUrl,
-  openInstagramShare,
-  openMessageShare,
+  getReferralAwareShareUrl,
   shareNativelyOrCopy,
 } from "../../utils/share";
 
@@ -173,7 +168,7 @@ export default function EventCard({ event, onSaveChange }) {
     return getTotalAvailableTickets() === 0;
   };
 
-  const shareUrl = getAbsoluteShareUrl(`/event/${event.id}`);
+  const shareUrl = getReferralAwareShareUrl(`/event/${event.id}`);
 
   const handleShare = async (e) => {
     e.stopPropagation();
@@ -185,26 +180,12 @@ export default function EventCard({ event, onSaveChange }) {
       });
       if (result === "copied") {
         toast.success("Event link copied");
+      } else {
+        toast.info("Choose Instagram, WhatsApp, or any app from share options.");
       }
     } catch {
       toast.error("Unable to share this event");
     }
-  };
-
-  const handleInstagramShare = async (e) => {
-    e.stopPropagation();
-    try {
-      await copyShareText({ title: event.title, url: shareUrl });
-      openInstagramShare({ title: event.title, url: shareUrl });
-      toast.info("Link copied. Paste into Instagram story or post.");
-    } catch {
-      toast.error("Could not prepare Instagram share");
-    }
-  };
-
-  const handleMessageShare = (e) => {
-    e.stopPropagation();
-    openMessageShare({ title: event.title, url: shareUrl });
   };
 
   return (
@@ -436,30 +417,12 @@ export default function EventCard({ event, onSaveChange }) {
               </>
             )}
 
-            <div className="flex items-center gap-1 rounded bg-zinc-900/70 px-1 py-0.5">
-              <button
-                type="button"
-                onClick={handleInstagramShare}
-                className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
-                aria-label="Share event to Instagram"
-                title="Share to Instagram"
-              >
-                <FaInstagram size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={handleMessageShare}
-                className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
-                aria-label="Share event in message"
-                title="Share in message"
-              >
-                <FaPaperPlane size={12} />
-              </button>
+            <div className="flex items-center rounded bg-zinc-900/70 px-1 py-0.5">
               <button
                 type="button"
                 onClick={handleShare}
                 className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
-                aria-label="Share event"
+                aria-label="Share event everywhere"
                 title="Share"
               >
                 <FaShareAlt size={12} />

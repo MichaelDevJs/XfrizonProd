@@ -173,10 +173,6 @@ export default function OrganizerProfileEdit() {
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Logo must be smaller than 5MB");
-        return;
-      }
       if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file");
         return;
@@ -195,10 +191,6 @@ export default function OrganizerProfileEdit() {
   const handleCoverPhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error("Cover media must be smaller than 20MB");
-        return;
-      }
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         toast.error("Please select an image or video file");
         return;
@@ -218,10 +210,6 @@ export default function OrganizerProfileEdit() {
     const files = e.target.files;
     if (files) {
       Array.from(files).forEach((file) => {
-        if (file.size > 10 * 1024 * 1024) {
-          toast.warning(`${file.name} is too large (max 10MB)`);
-          return;
-        }
         if (
           !file.type.startsWith("image/") &&
           !file.type.startsWith("video/")
@@ -541,8 +529,7 @@ export default function OrganizerProfileEdit() {
               {/* Upload Section */}
               <div className="flex-1">
                 <p className="text-gray-300 text-sm mb-4">
-                  Click to upload your organization logo (Max 5MB. JPG, PNG, or
-                  GIF)
+                  Click to upload your organization logo (JPG, PNG, or GIF)
                 </p>
                 <input
                   type="file"
@@ -625,9 +612,7 @@ export default function OrganizerProfileEdit() {
                   ? "Change Cover Media"
                   : "Upload Cover Media"}
               </button>
-              <p className="mt-2 text-xs text-gray-500">
-                Supports image or video (max 20MB).
-              </p>
+              <p className="mt-2 text-xs text-gray-500">Supports image or video.</p>
             </div>
           </div>
 

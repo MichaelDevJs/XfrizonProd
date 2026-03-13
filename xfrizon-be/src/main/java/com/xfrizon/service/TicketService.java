@@ -46,6 +46,7 @@ public class TicketService {
     private final PaymentRecordRepository paymentRecordRepository;
     private final EmailService emailService;
     private final PdfGenerationService pdfGenerationService;
+    private final ReferralConversionService referralConversionService;
 
     /**
      * Record a ticket purchase after successful payment
@@ -124,6 +125,13 @@ public class TicketService {
                 UserTicket savedTicket = userTicketRepository.save(userTicket);
                 savedTickets.add(savedTicket);
             }
+
+            referralConversionService.trackTicketPurchaseConversion(
+                    request.getReferralCode(),
+                    user,
+                    event,
+                    request.getPaymentIntentId()
+            );
 
             log.info("Ticket purchase recorded: {} individual tickets created for payment intent: {}", quantityToPurchase, request.getPaymentIntentId());
             

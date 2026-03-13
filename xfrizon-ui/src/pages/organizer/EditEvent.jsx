@@ -162,7 +162,7 @@ export default function EditEvent() {
         navigate("/organizer/dashboard");
       } else if (error.response?.status === 401) {
         toast.error("Your session has expired. Please log in again.");
-        navigate("/organizer/login", {
+        navigate("/auth/login", {
           replace: true,
           state: { from: location },
         });

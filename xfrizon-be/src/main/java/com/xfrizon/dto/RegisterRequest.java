@@ -1,5 +1,6 @@
 package com.xfrizon.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -36,4 +37,7 @@ public class RegisterRequest {
     private String phoneNumber;
 
     private String profilePicture; // For organizer logo/avatar
+
+    @JsonAlias({"ref", "referral", "referral_code"})
+    private String referralCode;
 }

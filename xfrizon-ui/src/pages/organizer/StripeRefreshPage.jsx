@@ -15,7 +15,7 @@ export default function StripeRefreshPage() {
 
       if (!user || !user.id) {
         toast.error("Please log in again");
-        navigate("/organizer/login");
+        navigate("/auth/login");
         return;
       }
 

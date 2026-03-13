@@ -7,6 +7,42 @@ export const getAbsoluteShareUrl = (pathOrUrl) => {
   return `${window.location.origin}${normalized}`;
 };
 
+export const getCurrentUserReferralCode = () => {
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser) return "";
+    const parsedUser = JSON.parse(rawUser);
+    return String(parsedUser?.id || parsedUser?.userId || "").trim();
+  } catch {
+    return "";
+  }
+};
+
+export const captureReferralFromUrl = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = (params.get("ref") || "").trim();
+    if (!ref) return;
+    localStorage.setItem("xfrizon_referral", ref);
+  } catch {
+    // Ignore invalid URL state.
+  }
+};
+
+export const getReferralAwareShareUrl = (pathOrUrl) => {
+  const baseUrl = getAbsoluteShareUrl(pathOrUrl);
+  const ref = getCurrentUserReferralCode();
+  if (!ref) return baseUrl;
+
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set("ref", ref);
+    return url.toString();
+  } catch {
+    return baseUrl;
+  }
+};
+
 export const openMessageShare = ({ title = "", url = "" }) => {
   const payload = encodeURIComponent(`${title}\n${url}`.trim());
   window.open(`https://wa.me/?text=${payload}`, "_blank", "noopener,noreferrer");

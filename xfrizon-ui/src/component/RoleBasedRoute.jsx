@@ -19,8 +19,7 @@ export default function RoleBasedRoute({ children, requiredRole }) {
 
   // If user is not logged in, redirect to login
   if (!organizer) {
-    const loginPath =
-      requiredRole === "ORGANIZER" ? "/organizer/login" : "/auth/login";
+    const loginPath = "/auth/login";
     return (
       <Navigate
         to={loginPath}

@@ -1,0 +1,31 @@
+Xfrizon Growth Playbook (Top 10)
+
+1. Programmatic SEO pages
+Create indexable pages for city, genre, and organizer intent with unique text.
+
+2. Event + list schema
+Use Event schema on detail pages and ItemList schema on listing pages.
+
+3. Social-first share assets
+Generate event/blog share images with date, city, CTA, and brand mark.
+
+4. Referral loop
+Give users personal referral links and reward conversions.
+
+5. Organizer creator toolkit
+Provide captions, hashtags, and ready-made story/post assets.
+
+6. Sticky conversion CTAs
+Keep Buy Tickets visible on mobile to reduce checkout drop-off.
+
+7. Lifecycle messaging
+Automate alerts for new events, low ticket inventory, and recaps.
+
+8. Content flywheel
+Publish recurring city-based roundup content and interlink deeply.
+
+9. Fast analytics loop
+Track share clicks, referral conversion, and save-to-purchase rates.
+
+10. SSR/prerender for key pages
+Render public pages server-side or prerender for stronger indexing.

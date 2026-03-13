@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 
@@ -22,7 +22,6 @@ import BlogDetailPage from "./pages/public/blog/BlogDetailPage";
 import AllBlogs from "./pages/public/AllBlogs";
 
 import OrganizerRegister from "./pages/organizer/OrganizerRegister";
-import OrganizerLogin from "./pages/organizer/OrganizerLogin";
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard";
 import MyEvents from "./pages/organizer/MyEvents";
 import CreateEvent from "./pages/organizer/CreateEvent";
@@ -58,8 +57,13 @@ import MessagesManagement from "./pages/admin/MessagesManagement";
 import AdminHomeBlocksPage from "./pages/admin/AdminHomeBlocksPage";
 import AdminBlogHeroBlocksPage from "./pages/admin/AdminBlogHeroBlocksPage";
 import AdminPayoutManagement from "./pages/admin/AdminPayoutManagement";
+import { captureReferralFromUrl } from "./utils/share";
 
 function RootApp() {
+  useEffect(() => {
+    captureReferralFromUrl();
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -137,7 +141,6 @@ function RootApp() {
             />
 
             {/* Organizer Auth Routes */}
-            <Route path="/organizer/login" element={<OrganizerLogin />} />
             <Route path="/organizer/register" element={<OrganizerRegister />} />
 
             {/* Stripe Connect Callback Routes */}

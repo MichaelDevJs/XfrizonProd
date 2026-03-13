@@ -142,6 +142,11 @@ export default function OrganizerSignUp() {
           }),
         );
 
+        const referralCode = (localStorage.getItem("xfrizon_referral") || "").trim();
+        if (referralCode) {
+          localStorage.removeItem("xfrizon_referral");
+        }
+
         toast.success("Organizer account created successfully!");
         setTimeout(() => {
           navigate("/organizer/dashboard");

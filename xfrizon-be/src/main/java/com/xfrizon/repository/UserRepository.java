@@ -42,4 +42,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRoleAndPrefersManualPayout(User.UserRole role, Boolean prefersManualPayout);
 
     Optional<User> findByStripeAccountId(String stripeAccountId);
+
+        long countByRoleAndIsActiveTrue(User.UserRole role);
+
+        long countByRoleAndVerificationStatusAndIsActiveTrue(
+                        User.UserRole role,
+                        User.VerificationStatus verificationStatus
+        );
 }

@@ -3,6 +3,7 @@ import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { useAuth } from "../../hooks/useAuth";
+import useSeo from "../../hooks/useSeo";
 import EventDetailsView from "../../component/events/EventDetailsView";
 import TicketSelectionModal from "../../component/events/TicketSelectionModal";
 import CheckoutModal from "../../component/events/CheckoutModal";
@@ -25,9 +26,61 @@ export default function EventDetailsPage() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [processingPayment, setProcessingPayment] = useState(false);
 
+  const getAbsoluteMediaUrl = (path) => {
+    if (!path) return "";
+    if (String(path).startsWith("http")) return String(path);
+    const normalized = String(path).startsWith("/") ? String(path) : `/${String(path)}`;
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${normalized}`;
+    }
+    return `https://xfrizon.up.railway.app${normalized}`;
+  };
+
   const SERVICE_FEE_RATE = 0.1; // 10% service fee per ticket
   const roundCurrency = (amount) =>
     Math.round((Number(amount) + 1e-9) * 100) / 100;
+
+  useSeo({
+    title: event?.title ? `${event.title} | Xfrizon Events` : "Event Details | Xfrizon",
+    description:
+      (event?.description || "Get event details, date, location and tickets on Xfrizon.").slice(0, 160),
+    image: getAbsoluteMediaUrl(event?.flyerUrl || event?.flyer_url || event?.image),
+    type: "event",
+    url:
+      typeof window !== "undefined"
+        ? window.location.href
+        : `https://xfrizon.up.railway.app/event/${eventId}`,
+    keywords: "event tickets, concerts, nightlife, event details, Xfrizon",
+    jsonLd: event
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          name: event.title,
+          description: event.description || "",
+          startDate: event.eventDateTime,
+          endDate: event.eventEndDate || event.eventDateTime,
+          image: [getAbsoluteMediaUrl(event.flyerUrl || event.flyer_url || event.image)],
+          eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+          eventStatus: "https://schema.org/EventScheduled",
+          location: {
+            "@type": "Place",
+            name:
+              event.venueName ||
+              [event.city, event.country].filter(Boolean).join(", ") ||
+              "Event Venue",
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: event.city || "",
+              addressCountry: event.country || "",
+            },
+          },
+          organizer: {
+            "@type": "Organization",
+            name: organizer?.name || "Xfrizon",
+          },
+        }
+      : null,
+  });
 
   useEffect(() => {
     fetchEventDetails();
@@ -234,6 +287,7 @@ export default function EventDetailsPage() {
               paymentIntentId,
               totalPrice: tierTotal,
               currency,
+              referralCode: (localStorage.getItem("xfrizon_referral") || "").trim() || undefined,
             };
 
             try {

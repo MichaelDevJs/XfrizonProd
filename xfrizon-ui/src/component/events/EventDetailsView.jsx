@@ -291,7 +291,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
         </section>
 
         {/* Main Content - Clean Layout */}
-        <div className="max-w-3xl mx-auto px-4 pb-12">
+        <div className="max-w-3xl mx-auto px-4 pb-28 md:pb-12">
           {/* Navigation Tabs */}
           <div className="flex justify-center gap-5 mb-6 pt-6">
             <button
@@ -509,6 +509,29 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
           )}
 
 
+        </div>
+
+        <div className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-zinc-800 bg-black/95 backdrop-blur-sm p-3">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+            <div className="text-xs text-gray-300">
+              <span className="text-gray-400">Selected: </span>
+              <span className="font-mono text-gray-100">{getTotalSelectedTickets()}</span>
+              <span className="ml-1">tickets</span>
+            </div>
+            <button
+              onClick={() => {
+                if (typeof onBuyTickets === "function") {
+                  onBuyTickets(selectedTickets);
+                }
+              }}
+              disabled={getTotalSelectedTickets() === 0}
+              className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded text-xs"
+            >
+              {getTotalSelectedTickets() > 0
+                ? `Buy ${getTotalSelectedTickets()} Ticket${getTotalSelectedTickets() !== 1 ? "s" : ""}`
+                : "Select Tickets"}
+            </button>
+          </div>
         </div>
       </div>
     </>

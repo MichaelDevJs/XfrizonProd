@@ -194,6 +194,7 @@ const AuthProvider = ({ children }) => {
     profilePicture,
   ) => {
     try {
+      const referralCode = (localStorage.getItem("xfrizon_referral") || "").trim();
       const response = await api.post("/auth/register", {
         firstName,
         lastName,
@@ -201,6 +202,7 @@ const AuthProvider = ({ children }) => {
         password,
         confirmPassword: password,
         profilePicture,
+        referralCode: referralCode || undefined,
       });
 
       if (response.data.success) {
@@ -226,6 +228,10 @@ const AuthProvider = ({ children }) => {
           role: response.data.role,
           profilePicture: response.data.profilePicture,
         });
+
+        if (referralCode) {
+          localStorage.removeItem("xfrizon_referral");
+        }
 
         return response.data;
       }

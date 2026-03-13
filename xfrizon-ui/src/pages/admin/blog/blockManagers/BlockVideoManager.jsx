@@ -7,10 +7,6 @@ export default function BlockVideoManager({ block, updateBlock }) {
   const handleVideoUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      if (file.size > 500 * 1024 * 1024) {
-        toast.error(`"${file.name}" exceeds 500MB limit`);
-        return;
-      }
       updateBlock(block.id, {
         videos: [
           ...(block.videos || []),

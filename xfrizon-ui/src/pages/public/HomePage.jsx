@@ -6,6 +6,7 @@ import CenteredBanner from "../../component/CenteredBanner/CenteredBanner";
 import BlogsSection from "../../feature/home/blogs/BlogsSection";
 import FilterProvider from "../../context/FilterContext";
 import api from "../../api/axios";
+import useSeo from "../../hooks/useSeo";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,34 @@ export default function HomePage() {
     "blogsSection",
     "eventSection",
   ]);
+
+  useSeo({
+    title: "Xfrizon | Discover Events and Culture Blogs",
+    description:
+      "Discover upcoming events, buy tickets, and explore music and culture stories on Xfrizon.",
+    keywords:
+      "events, tickets, concerts, nightlife, music blog, culture blog, Xfrizon",
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "Xfrizon",
+        url:
+          typeof window !== "undefined"
+            ? window.location.origin
+            : "https://xfrizon.up.railway.app",
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "Xfrizon",
+        url:
+          typeof window !== "undefined"
+            ? window.location.origin
+            : "https://xfrizon.up.railway.app",
+      },
+    ],
+  });
 
   const isVideoUrl = (url = "") => {
     const value = String(url).toLowerCase();

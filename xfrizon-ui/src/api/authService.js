@@ -3,12 +3,14 @@ import api from "./axios";
 const authService = {
   register: async (firstName, lastName, email, password) => {
     try {
+      const referralCode = (localStorage.getItem("xfrizon_referral") || "").trim();
       const response = await api.post("/auth/register", {
         firstName,
         lastName,
         email,
         password,
         confirmPassword: password,
+        referralCode: referralCode || undefined,
       });
       return response.data;
     } catch (error) {
@@ -18,12 +20,14 @@ const authService = {
 
   registerOrganizer: async (firstName, lastName, email, password) => {
     try {
+      const referralCode = (localStorage.getItem("xfrizon_referral") || "").trim();
       const response = await api.post("/auth/register-organizer", {
         firstName,
         lastName,
         email,
         password,
         confirmPassword: password,
+        referralCode: referralCode || undefined,
       });
       return response.data;
     } catch (error) {

@@ -8,10 +8,6 @@ export default function BlockAudioManager({ block, updateBlock }) {
   const handleAudioUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      if (file.size > 200 * 1024 * 1024) {
-        toast.error(`"${file.name}" exceeds 200MB limit`);
-        return;
-      }
       updateBlock(block.id, {
         audioTracks: [
           ...(block.audioTracks || []),

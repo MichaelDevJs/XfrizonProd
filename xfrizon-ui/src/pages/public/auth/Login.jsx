@@ -87,7 +87,6 @@ export default function Login() {
               : null;
             const isFromLogin =
               from?.pathname === "/auth/login" ||
-              from?.pathname === "/organizer/login" ||
               from?.pathname === "/admin-login";
 
             const fallback =

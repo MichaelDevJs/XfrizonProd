@@ -15,6 +15,10 @@ export default function BlogCard({ blog }) {
     >
       {/* Blog Image */}
       <div className="relative overflow-hidden bg-black rounded-lg mb-4 shrink-0 h-64">
+        <div className="absolute left-3 top-3 z-20 pointer-events-none">
+          <span className="text-red-500 font-extrabold text-sm tracking-wide">XF</span>
+          <span className="text-white font-semibold text-xs tracking-wide ml-1">Mag</span>
+        </div>
         {blog.image || blog.coverImage ? (
           <img
             src={blog.image || blog.coverImage}

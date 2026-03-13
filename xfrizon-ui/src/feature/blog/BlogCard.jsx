@@ -1,11 +1,8 @@
 import React from "react";
-import { FaInstagram, FaPaperPlane, FaShareAlt } from "react-icons/fa";
+import { FaShareAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import {
-  copyShareText,
-  getAbsoluteShareUrl,
-  openInstagramShare,
-  openMessageShare,
+  getReferralAwareShareUrl,
   shareNativelyOrCopy,
 } from "../../utils/share";
 
@@ -50,7 +47,7 @@ export default function BlogCard({ blog }) {
   const imageSource = resolveImage(
     blog?.coverImage?.src || blog?.coverImage || blog?.image,
   );
-  const shareUrl = getAbsoluteShareUrl(`/blog/${blog?.id}`);
+  const shareUrl = getReferralAwareShareUrl(`/blog/${blog?.id}`);
 
   const handleShare = async (event) => {
     event.preventDefault();
@@ -63,54 +60,26 @@ export default function BlogCard({ blog }) {
       });
       if (result === "copied") {
         toast.success("Blog link copied");
+      } else {
+        toast.info("Choose Instagram, WhatsApp, or any app from share options.");
       }
     } catch {
       toast.error("Unable to share this blog");
     }
   };
 
-  const handleInstagram = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    try {
-      await copyShareText({ title, url: shareUrl });
-      openInstagramShare({ title, url: shareUrl });
-      toast.info("Link copied. Paste into Instagram story or post.");
-    } catch {
-      toast.error("Could not prepare Instagram share");
-    }
-  };
-
-  const handleMessage = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    openMessageShare({ title, url: shareUrl });
-  };
-
   return (
     <article className="group relative h-full overflow-hidden">
       <div className="relative w-full aspect-video sm:aspect-2/1 overflow-hidden">
-        <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded bg-black/55 p-1">
-          <button
-            type="button"
-            onClick={handleInstagram}
-            aria-label="Share blog on Instagram"
-            className="rounded p-1 text-zinc-200 hover:text-white hover:bg-zinc-800/70"
-          >
-            <FaInstagram size={12} />
-          </button>
-          <button
-            type="button"
-            onClick={handleMessage}
-            aria-label="Share blog in message"
-            className="rounded p-1 text-zinc-200 hover:text-white hover:bg-zinc-800/70"
-          >
-            <FaPaperPlane size={12} />
-          </button>
+        <div className="absolute left-4 sm:left-5 top-2 z-20 pointer-events-none">
+          <span className="text-red-500 font-extrabold text-sm tracking-wide">XF</span>
+          <span className="text-white font-semibold text-xs tracking-wide ml-1">Mag</span>
+        </div>
+        <div className="absolute right-2 top-2 z-20 rounded bg-black/55 p-1">
           <button
             type="button"
             onClick={handleShare}
-            aria-label="Share blog"
+            aria-label="Share blog everywhere"
             className="rounded p-1 text-zinc-200 hover:text-white hover:bg-zinc-800/70"
           >
             <FaShareAlt size={12} />

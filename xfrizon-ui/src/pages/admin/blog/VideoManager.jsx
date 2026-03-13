@@ -7,12 +7,6 @@ export default function VideoManager({ formData, setFormData }) {
   const handleVideoUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      // Check file size (max 500MB)
-      if (file.size > 500 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 500MB)`);
-        return;
-      }
-
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData((prev) => ({
@@ -92,7 +86,7 @@ export default function VideoManager({ formData, setFormData }) {
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
         <p className="text-xs text-amber-800">
-          💡 <strong>Tip:</strong> Supports MP4, WebM, AVI (Max 500MB). For
+          💡 <strong>Tip:</strong> Supports MP4, WebM, AVI. For
           larger videos, use YouTube links instead.
         </p>
       </div>
