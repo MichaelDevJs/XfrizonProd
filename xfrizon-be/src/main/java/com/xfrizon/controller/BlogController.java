@@ -305,6 +305,7 @@ public class BlogController {
             if (currentUserId != null && !commentIds.isEmpty()) {
                 likedCommentIds = new HashSet<>(blogCommentLikeRepository.findLikedCommentIds(commentIds, currentUserId));
             }
+            final Set<Long> finalLikedCommentIds = likedCommentIds;
 
             List<BlogCommentResponse> comments = commentEntities.stream()
                     .map(comment -> {
@@ -319,7 +320,7 @@ public class BlogController {
                                 .authorName(fullName.isEmpty() ? "User" : fullName)
                                 .content(comment.getContent())
                                 .likeCount(likeCounts.getOrDefault(comment.getId(), 0L))
-                                .likedByCurrentUser(likedCommentIds.contains(comment.getId()))
+                                .likedByCurrentUser(finalLikedCommentIds.contains(comment.getId()))
                                 .createdAt(comment.getCreatedAt())
                                 .build();
                     })
