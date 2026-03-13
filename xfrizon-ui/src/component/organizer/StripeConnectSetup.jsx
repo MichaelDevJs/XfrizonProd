@@ -147,7 +147,7 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
 
   if (loading) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
+      <div className="bg-zinc-900 border border-zinc-800 p-4 text-center">
         <div className="flex items-center justify-center py-8">
           <FaSpinner className="animate-spin text-red-500 text-xl" />
           <span className="ml-2 text-sm text-gray-400">Loading...</span>
@@ -163,7 +163,7 @@ export default function StripeConnectSetup({ organizerId, organizer }) {
     status?.status === "not_started" || !status?.stripeAccountId;
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+    <div className="bg-zinc-900 border border-zinc-800 overflow-hidden">
       <div className="max-h-80 overflow-y-auto hide-scrollbar p-4 space-y-3">
         {/* Status Banner - Fully Connected */}
         {isFullyConnected && (

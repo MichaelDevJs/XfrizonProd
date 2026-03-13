@@ -3,13 +3,10 @@ import {
   FaHome,
   FaCalendarAlt,
   FaPlus,
-  FaEnvelope,
   FaDollarSign,
   FaHeadset,
-  FaUser,
   FaSignOutAlt,
   FaQrcode,
-  FaChartLine,
   FaSlidersH,
 } from "react-icons/fa";
 import { useContext } from "react";
@@ -18,10 +15,6 @@ import { AuthContext } from "../../context/AuthContext";
 const OrganizerSidebar = ({ className = "", onNavigate = () => {} }) => {
   const location = useLocation();
   const { organizer, logout } = useContext(AuthContext);
-
-  const organizerProfilePath = organizer?.id
-    ? `/organizer/profile/${organizer.id}`
-    : "/organizer/profile-edit";
 
   const isActive = (path) => location.pathname.includes(path);
 
@@ -45,20 +38,9 @@ const OrganizerSidebar = ({ className = "", onNavigate = () => {} }) => {
 
   const manageItems = [
     {
-      path: "/organizer/statistics",
-      label: "Statistics",
-      icon: <FaChartLine className="w-4 h-4" />,
-    },
-    {
       path: "/organizer/scanner",
       label: "Ticket Scanner",
       icon: <FaQrcode className="w-4 h-4" />,
-    },
-    {
-      path: "/organizer/messages",
-      label: "Messages",
-      icon: <FaEnvelope className="w-4 h-4" />,
-      badge: 0,
     },
     {
       path: "/organizer/finance",
@@ -66,22 +48,9 @@ const OrganizerSidebar = ({ className = "", onNavigate = () => {} }) => {
       icon: <FaDollarSign className="w-4 h-4" />,
     },
     {
-      path: organizerProfilePath,
-      label: "Profile",
-      icon: <FaUser className="w-4 h-4" />,
-    },
-    {
       path: "/organizer/profile-config",
       label: "Profile Config",
       icon: <FaSlidersH className="w-4 h-4" />,
-    },
-  ];
-
-  const supportItems = [
-    {
-      path: "/organizer/support",
-      label: "Contact Support",
-      icon: <FaHeadset className="w-4 h-4" />,
     },
   ];
 
@@ -158,21 +127,10 @@ const OrganizerSidebar = ({ className = "", onNavigate = () => {} }) => {
           Support
         </p>
         <nav className="space-y-2">
-          {supportItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 font-light text-sm ${
-                isActive(item.path)
-                  ? "bg-red-500 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-zinc-800"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
+          <span className="flex items-center gap-3 px-4 py-3 rounded-lg font-light text-sm text-zinc-600 cursor-not-allowed opacity-50">
+            <FaHeadset className="w-4 h-4" />
+            Contact Support
+          </span>
         </nav>
       </div>
 

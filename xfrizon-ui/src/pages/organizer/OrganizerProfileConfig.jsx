@@ -4,9 +4,6 @@ import axios from "axios";
 import {
   FaCamera,
   FaSave,
-  FaStore,
-  FaMapMarkerAlt,
-  FaPhone,
   FaGlobe,
   FaInstagram,
   FaTwitter,
@@ -83,7 +80,7 @@ const OrganizerProfileConfig = () => {
     twitter: currentOrganizer?.twitter || currentOrganizer?.x || "",
   });
 
-  const [isPreviewOpen, setIsPreviewOpen] = useState(true);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (!currentOrganizer) return;
@@ -461,7 +458,7 @@ const OrganizerProfileConfig = () => {
 
   if (!currentOrganizer || currentOrganizer.role !== "ORGANIZER") {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-gray-400">
+      <div className="bg-[#1e1e1e] p-6 text-sm text-gray-400">
         Only organizers can access profile configuration.
       </div>
     );
@@ -469,41 +466,40 @@ const OrganizerProfileConfig = () => {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 sm:space-y-6 pb-6 sm:pb-8">
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div>
+      <div className="flex flex-col items-center justify-center gap-3 p-4 text-center sm:p-5">
+        <div className="text-center">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-wide text-gray-100">
             Profile Config
           </h1>
-          <p className="text-xs sm:text-sm text-gray-400 mt-1">
-            Configure how your organizer store appears to visitors.
-          </p>
         </div>
-        <Link
-          to={profilePath}
-          className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-[11px] sm:text-xs uppercase tracking-[0.18em] text-red-300 hover:bg-red-500/20 transition-colors"
-        >
-          View Public Store
-        </Link>
       </div>
 
       {/* ─── Live Preview ─── */}
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 overflow-hidden transition-colors">
-        <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/60 flex items-center justify-between gap-3">
+      <section className="overflow-hidden border-b border-zinc-900/70 transition-colors">
+        <div className="px-4 py-2.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-300/90">
             Live Preview
           </span>
-          <button
-            type="button"
-            onClick={() => setIsPreviewOpen((prev) => !prev)}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-700 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-200 transition-colors hover:border-zinc-500 hover:text-white"
-          >
-            {isPreviewOpen ? "Close Preview" : "Open Preview"}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              to={profilePath}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-700 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-200 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              Open Store
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen((prev) => !prev)}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-700 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-200 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              {isPreviewOpen ? "Close Preview" : "Open Preview"}
+            </button>
+          </div>
         </div>
 
         {/* scrollable preview — hero always visible, rest revealed by scroll */}
         {isPreviewOpen && (
-        <div className="overflow-y-auto hide-scrollbar max-h-105 sm:max-h-130 lg:max-h-145 pointer-events-none">
+        <div className="overflow-y-auto hide-scrollbar max-h-80 sm:max-h-96 pointer-events-none">
 
           {/* Cover Slideshow */}
           <div className="relative w-full h-40 sm:h-52 lg:h-60 overflow-hidden bg-black">
@@ -519,7 +515,7 @@ const OrganizerProfileConfig = () => {
           {/* Top About Org (no bio) */}
           <div className="px-3 sm:px-4 py-4 sm:py-6">
             <div className="w-full max-w-4xl mx-auto">
-              <div className="rounded-lg p-3 sm:p-4 text-center">
+              <div className="p-3 sm:p-4 text-center">
                 <p className="text-sm font-medium text-white">{formData.name || "Organizer"}</p>
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light text-gray-200/90">
                   {formData.location && <span>{formData.location}</span>}
@@ -572,7 +568,7 @@ const OrganizerProfileConfig = () => {
                   galleryItems.map((item) => (
                     <div
                       key={item.id}
-                      className="shrink-0 w-36 sm:w-48 h-24 sm:h-28 rounded-lg border border-zinc-800 bg-zinc-900/70 overflow-hidden"
+                      className="shrink-0 w-36 sm:w-48 h-24 sm:h-28 bg-[#1e1e1e] overflow-hidden"
                     >
                       {item.type === "video" ? (
                         <video
@@ -603,274 +599,313 @@ const OrganizerProfileConfig = () => {
       </section>
 
       <form onSubmit={handleSave} className="space-y-4 sm:space-y-6">
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-6">
-          <h2 className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
-            Branding Media
-          </h2>
-          <div className="grid gap-6 lg:grid-cols-2">
+        <section className="bg-[#1e1e1e] p-4 sm:p-6">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="mb-2 text-xs text-gray-400">Logo (image)</p>
-              <div className="mb-3 h-32 w-32 overflow-hidden rounded-xl border border-zinc-700 bg-black">
-                {logoPreview ? (
-                  <img
-                    src={getMediaUrl(logoPreview) || logoPreview}
-                    alt="Logo preview"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-gray-600">
-                    No logo
-                  </div>
-                )}
+              <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
+                Branding Media
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">
+                Keep the brand assets clean and balanced across your store.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="mx-auto w-full max-w-sm rounded-2xl border border-zinc-800 bg-black/20 p-5">
+              <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+                Logo
+              </p>
+              <div className="mt-5 flex flex-col items-center justify-center text-center">
+                <div className="h-32 w-32 overflow-hidden border border-zinc-700 bg-black">
+                  {logoPreview ? (
+                    <img
+                      src={getMediaUrl(logoPreview) || logoPreview}
+                      alt="Logo preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-gray-600">
+                      No logo
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onLogoUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400 transition-colors hover:text-red-300"
+                >
+                  <FaCamera />
+                  {logoPreview ? "Change Logo" : "Upload Logo"}
+                </button>
               </div>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onLogoUpload}
-                className="hidden"
-              />
+            </div>
+
+            <div className="border border-zinc-800 bg-black/20 p-5">
+              <div>
+                <div className="mb-3 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      Cover Slides
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Image or video, max 20MB each.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-3 flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+                  {coverSlides.map((slide, idx) => (
+                    <div
+                      key={slide.id}
+                      className="relative h-24 w-44 shrink-0 overflow-hidden border border-zinc-700 bg-black sm:h-28 sm:w-52"
+                    >
+                      {slide.type === "video" ? (
+                        <video
+                          src={getMediaUrl(slide.url) || slide.url}
+                          className="h-full w-full object-cover"
+                          muted
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={getMediaUrl(slide.url) || slide.url}
+                          alt={`Slide ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                        {idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeCoverSlide(slide.id)}
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                        aria-label="Remove slide"
+                      >
+                        <FaTrash size={9} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => coverSlideInputRef.current?.click()}
+                    className="flex h-24 w-44 shrink-0 flex-col items-center justify-center border border-dashed border-zinc-600 text-zinc-500 transition hover:border-red-500 hover:text-red-400 sm:h-28 sm:w-52"
+                  >
+                    <FaPlus size={16} />
+                    <span className="mt-1 text-xs">Add</span>
+                  </button>
+                </div>
+
+                <input
+                  ref={coverSlideInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={onAddCoverSlides}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-[#1e1e1e] p-4 sm:p-6">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
+                Store Identity
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">
+                Set the essential details visitors use to understand and contact your store.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-black/20 p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-xs text-gray-400">
+                Store Name
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Email
+                <input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Phone
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Location
+                <input
+                  name="location"
+                  value={formData.location}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400 md:col-span-2">
+                Address
+                <input
+                  name="address"
+                  value={formData.address}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400 md:col-span-2">
+                Description
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={onTextChange}
+                  rows={4}
+                  className="hide-scrollbar mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-[#1e1e1e] p-4 sm:p-6">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
+                Gallery Media
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">
+                Add supporting visuals that extend your organizer story.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-black/20 p-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {galleryItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="relative overflow-hidden bg-black"
+                  style={{ aspectRatio: "4/3" }}
+                >
+                  {item.type === "video" ? (
+                    <video
+                      src={getMediaUrl(item.url) || item.url}
+                      className="h-full w-full object-cover"
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={getMediaUrl(item.url) || item.url}
+                      alt={`Gallery ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryItem(item.id)}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                    aria-label="Remove gallery item"
+                  >
+                    <FaTrash size={9} />
+                  </button>
+                </div>
+              ))}
+
               <button
                 type="button"
-                onClick={() => logoInputRef.current?.click()}
-                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white hover:bg-red-600"
+                onClick={() => galleryInputRef.current?.click()}
+                style={{ aspectRatio: "4/3" }}
+                className="flex flex-col items-center justify-center text-zinc-500 transition hover:text-red-400"
               >
-                <FaCamera />
-                {logoPreview ? "Change Logo" : "Upload Logo"}
+                <FaPlus size={16} />
+                <span className="mt-1 text-xs">Add</span>
               </button>
             </div>
 
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={onAddGalleryItems}
+              className="hidden"
+            />
+
+            <p className="mt-3 text-xs text-gray-500">
+              Add organizer gallery images/videos (max 20MB each).
+            </p>
+          </div>
+        </section>
+
+        <section className="bg-[#1e1e1e] p-4 sm:p-6">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="mb-2 text-xs text-gray-400">
-                Cover Slides (image or video)
-              </p>
-
-              {/* Slide thumbnails grid */}
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {coverSlides.map((slide, idx) => (
-                  <div
-                    key={slide.id}
-                    className="relative rounded-lg overflow-hidden border border-zinc-700 bg-black"
-                    style={{ aspectRatio: "16/9" }}
-                  >
-                    {slide.type === "video" ? (
-                      <video
-                        src={getMediaUrl(slide.url) || slide.url}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                      />
-                    ) : (
-                      <img
-                        src={getMediaUrl(slide.url) || slide.url}
-                        alt={`Slide ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                    {/* Slide number */}
-                    <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
-                      {idx + 1}
-                    </span>
-                    {/* Remove button */}
-                    <button
-                      type="button"
-                      onClick={() => removeCoverSlide(slide.id)}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white"
-                      aria-label="Remove slide"
-                    >
-                      <FaTrash size={9} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add slide button */}
-                <button
-                  type="button"
-                  onClick={() => coverSlideInputRef.current?.click()}
-                  style={{ aspectRatio: "16/9" }}
-                  className="rounded-lg border-2 border-dashed border-zinc-600 hover:border-red-500 flex flex-col items-center justify-center text-zinc-500 hover:text-red-400 transition"
-                >
-                  <FaPlus size={16} />
-                  <span className="text-xs mt-1">Add</span>
-                </button>
-              </div>
-
-              <input
-                ref={coverSlideInputRef}
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                onChange={onAddCoverSlides}
-                className="hidden"
-              />
-              <p className="text-xs text-gray-500">
-                Each slide max 20MB. Slides cycle automatically like a hero
-                banner.
+              <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
+                Social Links
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">
+                Add the channels fans should use to follow your brand.
               </p>
             </div>
           </div>
-        </section>
 
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
-            <FaStore className="text-red-400" />
-            Store Identity
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-xs text-gray-400">
-              Store Name
-              <input
-                name="name"
-                value={formData.name}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400">
-              Email
-              <input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400">
-              Phone
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400">
-              Location
-              <input
-                name="location"
-                value={formData.location}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400 md:col-span-2">
-              Address
-              <input
-                name="address"
-                value={formData.address}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400 md:col-span-2">
-              Description
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={onTextChange}
-                rows={4}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-6">
-          <h2 className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
-            Gallery Media
-          </h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
-            {galleryItems.map((item, idx) => (
-              <div
-                key={item.id}
-                className="relative rounded-lg overflow-hidden border border-zinc-700 bg-black"
-                style={{ aspectRatio: "4/3" }}
-              >
-                {item.type === "video" ? (
-                  <video
-                    src={getMediaUrl(item.url) || item.url}
-                    className="w-full h-full object-cover"
-                    muted
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={getMediaUrl(item.url) || item.url}
-                    alt={`Gallery ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => removeGalleryItem(item.id)}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white"
-                  aria-label="Remove gallery item"
-                >
-                  <FaTrash size={9} />
-                </button>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => galleryInputRef.current?.click()}
-              style={{ aspectRatio: "4/3" }}
-              className="rounded-lg border-2 border-dashed border-zinc-600 hover:border-red-500 flex flex-col items-center justify-center text-zinc-500 hover:text-red-400 transition"
-            >
-              <FaPlus size={16} />
-              <span className="text-xs mt-1">Add</span>
-            </button>
-          </div>
-
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            onChange={onAddGalleryItems}
-            className="hidden"
-          />
-
-          <p className="text-xs text-gray-500">
-            Add organizer gallery images/videos (max 20MB each).
-          </p>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-6">
-          <h2 className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">
-            Social Links
-          </h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            <label className="text-xs text-gray-400">
-              Website
-              <input
-                name="website"
-                value={formData.website}
-                onChange={onTextChange}
-                placeholder="https://"
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400">
-              Instagram
-              <input
-                name="instagram"
-                value={formData.instagram}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
-            <label className="text-xs text-gray-400">
-              Twitter/X
-              <input
-                name="twitter"
-                value={formData.twitter}
-                onChange={onTextChange}
-                className="mt-2 w-full rounded-xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
-              />
-            </label>
+          <div className="bg-black/20 p-5">
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="text-xs text-gray-400">
+                Website
+                <input
+                  name="website"
+                  value={formData.website}
+                  onChange={onTextChange}
+                  placeholder="https://"
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Instagram
+                <input
+                  name="instagram"
+                  value={formData.instagram}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Twitter/X
+                <input
+                  name="twitter"
+                  value={formData.twitter}
+                  onChange={onTextChange}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#1e1e1e] px-3 py-2.5 text-sm text-white focus:border-red-500 focus:outline-none"
+                />
+              </label>
+            </div>
           </div>
         </section>
 
@@ -878,7 +913,7 @@ const OrganizerProfileConfig = () => {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/20 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-red-400 transition-colors hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <FaSave />
             {loading ? "Saving..." : "Save Config"}

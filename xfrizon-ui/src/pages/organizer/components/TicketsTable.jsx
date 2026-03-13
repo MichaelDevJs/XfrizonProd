@@ -38,7 +38,7 @@ const TicketsTable = ({ tickets, onDownload, isLoading }) => {
   }
 
   return (
-    <div className="w-full overflow-x-auto border border-zinc-700 rounded">
+    <div className="w-full overflow-x-auto hide-scrollbar border border-zinc-700 rounded">
       <table className="w-full text-xs sm:text-sm border-collapse min-w-max">
         <thead>
           <tr className="border-b border-zinc-700 bg-zinc-900/50 sticky top-0 z-10">

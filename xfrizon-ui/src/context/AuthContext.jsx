@@ -280,6 +280,9 @@ const AuthProvider = ({ children }) => {
         organizer?.bio ||
         organizer?.description,
       coverPhoto: userData.coverPhoto || organizer?.coverPhoto,
+      website: userData.website || organizer?.website || "",
+      instagram: userData.instagram || organizer?.instagram || "",
+      twitter: userData.twitter || organizer?.twitter || "",
     };
     setOrganizer(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));

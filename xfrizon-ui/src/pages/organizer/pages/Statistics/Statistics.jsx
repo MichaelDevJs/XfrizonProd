@@ -374,7 +374,7 @@ const Statistics = () => {
               📥 Download All
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hide-scrollbar">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-900">

@@ -96,14 +96,14 @@ const BankDetailsForm = () => {
 
   if (loading) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
+      <div className="bg-zinc-900 border border-zinc-800 p-4 text-center">
         <p className="text-sm text-gray-400">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+    <div className="bg-zinc-900 border border-zinc-800 overflow-hidden">
       {message && (
         <div
           className={`p-3 flex items-center gap-2 text-sm ${

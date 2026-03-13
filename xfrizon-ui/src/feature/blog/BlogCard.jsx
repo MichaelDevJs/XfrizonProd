@@ -1,4 +1,13 @@
 import React from "react";
+import { FaInstagram, FaPaperPlane, FaShareAlt } from "react-icons/fa";
+import { toast } from "react-toastify";
+import {
+  copyShareText,
+  getAbsoluteShareUrl,
+  openInstagramShare,
+  openMessageShare,
+  shareNativelyOrCopy,
+} from "../../utils/share";
 
 const PLACEHOLDER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700'%3E%3Crect fill='%23272727' width='1200' height='700'/%3E%3Ctext x='50%25' y='50%25' font-size='28' fill='%23717171' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -41,10 +50,72 @@ export default function BlogCard({ blog }) {
   const imageSource = resolveImage(
     blog?.coverImage?.src || blog?.coverImage || blog?.image,
   );
+  const shareUrl = getAbsoluteShareUrl(`/blog/${blog?.id}`);
+
+  const handleShare = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      const result = await shareNativelyOrCopy({
+        title,
+        text: excerpt,
+        url: shareUrl,
+      });
+      if (result === "copied") {
+        toast.success("Blog link copied");
+      }
+    } catch {
+      toast.error("Unable to share this blog");
+    }
+  };
+
+  const handleInstagram = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await copyShareText({ title, url: shareUrl });
+      openInstagramShare({ title, url: shareUrl });
+      toast.info("Link copied. Paste into Instagram story or post.");
+    } catch {
+      toast.error("Could not prepare Instagram share");
+    }
+  };
+
+  const handleMessage = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openMessageShare({ title, url: shareUrl });
+  };
 
   return (
     <article className="group relative h-full overflow-hidden">
       <div className="relative w-full aspect-video sm:aspect-2/1 overflow-hidden">
+        <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded bg-black/55 p-1">
+          <button
+            type="button"
+            onClick={handleInstagram}
+            aria-label="Share blog on Instagram"
+            className="rounded p-1 text-zinc-200 hover:text-white hover:bg-zinc-800/70"
+          >
+            <FaInstagram size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={handleMessage}
+            aria-label="Share blog in message"
+            className="rounded p-1 text-zinc-200 hover:text-white hover:bg-zinc-800/70"
+          >
+            <FaPaperPlane size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Share blog"
+            className="rounded p-1 text-zinc-200 hover:text-white hover:bg-zinc-800/70"
+          >
+            <FaShareAlt size={12} />
+          </button>
+        </div>
         <img
           src={imageSource}
           alt={title}
@@ -55,7 +126,7 @@ export default function BlogCard({ blog }) {
         />
 
         {/* Overlay with gradient for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent"></div>
 
         {/* Content overlay at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">

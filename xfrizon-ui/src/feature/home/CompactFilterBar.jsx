@@ -138,17 +138,17 @@ export default function CompactFilterBar() {
 
   return (
     <div
-      className="bg-zinc-950/70 border border-zinc-800 rounded-lg px-3 sm:px-4 py-3 relative"
+      className="bg-zinc-950/70 rounded-lg px-2.5 sm:px-3 py-2 relative"
       ref={panelRef}
     >
       <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-widest text-zinc-500">
+        <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">
           Events
         </div>
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          className="text-xs uppercase tracking-widest text-zinc-300 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors"
+          className="text-[10px] uppercase tracking-[0.14em] text-zinc-300 px-2.5 py-1 rounded-md hover:text-white transition-colors"
           aria-expanded={isOpen}
           aria-haspopup="dialog"
         >

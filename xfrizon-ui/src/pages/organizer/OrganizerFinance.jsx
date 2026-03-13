@@ -377,7 +377,7 @@ const OrganizerFinance = () => {
       )}
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500 rounded-xl p-4 text-red-400">
+        <div className="bg-red-500/10 border border-red-500 p-4 text-red-400">
           {error}
         </div>
       )}
@@ -385,7 +385,7 @@ const OrganizerFinance = () => {
       {(payoutReport || !loading) && (
         <>
           {/* Financial Cards */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3 sm:p-4 overflow-x-auto hide-scrollbar">
+          <div className="border border-zinc-800 bg-zinc-900/80 p-3 sm:p-4 overflow-x-auto hide-scrollbar">
             <div className="flex min-w-max gap-3 sm:gap-4">
               <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
                 <p className="text-xs font-light text-gray-400 mb-2">
@@ -466,7 +466,7 @@ const OrganizerFinance = () => {
           </div>
 
           {/* Date Filter */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+          <div className="bg-zinc-900 border border-zinc-800 p-3">
             <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
               Date Range
             </p>
@@ -544,14 +544,14 @@ const OrganizerFinance = () => {
 
           {/* Payout Summary */}
           {!payoutReport?.payoutSummary?.length ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 text-center">
+            <div className="bg-zinc-900 border border-zinc-800 p-6 text-center">
               <FaDollarSign className="w-8 h-8 text-gray-600 mx-auto mb-2" />
               <p className="text-sm text-gray-500 font-light">
                 No payout data for selected period
               </p>
             </div>
           ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="bg-zinc-900 border border-zinc-800 overflow-hidden">
               <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-medium text-gray-200">

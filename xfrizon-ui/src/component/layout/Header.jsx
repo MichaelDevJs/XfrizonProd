@@ -2,6 +2,8 @@ import { useContext, useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
+import blogApi from "../../api/blogApi";
+import { FaBell } from "react-icons/fa";
 
 const Header = () => {
   const { organizer, logout } = useContext(AuthContext);
@@ -11,7 +13,13 @@ const Header = () => {
   const [genreDropdown, setGenreDropdown] = useState(false);
   const [signupDropdownOpen, setSignupDropdownOpen] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [commentNotifications, setCommentNotifications] = useState([]);
+  const [commentUnreadCount, setCommentUnreadCount] = useState(0);
+  const [commentNotificationsLoading, setCommentNotificationsLoading] =
+    useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const dropdownBtnRef = useRef(null);
+  const notificationRef = useRef(null);
   const genreDropdownRef = useRef(null);
   const signupDropdownRef = useRef(null);
 
@@ -23,6 +31,12 @@ const Header = () => {
         !dropdownBtnRef.current.contains(event.target)
       ) {
         setDropdownOpen(false);
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setNotificationOpen(false);
       }
       if (
         genreDropdownRef.current &&
@@ -47,6 +61,73 @@ const Header = () => {
   useEffect(() => {
     setImageLoadError(false);
   }, [organizer?.logo, organizer?.profilePicture]);
+
+  useEffect(() => {
+    if (!organizer || !notificationOpen) return;
+    fetchCommentNotifications();
+  }, [organizer, notificationOpen]);
+
+  useEffect(() => {
+    if (!organizer) return;
+
+    fetchCommentNotifications();
+    const intervalId = setInterval(() => {
+      fetchCommentNotifications();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [organizer]);
+
+  const fetchCommentNotifications = async () => {
+    try {
+      setCommentNotificationsLoading(true);
+      const response = await blogApi.getCommentNotifications();
+      const payload = response?.data ?? response ?? {};
+      setCommentNotifications(
+        Array.isArray(payload.notifications) ? payload.notifications : [],
+      );
+      setCommentUnreadCount(Number(payload.unreadCount || 0));
+    } catch (err) {
+      setCommentNotifications([]);
+      setCommentUnreadCount(0);
+    } finally {
+      setCommentNotificationsLoading(false);
+    }
+  };
+
+  const handleOpenNotification = async (notification) => {
+    try {
+      if (!notification?.isRead) {
+        await blogApi.markCommentNotificationRead(notification.id);
+        setCommentNotifications((prev) =>
+          prev.map((item) =>
+            item.id === notification.id ? { ...item, isRead: true } : item,
+          ),
+        );
+        setCommentUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch {
+      // Keep navigation behavior even if read-state update fails.
+    } finally {
+      setDropdownOpen(false);
+      setNotificationOpen(false);
+      if (notification?.blogId) {
+        navigate(`/blog/${notification.blogId}`);
+      }
+    }
+  };
+
+  const handleMarkAllCommentNotificationsRead = async () => {
+    try {
+      await blogApi.markAllCommentNotificationsRead();
+      setCommentNotifications((prev) =>
+        prev.map((item) => ({ ...item, isRead: true })),
+      );
+      setCommentUnreadCount(0);
+    } catch {
+      // Intentionally ignore to avoid blocking dropdown usage.
+    }
+  };
 
   const genres = [
     "All Genres",
@@ -148,43 +229,126 @@ const Header = () => {
 
             {/* Auth Section */}
             {organizer ? (
-              <div className="relative" ref={dropdownBtnRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className={`flex items-center gap-2 px-3 py-2 border border-zinc-800 rounded-lg hover:border-cyan-500 hover:text-cyan-500 transition-all duration-300 text-xs font-light text-gray-400 hover:bg-zinc-900 ${
-                    dropdownOpen
-                      ? "bg-zinc-900 border-cyan-500 text-cyan-500"
-                      : ""
-                  }`}
-                >
-                  <div className="relative w-5 h-5">
-                    {!imageLoadError &&
-                    (organizer?.logo || organizer?.profilePicture) ? (
-                      <img
-                        key={organizer?.logo || organizer?.profilePicture}
-                        src={getImageUrl(
-                          organizer?.logo || organizer?.profilePicture,
-                        )}
-                        alt={organizer?.name}
-                        className="w-5 h-5 rounded-full object-cover border border-zinc-600"
-                        onError={() => setImageLoadError(true)}
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-linear-to-br from-red-500 to-red-600 flex items-center justify-center text-xs font-bold text-white">
-                        {organizer?.role === "ORGANIZER"
-                          ? organizer?.name?.charAt(0)?.toUpperCase() ||
-                            organizer?.firstName?.charAt(0)?.toUpperCase()
-                          : organizer?.firstName?.charAt(0)?.toUpperCase() ||
-                            "U"}
-                      </div>
+              <div className="flex items-center gap-2">
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotificationOpen((prev) => !prev);
+                      setDropdownOpen(false);
+                    }}
+                    className={`relative flex items-center justify-center w-9 h-9 border border-zinc-800 rounded-lg hover:border-cyan-500 hover:text-cyan-500 transition-all duration-300 text-gray-400 hover:bg-zinc-900 ${
+                      notificationOpen
+                        ? "bg-zinc-900 border-cyan-500 text-cyan-500"
+                        : ""
+                    }`}
+                    aria-label="Notifications"
+                  >
+                    <FaBell className="text-sm" />
+                    {commentUnreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[9px] leading-4 text-center font-semibold">
+                        {commentUnreadCount > 9 ? "9+" : commentUnreadCount}
+                      </span>
                     )}
-                  </div>
-                  <span className="hidden sm:inline text-xs uppercase tracking-widest">
-                    {organizer?.role === "ORGANIZER"
-                      ? (organizer?.name || "Organizer").split(" ")[0]
-                      : organizer?.firstName}
-                  </span>
-                </button>
+                  </button>
+
+                  {notificationOpen && (
+                    <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden">
+                      <div className="px-4 py-2.5 bg-zinc-900/60 border-b border-zinc-800">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] text-gray-400 uppercase tracking-widest">
+                            Notifications
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleMarkAllCommentNotificationsRead}
+                            disabled={commentUnreadCount === 0}
+                            className="text-[10px] text-xf-accent uppercase tracking-widest disabled:opacity-40"
+                          >
+                            Mark all
+                          </button>
+                        </div>
+                      </div>
+
+                      {commentNotificationsLoading ? (
+                        <p className="px-4 py-3 text-xs text-gray-500">Loading...</p>
+                      ) : commentNotifications.length === 0 ? (
+                        <p className="px-4 py-3 text-xs text-gray-500">
+                          No comment activity yet
+                        </p>
+                      ) : (
+                        <div
+                          className={
+                            commentNotifications.length > 10
+                              ? "max-h-72 overflow-y-auto hide-scrollbar"
+                              : ""
+                          }
+                        >
+                          {commentNotifications.map((notification) => (
+                            <button
+                              key={notification.id}
+                              type="button"
+                              onClick={() => handleOpenNotification(notification)}
+                              className={`w-full text-left px-4 py-2.5 border-t border-zinc-800 transition-colors ${
+                                notification.isRead
+                                  ? "text-gray-500 hover:bg-zinc-800"
+                                  : "text-gray-300 hover:bg-zinc-800/90"
+                              }`}
+                            >
+                              <p className="text-xs leading-5">{notification.message}</p>
+                              {!notification.isRead && (
+                                <p className="text-[10px] text-red-400 uppercase tracking-widest mt-1">
+                                  New
+                                </p>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative" ref={dropdownBtnRef}>
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(!dropdownOpen);
+                      setNotificationOpen(false);
+                    }}
+                    className={`flex items-center gap-2 px-3 py-2 border border-zinc-800 rounded-lg hover:border-cyan-500 hover:text-cyan-500 transition-all duration-300 text-xs font-light text-gray-400 hover:bg-zinc-900 ${
+                      dropdownOpen
+                        ? "bg-zinc-900 border-cyan-500 text-cyan-500"
+                        : ""
+                    }`}
+                  >
+                    <div className="relative w-5 h-5">
+                      {!imageLoadError &&
+                      (organizer?.logo || organizer?.profilePicture) ? (
+                        <img
+                          key={organizer?.logo || organizer?.profilePicture}
+                          src={getImageUrl(
+                            organizer?.logo || organizer?.profilePicture,
+                          )}
+                          alt={organizer?.name}
+                          className="w-5 h-5 rounded-full object-cover border border-zinc-600"
+                          onError={() => setImageLoadError(true)}
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-linear-to-br from-red-500 to-red-600 flex items-center justify-center text-xs font-bold text-white">
+                          {organizer?.role === "ORGANIZER"
+                            ? organizer?.name?.charAt(0)?.toUpperCase() ||
+                              organizer?.firstName?.charAt(0)?.toUpperCase()
+                            : organizer?.firstName?.charAt(0)?.toUpperCase() ||
+                              "U"}
+                        </div>
+                      )}
+                    </div>
+                    <span className="hidden sm:inline text-xs uppercase tracking-widest">
+                      {organizer?.role === "ORGANIZER"
+                        ? (organizer?.name || "Organizer").split(" ")[0]
+                        : organizer?.firstName}
+                    </span>
+                  </button>
 
                 {/* User Dropdown Menu */}
                 {dropdownOpen && (
@@ -287,20 +451,16 @@ const Header = () => {
                     {organizer.role !== "ORGANIZER" && (
                       <>
                         <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate(`/user/${organizer.id}`);
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          type="button"
+                          disabled
+                          className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
                         >
                           View Profile
                         </button>
                         <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/user-profile-edit");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          type="button"
+                          disabled
+                          className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
                         >
                           Edit Profile
                         </button>
@@ -314,11 +474,9 @@ const Header = () => {
                           My Tickets
                         </button>
                         <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/saved-events");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          type="button"
+                          disabled
+                          className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
                         >
                           Saved Events
                         </button>
@@ -337,6 +495,7 @@ const Header = () => {
                     </button>
                   </div>
                 )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-wrap items-center justify-end gap-2">

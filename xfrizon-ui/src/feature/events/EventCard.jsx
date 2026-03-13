@@ -3,12 +3,22 @@ import {
   FaCalendarAlt,
   FaClock,
   FaHeart,
+  FaInstagram,
+  FaPaperPlane,
+  FaShareAlt,
 } from "react-icons/fa";
 import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
+import {
+  copyShareText,
+  getAbsoluteShareUrl,
+  openInstagramShare,
+  openMessageShare,
+  shareNativelyOrCopy,
+} from "../../utils/share";
 
 const PLACEHOLDER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%233f3f46' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23a1a1a1' text-anchor='middle' dominant-baseline='middle'%3EEvent Image%3C/text%3E%3C/svg%3E";
@@ -161,6 +171,40 @@ export default function EventCard({ event, onSaveChange }) {
 
   const allTicketsSoldOut = () => {
     return getTotalAvailableTickets() === 0;
+  };
+
+  const shareUrl = getAbsoluteShareUrl(`/event/${event.id}`);
+
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    try {
+      const result = await shareNativelyOrCopy({
+        title: event.title,
+        text: event.description || "Check out this event",
+        url: shareUrl,
+      });
+      if (result === "copied") {
+        toast.success("Event link copied");
+      }
+    } catch {
+      toast.error("Unable to share this event");
+    }
+  };
+
+  const handleInstagramShare = async (e) => {
+    e.stopPropagation();
+    try {
+      await copyShareText({ title: event.title, url: shareUrl });
+      openInstagramShare({ title: event.title, url: shareUrl });
+      toast.info("Link copied. Paste into Instagram story or post.");
+    } catch {
+      toast.error("Could not prepare Instagram share");
+    }
+  };
+
+  const handleMessageShare = (e) => {
+    e.stopPropagation();
+    openMessageShare({ title: event.title, url: shareUrl });
   };
 
   return (
@@ -391,6 +435,36 @@ export default function EventCard({ event, onSaveChange }) {
                 </div>
               </>
             )}
+
+            <div className="flex items-center gap-1 rounded bg-zinc-900/70 px-1 py-0.5">
+              <button
+                type="button"
+                onClick={handleInstagramShare}
+                className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
+                aria-label="Share event to Instagram"
+                title="Share to Instagram"
+              >
+                <FaInstagram size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={handleMessageShare}
+                className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
+                aria-label="Share event in message"
+                title="Share in message"
+              >
+                <FaPaperPlane size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
+                aria-label="Share event"
+                title="Share"
+              >
+                <FaShareAlt size={12} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

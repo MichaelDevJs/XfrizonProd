@@ -3,7 +3,6 @@ import {
   FaCalendarAlt,
   FaClock,
   FaUsers,
-  FaUser,
   FaPhone,
   FaEnvelope,
   FaTicketAlt,
@@ -301,12 +300,6 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
             >
               Overview
             </button>
-            <button
-              className={`pb-2.5 font-medium text-xs transition-colors duration-200 ${activeTab === "info" ? "text-gray-200 border-b-2 border-red-400" : "text-gray-400 hover:text-gray-300"}`}
-              onClick={() => setActiveTab("info")}
-            >
-              Info
-            </button>
           </div>
 
           {activeTab === "overview" && (
@@ -512,113 +505,10 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                 </div>
               </div>
 
-              {organizer && (
-                <div className="w-full max-w-lg mx-auto mt-12">
-                  <h4 className="text-[11px] font-medium tracking-wide uppercase text-gray-300 mb-2 text-left">
-                    About Org
-                  </h4>
-                  <div
-                    className="rounded-lg p-3 transition-colors duration-200 cursor-pointer"
-                    onClick={() => organizer?.id && navigate(`/organizer/${organizer.id}`)}
-                  >
-                    <div className="flex flex-col items-start gap-2">
-                      {organizer.profilePicture ? (
-                        <img
-                          src={resolveFlyerUrl(organizer.profilePicture)}
-                          alt={organizer.name}
-                          className="w-12 h-12 rounded-full object-cover"
-                          onError={(e) => (e.target.style.display = "none")}
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-200">
-                          <FaUser className="text-sm" />
-                        </div>
-                      )}
-
-                      <div className="w-full min-w-0">
-                        <p className="text-sm font-medium text-white">
-                          {organizer.name || "Organizer"}
-                        </p>
-                        {organizer.email && (
-                          <p className="text-[11px] text-gray-400">
-                            {organizer.email}
-                          </p>
-                        )}
-                        {organizer.phone && (
-                          <p className="text-[11px] text-gray-400 truncate">
-                            {organizer.phone}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           )}
 
-          {activeTab === "info" && (
-            <div className="space-y-8">
-              {/* Night With Us Video */}
-              {organizer && nightWithUsVideoUrl && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">Night with Us</h2>
-                  <div className="w-full overflow-hidden rounded-lg">
-                    <video
-                      src={nightWithUsVideoUrl}
-                      className="w-full aspect-video object-cover"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                    />
-                  </div>
-                </div>
-              )}
 
-              {/* Organizer Profile */}
-              {organizer && (
-                <div className="space-y-4 pb-8">
-                  <h2 className="text-lg font-semibold">Organizer</h2>
-                  <div
-                    className="border border-gray-800 rounded-lg p-4 bg-gray-950 hover:border-gray-700 transition-colors duration-200 cursor-pointer"
-                    onClick={() => navigate(`/organizer/${organizer.id}`)}
-                  >
-                    <div className="flex items-center gap-4">
-                      {organizer.profilePicture ? (
-                        <img
-                          src={resolveFlyerUrl(organizer.profilePicture)}
-                          alt={organizer.name}
-                          className="w-16 h-16 rounded-full object-cover"
-                          onError={(e) => (e.target.style.display = "none")}
-                        />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center text-white font-semibold text-lg">
-                          {organizer.name?.charAt(0)?.toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base text-white mb-1">
-                          {organizer.name}
-                        </h3>
-                        {organizer.email && (
-                          <p className="text-xs text-gray-400 mb-1 truncate">
-                            {organizer.email}
-                          </p>
-                        )}
-                        {organizer.phone && (
-                          <p className="text-xs text-gray-400">
-                            {organizer.phone}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </>

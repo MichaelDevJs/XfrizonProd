@@ -9,31 +9,29 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "blog_comments")
+@Table(
+        name = "blog_comment_likes",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_blog_comment_like_comment_user", columnNames = {"comment_id", "user_id"})
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BlogComment {
+public class BlogCommentLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blog_id", nullable = false)
-    private Blog blog;
+    @JoinColumn(name = "comment_id", nullable = false)
+    private BlogComment comment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_comment_id")
-    private BlogComment parentComment;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
