@@ -11,7 +11,7 @@ import com.xfrizon.entity.User;
 import com.xfrizon.repository.EventPayoutRepository;
 import com.xfrizon.repository.EventRepository;
 import com.xfrizon.repository.PaymentRecordRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class EventPayoutService {
 
