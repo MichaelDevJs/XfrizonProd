@@ -6,6 +6,7 @@ import HeroSlideshow from "../../component/HeroSlideshow/HeroSlideshow";
 import api from "../../api/axios";
 import { FaSearch } from "react-icons/fa";
 import useSeo from "../../hooks/useSeo";
+import { getSiteBaseUrl, toAbsoluteSiteUrl } from "../../utils/siteUrl";
 
 export default function AllBlogs() {
   const BLOGS_PER_PAGE = 10;
@@ -322,7 +323,7 @@ export default function AllBlogs() {
       url:
         typeof window !== "undefined"
           ? `${window.location.origin}/blog/${blog.id}`
-          : `https://xfrizon.up.railway.app/blog/${blog.id}`,
+          : toAbsoluteSiteUrl(`/blog/${blog.id}`),
       name: blog.title,
     })),
   };
@@ -332,9 +333,7 @@ export default function AllBlogs() {
     "@type": "Organization",
     name: "Xfrizon",
     url:
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "https://xfrizon.up.railway.app",
+      typeof window !== "undefined" ? window.location.origin : getSiteBaseUrl(),
   };
 
   useSeo({
@@ -344,7 +343,7 @@ export default function AllBlogs() {
     url:
       typeof window !== "undefined"
         ? window.location.href
-        : "https://xfrizon.up.railway.app/blogs",
+        : toAbsoluteSiteUrl("/blogs"),
     jsonLd: [organizationJsonLd, itemListJsonLd],
   });
 

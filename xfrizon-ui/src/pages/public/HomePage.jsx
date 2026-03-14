@@ -7,6 +7,7 @@ import BlogsSection from "../../feature/home/blogs/BlogsSection";
 import FilterProvider from "../../context/FilterContext";
 import api from "../../api/axios";
 import useSeo from "../../hooks/useSeo";
+import { getSiteBaseUrl } from "../../utils/siteUrl";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,7 @@ export default function HomePage() {
         url:
           typeof window !== "undefined"
             ? window.location.origin
-            : "https://xfrizon.up.railway.app",
+            : getSiteBaseUrl(),
       },
       {
         "@context": "https://schema.org",
@@ -56,7 +57,7 @@ export default function HomePage() {
         url:
           typeof window !== "undefined"
             ? window.location.origin
-            : "https://xfrizon.up.railway.app",
+            : getSiteBaseUrl(),
       },
     ],
   });

@@ -37,7 +37,7 @@ const AuthProvider = ({ children }) => {
     const validateToken = async () => {
       try {
         // Skip validation for admin routes - admin uses separate adminToken
-        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        const isAdminRoute = window.location.pathname.startsWith("/admin");
         if (isAdminRoute) {
           setLoading(false);
           return;
@@ -194,7 +194,9 @@ const AuthProvider = ({ children }) => {
     profilePicture,
   ) => {
     try {
-      const referralCode = (localStorage.getItem("xfrizon_referral") || "").trim();
+      const referralCode = (
+        localStorage.getItem("xfrizon_referral") || ""
+      ).trim();
       const response = await api.post("/auth/register", {
         firstName,
         lastName,

@@ -15,6 +15,11 @@ import java.util.Optional;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
 
+    interface EventSitemapEntry {
+        Long getId();
+        LocalDateTime getLastModified();
+    }
+
     Page<Event> findByOrganizerId(Long organizerId, Pageable pageable);
 
     List<Event> findByOrganizerIdAndStatus(Long organizerId, Event.EventStatus status);
@@ -44,4 +49,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByStatusAndEventDateTimeIsBetween(Event.EventStatus status, LocalDateTime start, LocalDateTime end);
 
     int countByOrganizerIdAndStatus(Long organizerId, Event.EventStatus status);
+
+    @Query("""
+        SELECT e.id AS id,
+               COALESCE(e.updatedAt, e.publishedAt, e.createdAt) AS lastModified
+        FROM Event e
+        WHERE e.status IN (
+            com.xfrizon.entity.Event$EventStatus.PUBLISHED,
+            com.xfrizon.entity.Event$EventStatus.LIVE,
+            com.xfrizon.entity.Event$EventStatus.COMPLETED
+        )
+        ORDER BY COALESCE(e.updatedAt, e.publishedAt, e.createdAt) DESC
+        """)
+    List<EventSitemapEntry> findPublicEventSitemapEntries();
 }

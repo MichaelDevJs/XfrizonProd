@@ -61,7 +61,9 @@ export default function BlogCard({ blog }) {
       if (result === "copied") {
         toast.success("Blog link copied");
       } else {
-        toast.info("Choose Instagram, WhatsApp, or any app from share options.");
+        toast.info(
+          "Choose Instagram, WhatsApp, or any app from share options.",
+        );
       }
     } catch {
       toast.error("Unable to share this blog");
@@ -72,8 +74,12 @@ export default function BlogCard({ blog }) {
     <article className="group relative h-full overflow-hidden">
       <div className="relative w-full aspect-video sm:aspect-2/1 overflow-hidden">
         <div className="absolute left-4 sm:left-5 top-2 z-20 pointer-events-none">
-          <span className="text-red-500 font-extrabold text-sm tracking-wide">XF</span>
-          <span className="text-white font-semibold text-xs tracking-wide ml-1">Mag</span>
+          <span className="text-red-500 font-extrabold text-sm tracking-wide">
+            XF
+          </span>
+          <span className="text-white font-semibold text-xs tracking-wide ml-1">
+            Mag
+          </span>
         </div>
         <div className="absolute right-2 top-2 z-20 rounded bg-black/55 p-1">
           <button

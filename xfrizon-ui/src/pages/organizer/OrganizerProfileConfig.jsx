@@ -26,26 +26,26 @@ const VIDEO_EXTENSIONS = [
 ];
 
 const getMediaUrl = (path) => {
-    if (!path) return null;
-    // If already a full URL or data URL, return as-is
-    if (String(path).startsWith("http") || String(path).startsWith("data:")) {
-      return path;
-    }
-  
-    const normalized = String(path).startsWith("/") ? path : `/${path}`;
-    
-    // In production, use relative paths; in dev, prepend API base
-    if (import.meta.env.PROD) {
-      // Production: return relative path for front-end served with backend
-      return normalized;
-    }
-    
-    // Development: prepend localhost
-    if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
-      return `http://localhost:8081${normalized}`;
-    }
-    return `http://localhost:8081/api/v1${normalized}`;
-  };
+  if (!path) return null;
+  // If already a full URL or data URL, return as-is
+  if (String(path).startsWith("http") || String(path).startsWith("data:")) {
+    return path;
+  }
+
+  const normalized = String(path).startsWith("/") ? path : `/${path}`;
+
+  // In production, use relative paths; in dev, prepend API base
+  if (import.meta.env.PROD) {
+    // Production: return relative path for front-end served with backend
+    return normalized;
+  }
+
+  // Development: prepend localhost
+  if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
+    return `http://localhost:8081${normalized}`;
+  }
+  return `http://localhost:8081/api/v1${normalized}`;
+};
 
 const isVideoMedia = (value) => {
   if (!value) return false;
@@ -486,103 +486,119 @@ const OrganizerProfileConfig = () => {
 
         {/* scrollable preview — hero always visible, rest revealed by scroll */}
         {isPreviewOpen && (
-        <div className="overflow-y-auto hide-scrollbar max-h-80 sm:max-h-96 pointer-events-none">
+          <div className="overflow-y-auto hide-scrollbar max-h-80 sm:max-h-96 pointer-events-none">
+            {/* Cover Slideshow */}
+            <div className="relative w-full h-40 sm:h-52 lg:h-60 overflow-hidden bg-black">
+              <OrganizerCoverSlideshow
+                slides={coverSlides.map((s) => ({
+                  id: s.id,
+                  url: getMediaUrl(s.url) || s.url,
+                  type: s.type,
+                }))}
+              />
+            </div>
 
-          {/* Cover Slideshow */}
-          <div className="relative w-full h-40 sm:h-52 lg:h-60 overflow-hidden bg-black">
-            <OrganizerCoverSlideshow
-              slides={coverSlides.map((s) => ({
-                id: s.id,
-                url: getMediaUrl(s.url) || s.url,
-                type: s.type,
-              }))}
-            />
-          </div>
-
-          {/* Top About Org (no bio) */}
-          <div className="px-3 sm:px-4 py-4 sm:py-6">
-            <div className="w-full max-w-4xl mx-auto">
-              <div className="p-3 sm:p-4 text-center">
-                <p className="text-sm font-medium text-white">{formData.name || "Organizer"}</p>
-                <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light text-gray-200/90">
-                  {formData.location && <span>{formData.location}</span>}
-                  {formData.location && <span className="text-gray-500">|</span>}
-                  <span>Joined {new Date().toLocaleDateString("en-US", { year: "numeric", month: "short" })}</span>
-                  {(formData.website || formData.instagram || formData.twitter) && (
-                    <span className="text-gray-500">|</span>
-                  )}
-                  <div className="flex items-center gap-2 text-gray-200">
-                    {formData.instagram && <FaInstagram size={13} />}
-                    {formData.website && <FaGlobe size={13} />}
-                    {formData.twitter && <FaTwitter size={13} />}
+            {/* Top About Org (no bio) */}
+            <div className="px-3 sm:px-4 py-4 sm:py-6">
+              <div className="w-full max-w-4xl mx-auto">
+                <div className="p-3 sm:p-4 text-center">
+                  <p className="text-sm font-medium text-white">
+                    {formData.name || "Organizer"}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light text-gray-200/90">
+                    {formData.location && <span>{formData.location}</span>}
+                    {formData.location && (
+                      <span className="text-gray-500">|</span>
+                    )}
+                    <span>
+                      Joined{" "}
+                      {new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                    {(formData.website ||
+                      formData.instagram ||
+                      formData.twitter) && (
+                      <span className="text-gray-500">|</span>
+                    )}
+                    <div className="flex items-center gap-2 text-gray-200">
+                      {formData.instagram && <FaInstagram size={13} />}
+                      {formData.website && <FaGlobe size={13} />}
+                      {formData.twitter && <FaTwitter size={13} />}
+                    </div>
+                    {formData.address && (
+                      <span className="text-gray-500">|</span>
+                    )}
+                    {formData.address && <span>{formData.address}</span>}
                   </div>
-                  {formData.address && <span className="text-gray-500">|</span>}
-                  {formData.address && <span>{formData.address}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Tab Row */}
+            <div className="flex justify-center gap-5 mb-6 pt-6">
+              <span className="pb-2.5 font-medium text-xs text-gray-200 border-b-2 border-red-400">
+                Overview
+              </span>
+              <span className="pb-2.5 font-medium text-xs text-gray-400">
+                Upcoming Events
+              </span>
+              <span className="pb-2.5 font-medium text-xs text-gray-400">
+                Past Events
+              </span>
+            </div>
+
+            {/* Overview tab content */}
+            <div className="px-3 sm:px-4 pb-6 space-y-8">
+              {/* Featured Events placeholder */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-white">
+                  Featured Events
+                </h3>
+                <p className="text-xs text-gray-400">No featured events yet.</p>
+              </div>
+
+              {/* Gallery */}
+              <div className="w-full max-w-4xl mx-auto">
+                <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
+                  Gallery
+                </h3>
+                <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
+                  {galleryItems.length > 0 ? (
+                    galleryItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="shrink-0 w-36 sm:w-48 h-24 sm:h-28 bg-[#1e1e1e] overflow-hidden"
+                      >
+                        {item.type === "video" ? (
+                          <video
+                            src={getMediaUrl(item.url) || item.url}
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={getMediaUrl(item.url) || item.url}
+                            alt="Gallery"
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400">
+                      No gallery media yet.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Tab Row */}
-          <div className="flex justify-center gap-5 mb-6 pt-6">
-            <span className="pb-2.5 font-medium text-xs text-gray-200 border-b-2 border-red-400">
-              Overview
-            </span>
-            <span className="pb-2.5 font-medium text-xs text-gray-400">
-              Upcoming Events
-            </span>
-            <span className="pb-2.5 font-medium text-xs text-gray-400">
-              Past Events
-            </span>
-          </div>
-
-          {/* Overview tab content */}
-          <div className="px-3 sm:px-4 pb-6 space-y-8">
-
-            {/* Featured Events placeholder */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-white">Featured Events</h3>
-              <p className="text-xs text-gray-400">No featured events yet.</p>
-            </div>
-
-            {/* Gallery */}
-            <div className="w-full max-w-4xl mx-auto">
-              <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
-                Gallery
-              </h3>
-              <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
-                {galleryItems.length > 0 ? (
-                  galleryItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="shrink-0 w-36 sm:w-48 h-24 sm:h-28 bg-[#1e1e1e] overflow-hidden"
-                    >
-                      {item.type === "video" ? (
-                        <video
-                          src={getMediaUrl(item.url) || item.url}
-                          className="w-full h-full object-cover"
-                          muted
-                          playsInline
-                        />
-                      ) : (
-                        <img
-                          src={getMediaUrl(item.url) || item.url}
-                          alt="Gallery"
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-gray-400">No gallery media yet.</p>
-                )}
-              </div>
-            </div>
-
-          </div>
-        </div>
-        )}{/* end scroll wrapper */}
+        )}
+        {/* end scroll wrapper */}
       </section>
 
       <form onSubmit={handleSave} className="space-y-4 sm:space-y-6">
@@ -642,7 +658,9 @@ const OrganizerProfileConfig = () => {
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
                       Cover Slides
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">Image or video.</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Image or video.
+                    </p>
                   </div>
                 </div>
 
@@ -710,7 +728,8 @@ const OrganizerProfileConfig = () => {
                 Store Identity
               </h2>
               <p className="mt-1 text-xs text-gray-500">
-                Set the essential details visitors use to understand and contact your store.
+                Set the essential details visitors use to understand and contact
+                your store.
               </p>
             </div>
           </div>
@@ -843,7 +862,9 @@ const OrganizerProfileConfig = () => {
               className="hidden"
             />
 
-            <p className="mt-3 text-xs text-gray-500">Add organizer gallery images/videos.</p>
+            <p className="mt-3 text-xs text-gray-500">
+              Add organizer gallery images/videos.
+            </p>
           </div>
         </section>
 

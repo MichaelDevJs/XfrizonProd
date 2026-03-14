@@ -94,7 +94,7 @@ export default function AdminSignUp() {
           headers: {
             "X-Admin-Secret-Key": formData.adminSecretKey,
           },
-        }
+        },
       );
 
       if (response?.data?.success) {
@@ -107,7 +107,7 @@ export default function AdminSignUp() {
             firstName: response.data.firstName,
             lastName: response.data.lastName,
             role: response.data.role,
-          })
+          }),
         );
 
         toast.success("Admin account created successfully!");
@@ -129,7 +129,7 @@ export default function AdminSignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1e1e1e] flex items-center justify-center px-4 py-8">
+    <div className="admin-theme min-h-screen bg-[#1e1e1e] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -145,7 +145,7 @@ export default function AdminSignUp() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-8">
+        <div className="bg-zinc-950/70 rounded-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* First Name */}
             <div>
@@ -252,7 +252,9 @@ export default function AdminSignUp() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`w-full px-4 py-2.5 bg-zinc-900 border ${
-                    errors.confirmPassword ? "border-red-500" : "border-zinc-800"
+                    errors.confirmPassword
+                      ? "border-red-500"
+                      : "border-zinc-800"
                   } rounded-lg text-white placeholder-zinc-600 font-light text-sm transition-all focus:outline-none hover:border-zinc-700 focus:border-[#403838] pr-10`}
                   placeholder="••••••••"
                 />

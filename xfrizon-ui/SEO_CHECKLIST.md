@@ -11,4 +11,3 @@
 - [ ] Improve accessibility (alt tags, ARIA)
 - [ ] Add internal links between blog, events, artists, organizers
 - [ ] Monitor Google Search Console
-

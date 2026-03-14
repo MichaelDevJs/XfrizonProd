@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   getPendingPayouts,
-  getOrganizerPayoutPreview,
+  getEventPayoutPreview,
+  holdEventPayout,
+  releaseEventPayout,
+  payEventPayoutNow,
   markPayoutAsSent,
   cancelPayout,
 } from "../../api/payoutApi";
@@ -22,15 +25,13 @@ export default function AdminPayoutManagement() {
   const [prefillPayout, setPrefillPayout] = useState(null);
   const [selectedPayout, setSelectedPayout] = useState(null);
   const [adminNotes, setAdminNotes] = useState("");
-  const [payoutPreview, setPayoutPreview] = useState([]);
+  const [eventPayoutPreview, setEventPayoutPreview] = useState([]);
   const [previewLoading, setPreviewLoading] = useState(true);
-  const [previewCadence, setPreviewCadence] = useState("WEEKLY");
-  const [previewFrom, setPreviewFrom] = useState("");
-  const [previewTo, setPreviewTo] = useState("");
+  const [previewStatus, setPreviewStatus] = useState("");
 
   useEffect(() => {
     loadPendingPayouts();
-    loadPayoutPreview({ cadence: "WEEKLY", from: "", to: "" });
+    loadEventPayoutPreview("");
   }, []);
 
   const loadPendingPayouts = async () => {
@@ -58,23 +59,15 @@ export default function AdminPayoutManagement() {
     }
   };
 
-  const loadPayoutPreview = async ({ cadence, from, to } = {}) => {
+  const loadEventPayoutPreview = async (status = previewStatus) => {
     try {
       setPreviewLoading(true);
-      const resolvedCadence = cadence || previewCadence;
-      const resolvedFrom = from !== undefined ? from : previewFrom;
-      const resolvedTo = to !== undefined ? to : previewTo;
-
-      const response = await getOrganizerPayoutPreview({
-        cadence: resolvedCadence,
-        from: resolvedFrom || undefined,
-        to: resolvedTo || undefined,
-      });
+      const response = await getEventPayoutPreview(status || undefined);
       const rows = Array.isArray(response?.data) ? response.data : [];
-      setPayoutPreview(rows);
+      setEventPayoutPreview(rows);
     } catch (error) {
       console.error("Error loading payout preview:", error);
-      setPayoutPreview([]);
+      setEventPayoutPreview([]);
       if (error.message && !error.response) {
         toast.error(error.message);
         return;
@@ -84,7 +77,7 @@ export default function AdminPayoutManagement() {
       } else {
         toast.error(
           error.response?.data?.message ||
-            "Failed to load organizer payout preview",
+            "Failed to load event payout preview",
         );
       }
     } finally {
@@ -93,18 +86,56 @@ export default function AdminPayoutManagement() {
   };
 
   const handleApplyPreviewFilter = () => {
-    loadPayoutPreview({
-      cadence: previewCadence,
-      from: previewFrom,
-      to: previewTo,
-    });
+    loadEventPayoutPreview(previewStatus);
   };
 
   const handleResetPreviewFilter = () => {
-    setPreviewCadence("WEEKLY");
-    setPreviewFrom("");
-    setPreviewTo("");
-    loadPayoutPreview({ cadence: "WEEKLY", from: "", to: "" });
+    setPreviewStatus("");
+    loadEventPayoutPreview("");
+  };
+
+  const handleHoldEventPayout = async (payoutId) => {
+    const reason =
+      window.prompt("Reason for hold:", "Awaiting admin review") || "";
+    try {
+      setProcessing(`hold-${payoutId}`);
+      await holdEventPayout(payoutId, reason);
+      toast.success("Payout held");
+      loadEventPayoutPreview();
+    } catch (error) {
+      console.error("Error holding event payout:", error);
+      toast.error("Failed to hold payout");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleReleaseEventPayout = async (payoutId) => {
+    try {
+      setProcessing(`release-${payoutId}`);
+      await releaseEventPayout(payoutId);
+      toast.success("Payout released");
+      loadEventPayoutPreview();
+    } catch (error) {
+      console.error("Error releasing event payout:", error);
+      toast.error("Failed to release payout");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handlePayNow = async (payoutId) => {
+    try {
+      setProcessing(`pay-${payoutId}`);
+      await payEventPayoutNow(payoutId);
+      toast.success("Payout processed");
+      loadEventPayoutPreview();
+    } catch (error) {
+      console.error("Error processing payout:", error);
+      toast.error("Failed to process payout");
+    } finally {
+      setProcessing(null);
+    }
   };
 
   const handleMarkAsSent = async (payoutId) => {
@@ -115,7 +146,7 @@ export default function AdminPayoutManagement() {
       setAdminNotes("");
       setSelectedPayout(null);
       loadPendingPayouts();
-      loadPayoutPreview();
+      loadEventPayoutPreview();
     } catch (error) {
       console.error("Error marking payout as sent:", error);
       toast.error("Failed to mark payout as sent");
@@ -130,7 +161,7 @@ export default function AdminPayoutManagement() {
       await cancelPayout(payoutId, reason);
       toast.success("Payout cancelled");
       loadPendingPayouts();
-      loadPayoutPreview();
+      loadEventPayoutPreview();
     } catch (error) {
       console.error("Error cancelling payout:", error);
       toast.error("Failed to cancel payout");
@@ -245,11 +276,10 @@ export default function AdminPayoutManagement() {
           <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
             <div>
               <h2 className="text-white text-lg font-semibold">
-                Organizer Payout Preview
+                Event Payout Preview
               </h2>
               <p className="text-gray-400 text-sm">
-                Available to send = organizer earnings - sent payouts - pending
-                payouts
+                Automatic release is scheduled for next day after event ends.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -259,29 +289,19 @@ export default function AdminPayoutManagement() {
             </div>
           </div>
 
-          <div className="px-6 py-4 border-b border-zinc-800 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="px-6 py-4 border-b border-zinc-800 grid grid-cols-1 md:grid-cols-3 gap-3">
             <select
-              value={previewCadence}
-              onChange={(e) => setPreviewCadence(e.target.value)}
+              value={previewStatus}
+              onChange={(e) => setPreviewStatus(e.target.value)}
               className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white"
             >
-              <option value="WEEKLY">WEEKLY</option>
-              <option value="MONTHLY">MONTHLY</option>
+              <option value="">ALL</option>
+              <option value="SCHEDULED">SCHEDULED</option>
+              <option value="READY">READY</option>
+              <option value="HELD">HELD</option>
+              <option value="PAID">PAID</option>
+              <option value="FAILED">FAILED</option>
             </select>
-
-            <input
-              type="datetime-local"
-              value={previewFrom}
-              onChange={(e) => setPreviewFrom(e.target.value)}
-              className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white"
-            />
-
-            <input
-              type="datetime-local"
-              value={previewTo}
-              onChange={(e) => setPreviewTo(e.target.value)}
-              className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white"
-            />
 
             <button
               onClick={handleApplyPreviewFilter}
@@ -299,31 +319,31 @@ export default function AdminPayoutManagement() {
           </div>
 
           <div className="overflow-x-auto">
-            {payoutPreview.length === 0 ? (
+            {eventPayoutPreview.length === 0 ? (
               <div className="text-center py-10 text-gray-400">
-                No organizer payout preview data available
+                No event payout preview data available
               </div>
             ) : (
               <table className="w-full">
                 <thead className="bg-zinc-800">
                   <tr>
                     <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Event
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
                       Organizer
                     </th>
                     <th className="text-left px-6 py-3 text-gray-300 font-medium">
-                      Earned
+                      Net Payout
                     </th>
                     <th className="text-left px-6 py-3 text-gray-300 font-medium">
-                      Sent
+                      Event End
                     </th>
                     <th className="text-left px-6 py-3 text-gray-300 font-medium">
-                      Pending
+                      Release At
                     </th>
                     <th className="text-left px-6 py-3 text-gray-300 font-medium">
-                      Available To Send
-                    </th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
-                      Last Payment
+                      Status
                     </th>
                     <th className="text-right px-6 py-3 text-gray-300 font-medium">
                       Action
@@ -331,63 +351,81 @@ export default function AdminPayoutManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {payoutPreview.map((item) => {
-                    const canCreate = Number(item.availableToSend || 0) > 0;
+                  {eventPayoutPreview.map((item) => {
+                    const isProcessingPay =
+                      processing === `pay-${item.payoutId}`;
+                    const isProcessingHold =
+                      processing === `hold-${item.payoutId}`;
+                    const isProcessingRelease =
+                      processing === `release-${item.payoutId}`;
                     return (
                       <tr
-                        key={`${item.organizerId}-${item.currency}`}
+                        key={`${item.payoutId}`}
                         className="hover:bg-zinc-800/50 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <div className="text-white font-medium">
-                            {item.organizerName}
+                            {item.eventTitle}
                           </div>
                           <div className="text-gray-400 text-sm">
-                            ID: {item.organizerId} • {item.organizerEmail}
+                            Event #{item.eventId}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-200">
-                          {formatCurrency(
-                            item.totalEarnedByOrganizer,
-                            item.currency,
-                          )}
+                        <td className="px-6 py-4 text-gray-300 text-sm">
+                          {item.organizerName}
+                          <div className="text-gray-500">
+                            {item.organizerEmail}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-300">
-                          {formatCurrency(
-                            item.alreadySentAmount,
-                            item.currency,
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-yellow-400">
-                          {formatCurrency(
-                            item.pendingManualAmount,
-                            item.currency,
-                          )}
-                        </td>
-                        <td className="px-6 py-4 font-semibold text-green-400">
-                          {formatCurrency(item.availableToSend, item.currency)}
+                        <td className="px-6 py-4 text-gray-200 font-semibold">
+                          {formatCurrency(item.netPayout, item.currency)}
                         </td>
                         <td className="px-6 py-4 text-gray-400 text-sm">
-                          {formatDate(item.lastPaymentAt)}
+                          {formatDate(item.eventEndAt)}
+                        </td>
+                        <td className="px-6 py-4 text-gray-300 text-sm">
+                          {formatDate(item.releaseAt)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs px-2 py-1 rounded bg-zinc-800 text-gray-200 border border-zinc-700">
+                            {item.status}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => {
-                              setPrefillPayout({
-                                organizerId: item.organizerId,
-                                amount: Number(
-                                  item.availableToSend || 0,
-                                ).toFixed(2),
-                                currency: item.currency,
-                                description: `Manual payout for organizer ticket revenue (${item.currency})`,
-                              });
-                              setShowCreateModal(true);
-                            }}
-                            disabled={!canCreate}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Create Payout
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            {item.status !== "PAID" &&
+                              item.status !== "HELD" && (
+                                <button
+                                  onClick={() =>
+                                    handleHoldEventPayout(item.payoutId)
+                                  }
+                                  disabled={isProcessingHold}
+                                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded disabled:opacity-50"
+                                >
+                                  Hold
+                                </button>
+                              )}
+                            {item.status === "HELD" && (
+                              <button
+                                onClick={() =>
+                                  handleReleaseEventPayout(item.payoutId)
+                                }
+                                disabled={isProcessingRelease}
+                                className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded disabled:opacity-50"
+                              >
+                                Release
+                              </button>
+                            )}
+                            {item.status !== "PAID" && (
+                              <button
+                                onClick={() => handlePayNow(item.payoutId)}
+                                disabled={isProcessingPay}
+                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded disabled:opacity-50"
+                              >
+                                Pay Now
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -554,7 +592,7 @@ export default function AdminPayoutManagement() {
             setShowCreateModal(false);
             setPrefillPayout(null);
             loadPendingPayouts();
-            loadPayoutPreview();
+            loadEventPayoutPreview();
           }}
         />
       )}

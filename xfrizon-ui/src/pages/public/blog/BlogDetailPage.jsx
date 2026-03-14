@@ -15,8 +15,16 @@ import {
 import { LuSendHorizontal } from "react-icons/lu";
 import blogApi from "../../../api/blogApi";
 import useSeo from "../../../hooks/useSeo";
+import { getSiteBaseUrl, toAbsoluteSiteUrl } from "../../../utils/siteUrl";
 
-function ReplyBlock({ commentId, value, submittingId, onChange, onSubmit, onClose }) {
+function ReplyBlock({
+  commentId,
+  value,
+  submittingId,
+  onChange,
+  onSubmit,
+  onClose,
+}) {
   const ref = React.useRef(null);
 
   React.useEffect(() => {
@@ -52,7 +60,11 @@ function ReplyBlock({ commentId, value, submittingId, onChange, onSubmit, onClos
           disabled={submittingId === commentId || !value.trim()}
           className="inline-flex items-center justify-center pb-1.5 text-red-400 hover:text-red-300 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {submittingId === commentId ? "Posting..." : <LuSendHorizontal className="text-sm" />}
+          {submittingId === commentId ? (
+            "Posting..."
+          ) : (
+            <LuSendHorizontal className="text-sm" />
+          )}
         </button>
       </div>
     </div>
@@ -82,21 +94,30 @@ export default function BlogDetailPage() {
   const [shareBusy, setShareBusy] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const shareMenuRef = useRef(null);
+  const videoRefs = useRef({});
 
   // Defensive fallback for blog fields
   const safeBlog = blog || {};
   const safeTitle = safeBlog.title || "Untitled Blog";
   const safeBlocks = Array.isArray(safeBlog.blocks) ? safeBlog.blocks : [];
   const safeImages = Array.isArray(safeBlog.images) ? safeBlog.images : [];
-  const safeCoverImage = safeBlog.coverImage || (safeImages[0]?.src || "");
-  const safeExcerpt = safeBlog.excerpt || safeBlog.content || "No description available.";
+  const safeCoverImage = safeBlog.coverImage || safeImages[0]?.src || "";
+  const safeExcerpt =
+    safeBlog.excerpt || safeBlog.content || "No description available.";
   const safeCategory = safeBlog.category || "General";
   const safeAuthor = safeBlog.author || "Unknown";
   const safePublishedAt = safeBlog.publishedAt || safeBlog.createdAt || "";
-  const safeTitleStyle = typeof safeBlog.titleStyle === "object" && safeBlog.titleStyle !== null ? safeBlog.titleStyle : {};
+  const safeTitleStyle =
+    typeof safeBlog.titleStyle === "object" && safeBlog.titleStyle !== null
+      ? safeBlog.titleStyle
+      : {};
 
   // Log blog data for debugging
-  if (typeof window !== "undefined" && window.location && window.location.hostname !== "localhost") {
+  if (
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.hostname !== "localhost"
+  ) {
     // Only log in production
     console.log("BlogDetailPage blog data:", safeBlog);
   }
@@ -104,11 +125,13 @@ export default function BlogDetailPage() {
   const getAbsoluteMediaUrl = (path) => {
     if (!path) return "";
     if (String(path).startsWith("http")) return String(path);
-    const normalized = String(path).startsWith("/") ? String(path) : `/${String(path)}`;
+    const normalized = String(path).startsWith("/")
+      ? String(path)
+      : `/${String(path)}`;
     if (typeof window !== "undefined") {
       return `${window.location.origin}${normalized}`;
     }
-    return `https://xfrizon.up.railway.app${normalized}`;
+    return `${getSiteBaseUrl()}${normalized}`;
   };
 
   useEffect(() => {
@@ -277,7 +300,9 @@ export default function BlogDetailPage() {
       setNotificationsLoading(true);
       const response = await blogApi.getCommentNotifications();
       const payload = response?.data ?? response ?? {};
-      setNotifications(Array.isArray(payload.notifications) ? payload.notifications : []);
+      setNotifications(
+        Array.isArray(payload.notifications) ? payload.notifications : [],
+      );
       setUnreadNotificationCount(Number(payload.unreadCount || 0));
     } catch (err) {
       console.error("Failed to load comment notifications:", err);
@@ -340,7 +365,9 @@ export default function BlogDetailPage() {
     } catch (err) {
       console.error("Failed to add comment:", err);
       setCommentError(
-        err?.message || err?.error || "Failed to post comment. Please try again.",
+        err?.message ||
+          err?.error ||
+          "Failed to post comment. Please try again.",
       );
     } finally {
       setCommentSubmitting(false);
@@ -388,7 +415,9 @@ export default function BlogDetailPage() {
       await fetchCommentNotifications();
     } catch (err) {
       console.error("Failed to add reply:", err);
-      setReplyError(err?.message || err?.error || "Failed to post reply. Please try again.");
+      setReplyError(
+        err?.message || err?.error || "Failed to post reply. Please try again.",
+      );
     } finally {
       setReplySubmittingId(null);
     }
@@ -421,7 +450,11 @@ export default function BlogDetailPage() {
       await fetchCommentNotifications();
     } catch (err) {
       console.error("Failed to toggle comment like:", err);
-      setCommentError(err?.message || err?.error || "Failed to like comment. Please try again.");
+      setCommentError(
+        err?.message ||
+          err?.error ||
+          "Failed to like comment. Please try again.",
+      );
     }
   };
 
@@ -444,7 +477,9 @@ export default function BlogDetailPage() {
   const handleMarkAllNotificationsRead = async () => {
     try {
       await blogApi.markAllCommentNotificationsRead();
-      setNotifications((prev) => prev.map((notification) => ({ ...notification, isRead: true })));
+      setNotifications((prev) =>
+        prev.map((notification) => ({ ...notification, isRead: true })),
+      );
       setUnreadNotificationCount(0);
     } catch (err) {
       console.error("Failed to mark all notifications as read:", err);
@@ -542,7 +577,6 @@ export default function BlogDetailPage() {
         // Dark overlay for contrast
         ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
         ctx.fillRect(0, 0, width, topHeight);
-
       } catch {
         // Continue with gradient background if image loading fails.
       }
@@ -674,7 +708,9 @@ export default function BlogDetailPage() {
           text: shareText,
           files: [file],
         });
-        setShareStatus("Opened share sheet. Choose Instagram to post your story.");
+        setShareStatus(
+          "Opened share sheet. Choose Instagram to post your story.",
+        );
         return;
       }
 
@@ -698,7 +734,9 @@ export default function BlogDetailPage() {
         "Story card downloaded. Upload it in Instagram Story and paste the copied blog link.",
       );
     } catch (err) {
-      setShareStatus("Unable to create story card right now. Please try again.");
+      setShareStatus(
+        "Unable to create story card right now. Please try again.",
+      );
     } finally {
       setShareBusy(false);
     }
@@ -751,10 +789,7 @@ export default function BlogDetailPage() {
       "";
 
     return (
-      <div
-        key={comment.id}
-        className={`px-1 py-3 ${depth > 0 ? "ml-5" : ""}`}
-      >
+      <div key={comment.id} className={`px-1 py-3 ${depth > 0 ? "ml-5" : ""}`}>
         <div className="flex items-start gap-2">
           {authorAvatar ? (
             <img
@@ -772,14 +807,18 @@ export default function BlogDetailPage() {
             <p className="text-[13px] font-semibold leading-tight text-gray-100">
               {comment.authorName || "User"}
               {isOwnComment ? (
-                <span className="ml-2 text-[10px] uppercase tracking-wide text-red-300">You</span>
+                <span className="ml-2 text-[10px] uppercase tracking-wide text-red-300">
+                  You
+                </span>
               ) : null}
             </p>
             <p className="text-[9px] uppercase tracking-wide text-gray-500">
               {formatCommentDate(comment.createdAt)}
             </p>
 
-            <p className="mt-2 text-[13px] leading-6 text-gray-200 whitespace-pre-wrap">{comment.content}</p>
+            <p className="mt-2 text-[13px] leading-6 text-gray-200 whitespace-pre-wrap">
+              {comment.content}
+            </p>
 
             <div className="mt-3 flex items-center gap-4">
               <button
@@ -810,7 +849,10 @@ export default function BlogDetailPage() {
                 <button
                   type="button"
                   onClick={() =>
-                    setExpandedReplies((prev) => ({ ...prev, [comment.id]: !isReplyOpen }))
+                    setExpandedReplies((prev) => ({
+                      ...prev,
+                      [comment.id]: !isReplyOpen,
+                    }))
                   }
                   className="text-[11px] tracking-wide text-gray-400 hover:text-gray-200 transition-colors"
                 >
@@ -819,7 +861,8 @@ export default function BlogDetailPage() {
               ) : null}
             </div>
 
-            {isLoggedIn && Object.prototype.hasOwnProperty.call(replyInputs, comment.id) ? (
+            {isLoggedIn &&
+            Object.prototype.hasOwnProperty.call(replyInputs, comment.id) ? (
               <ReplyBlock
                 commentId={comment.id}
                 value={replyValue}
@@ -840,40 +883,6 @@ export default function BlogDetailPage() {
       </div>
     );
   };
-
-  if (loading) {
-    return (
-      <div className="bg-[#1e1e1e] min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
-          </div>
-          <p className="mt-4 text-gray-400">Loading article...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !blog) {
-    return (
-      <div className="bg-[#1e1e1e] min-h-screen">
-        <div className="bg-[#2a2a2a] border-b border-gray-700">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-red-500 hover:text-red-600 font-light uppercase tracking-widest text-xs mb-6 transition-colors"
-            >
-              <FaArrowLeft size={16} />
-              Back to Home
-            </button>
-          </div>
-        </div>
-        <div className="max-w-4xl mx-auto px-6 py-12 text-center">
-          <p className="text-gray-400">{error || "Blog not found or invalid data"}</p>
-        </div>
-      </div>
-    );
-  }
 
   // Extract featured image from blocks or images array
   let featuredImage = null;
@@ -959,7 +968,11 @@ export default function BlogDetailPage() {
             <div key={`video-${index}`} className="my-8">
               {block.videos &&
                 block.videos.map((video, videoIndex) => {
-                  const videoRef = useRef(null);
+                  const videoKey = `${index}-${videoIndex}`;
+                  if (!videoRefs.current[videoKey]) {
+                    videoRefs.current[videoKey] = React.createRef();
+                  }
+                  const videoRef = videoRefs.current[videoKey];
 
                   const handleMouseEnter = () => {
                     if (videoRef.current) {
@@ -1211,40 +1224,79 @@ export default function BlogDetailPage() {
 
   useSeo({
     title: safeTitle ? `${safeTitle} | Xfrizon Blog` : "Xfrizon Blog",
-    description:
-      (safeExcerpt || shareSnippet || "Read the latest stories on Xfrizon.").slice(0, 160),
+    description: (
+      safeExcerpt ||
+      shareSnippet ||
+      "Read the latest stories on Xfrizon."
+    ).slice(0, 160),
     image: getAbsoluteMediaUrl(heroImage),
     type: "article",
     url:
       typeof window !== "undefined"
         ? window.location.href
-        : `https://xfrizon.up.railway.app/blog/${id}`,
-    keywords:
-      "music blog, culture blog, nightlife, events, article, Xfrizon",
-    jsonLd: safeBlog && safeTitle
-      ? {
-          "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          headline: safeTitle,
-          description: (safeExcerpt || shareSnippet || "").slice(0, 200),
-          image: getAbsoluteMediaUrl(heroImage),
-          datePublished: safePublishedAt,
-          dateModified: safeBlog.updatedAt || safePublishedAt,
-          author: {
-            "@type": "Person",
-            name: safeAuthor,
-          },
-          publisher: {
-            "@type": "Organization",
-            name: "Xfrizon",
-          },
-          mainEntityOfPage:
-            typeof window !== "undefined"
-              ? window.location.href
-              : `https://xfrizon.up.railway.app/blog/${id}`,
-        }
-      : null,
+        : toAbsoluteSiteUrl(`/blog/${id}`),
+    keywords: "music blog, culture blog, nightlife, events, article, Xfrizon",
+    jsonLd:
+      safeBlog && safeTitle
+        ? {
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: safeTitle,
+            description: (safeExcerpt || shareSnippet || "").slice(0, 200),
+            image: getAbsoluteMediaUrl(heroImage),
+            datePublished: safePublishedAt,
+            dateModified: safeBlog.updatedAt || safePublishedAt,
+            author: {
+              "@type": "Person",
+              name: safeAuthor,
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Xfrizon",
+            },
+            mainEntityOfPage:
+              typeof window !== "undefined"
+                ? window.location.href
+                : toAbsoluteSiteUrl(`/blog/${id}`),
+          }
+        : null,
   });
+
+  if (loading) {
+    return (
+      <div className="bg-[#1e1e1e] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+          </div>
+          <p className="mt-4 text-gray-400">Loading article...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !blog) {
+    return (
+      <div className="bg-[#1e1e1e] min-h-screen">
+        <div className="bg-[#2a2a2a] border-b border-gray-700">
+          <div className="max-w-4xl mx-auto px-6 py-6">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 text-red-500 hover:text-red-600 font-light uppercase tracking-widest text-xs mb-6 transition-colors"
+            >
+              <FaArrowLeft size={16} />
+              Back to Home
+            </button>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto px-6 py-12 text-center">
+          <p className="text-gray-400">
+            {error || "Blog not found or invalid data"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#1e1e1e] min-h-screen">
@@ -1259,8 +1311,12 @@ export default function BlogDetailPage() {
             className="absolute top-24 left-6 md:top-20 z-40 pointer-events-none text-shadow"
             style={{ fontFamily: "'Bebas Neue', 'Oswald', sans-serif" }}
           >
-            <span className="text-red-500 font-extrabold text-lg tracking-[0.06em]">XF</span>
-            <span className="text-white font-semibold text-lg tracking-[0.06em] ml-1">Mag</span>
+            <span className="text-red-500 font-extrabold text-lg tracking-[0.06em]">
+              XF
+            </span>
+            <span className="text-white font-semibold text-lg tracking-[0.06em] ml-1">
+              Mag
+            </span>
           </div>
           <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/45 to-black/10"></div>
           <div className="absolute inset-0">
@@ -1425,7 +1481,9 @@ export default function BlogDetailPage() {
         {/* Comment Section */}
         <section className="mt-12 pt-8">
           <div className="mb-4 text-center">
-            <h3 className="text-xs uppercase tracking-widest text-gray-400">Comments</h3>
+            <h3 className="text-xs uppercase tracking-widest text-gray-400">
+              Comments
+            </h3>
           </div>
 
           {isLoggedIn ? (
@@ -1444,7 +1502,11 @@ export default function BlogDetailPage() {
                   disabled={commentSubmitting || !commentInput.trim()}
                   className="inline-flex items-center justify-center pb-1.5 text-red-400 hover:text-red-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {commentSubmitting ? "Posting..." : <LuSendHorizontal className="text-sm" />}
+                  {commentSubmitting ? (
+                    "Posting..."
+                  ) : (
+                    <LuSendHorizontal className="text-sm" />
+                  )}
                 </button>
               </div>
               {commentError && (
@@ -1460,14 +1522,18 @@ export default function BlogDetailPage() {
           {commentsLoading ? (
             <p className="text-sm text-gray-400">Loading comments...</p>
           ) : topLevelComments.length === 0 ? (
-            <p className="text-sm text-gray-400">No comments yet. Be the first to comment.</p>
+            <p className="text-sm text-gray-400">
+              No comments yet. Be the first to comment.
+            </p>
           ) : (
             <div className="bg-[#252525] py-4 space-y-4">
               {topLevelComments.map((comment) => renderCommentItem(comment, 0))}
             </div>
           )}
 
-          {replyError ? <p className="mt-3 text-xs text-red-400">{replyError}</p> : null}
+          {replyError ? (
+            <p className="mt-3 text-xs text-red-400">{replyError}</p>
+          ) : null}
         </section>
       </article>
     </div>

@@ -1,9 +1,12 @@
 package com.xfrizon.controller;
 
 import com.xfrizon.dto.ApiResponse;
+import com.xfrizon.dto.EventPayoutPreviewResponse;
 import com.xfrizon.dto.ManualPayoutRequest;
 import com.xfrizon.dto.OrganizerPayoutPreviewResponse;
+import com.xfrizon.entity.EventPayout;
 import com.xfrizon.entity.ManualPayout;
+import com.xfrizon.service.EventPayoutService;
 import com.xfrizon.service.PayoutService;
 import com.xfrizon.util.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +31,7 @@ import java.util.List;
 public class PayoutController {
 
     private final PayoutService payoutService;
+    private final EventPayoutService eventPayoutService;
     private final JwtTokenProvider jwtTokenProvider;
 
     /**
@@ -77,6 +81,117 @@ public class PayoutController {
             log.error("Error creating manual payout", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to create payout. Check organizer role and payload fields.", 500));
+        }
+    }
+
+    @GetMapping("/events/preview")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<EventPayoutPreviewResponse>>> getEventPayoutPreview(
+            @RequestParam(required = false) String status,
+            HttpServletRequest httpRequest) {
+        try {
+            Long adminId = extractUserIdFromToken(httpRequest);
+            log.debug("Admin {} requesting event payout preview, status={}", adminId, status);
+            List<EventPayoutPreviewResponse> rows = eventPayoutService.getAdminPreview(status);
+            return ResponseEntity.ok(ApiResponse.success(rows, "Event payout preview retrieved"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error fetching event payout preview", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch event payout preview", 500));
+        }
+    }
+
+    @PostMapping("/events/{payoutId}/hold")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<EventPayout>> holdEventPayout(
+            @PathVariable Long payoutId,
+            @RequestParam(required = false) String reason,
+            HttpServletRequest httpRequest) {
+        try {
+            extractUserIdFromToken(httpRequest);
+            EventPayout payout = eventPayoutService.holdPayout(payoutId, reason);
+            return ResponseEntity.ok(ApiResponse.success(payout, "Event payout held"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error holding event payout", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to hold event payout", 500));
+        }
+    }
+
+    @PostMapping("/events/{payoutId}/release")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<EventPayout>> releaseEventPayout(
+            @PathVariable Long payoutId,
+            HttpServletRequest httpRequest) {
+        try {
+            extractUserIdFromToken(httpRequest);
+            EventPayout payout = eventPayoutService.releaseHold(payoutId);
+            return ResponseEntity.ok(ApiResponse.success(payout, "Event payout released"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error releasing event payout", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to release event payout", 500));
+        }
+    }
+
+    @PostMapping("/events/{payoutId}/pay-now")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<EventPayout>> payEventNow(
+            @PathVariable Long payoutId,
+            HttpServletRequest httpRequest) {
+        try {
+            extractUserIdFromToken(httpRequest);
+            EventPayout payout = eventPayoutService.payNow(payoutId);
+            return ResponseEntity.ok(ApiResponse.success(payout, "Event payout processed"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error processing event payout", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to process event payout", 500));
+        }
+    }
+
+    @PostMapping("/events/{payoutId}/retry")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<EventPayout>> retryFailedEventPayout(
+            @PathVariable Long payoutId,
+            HttpServletRequest httpRequest) {
+        try {
+            extractUserIdFromToken(httpRequest);
+            EventPayout payout = eventPayoutService.retryFailedPayout(payoutId);
+            return ResponseEntity.ok(ApiResponse.success(payout, "Failed payout retry started"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error retrying failed event payout", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retry event payout", 500));
+        }
+    }
+
+    @PostMapping("/events/retry-failed")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Integer>> retryAllFailedEventPayouts(HttpServletRequest httpRequest) {
+        try {
+            extractUserIdFromToken(httpRequest);
+            int retried = eventPayoutService.retryAllFailedPayouts();
+            return ResponseEntity.ok(ApiResponse.success(retried, "Failed payouts retried"));
+        } catch (Exception e) {
+            log.error("Error retrying all failed event payouts", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retry failed payouts", 500));
         }
     }
 

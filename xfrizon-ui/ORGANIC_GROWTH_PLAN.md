@@ -22,4 +22,3 @@
    - Set up Google Analytics
    - Monitor Google Search Console
    - Track organic traffic and conversions
-

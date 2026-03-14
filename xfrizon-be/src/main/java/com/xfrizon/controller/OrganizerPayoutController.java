@@ -1,10 +1,12 @@
 package com.xfrizon.controller;
 
 import com.xfrizon.dto.ApiResponse;
+import com.xfrizon.dto.EventPayoutPreviewResponse;
 import com.xfrizon.dto.PayoutReportResponse;
 import com.xfrizon.dto.StripeConnectStatusResponse;
 import com.xfrizon.dto.StripeOnboardingResponse;
 import com.xfrizon.dto.UpdatePayoutCadenceRequest;
+import com.xfrizon.service.EventPayoutService;
 import com.xfrizon.service.OrganizerPayoutService;
 import com.xfrizon.service.StripeConnectService;
 import com.xfrizon.util.JwtTokenProvider;
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 public class OrganizerPayoutController {
 
     private final OrganizerPayoutService organizerPayoutService;
+    private final EventPayoutService eventPayoutService;
     private final StripeConnectService stripeConnectService;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -131,6 +134,23 @@ public class OrganizerPayoutController {
             log.error("Error generating payout report", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to generate payout report: " + e.getMessage(), 500));
+        }
+    }
+
+    @GetMapping("/payouts/preview")
+    public ResponseEntity<ApiResponse<java.util.List<EventPayoutPreviewResponse>>> getEventPayoutPreview(
+            HttpServletRequest httpRequest) {
+        try {
+            Long organizerId = extractUserIdFromToken(httpRequest);
+            java.util.List<EventPayoutPreviewResponse> rows = eventPayoutService.getOrganizerPreview(organizerId);
+            return ResponseEntity.ok(ApiResponse.success(rows, "Event payout preview retrieved"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error loading organizer event payout preview", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load event payout preview", 500));
         }
     }
 

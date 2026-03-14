@@ -47,6 +47,7 @@ public class TicketService {
     private final EmailService emailService;
     private final PdfGenerationService pdfGenerationService;
     private final ReferralConversionService referralConversionService;
+    private final PointsService pointsService;
 
     /**
      * Record a ticket purchase after successful payment
@@ -132,6 +133,13 @@ public class TicketService {
                     event,
                     request.getPaymentIntentId()
             );
+
+            // Award XF points for the ticket purchase (10 pts per currency unit)
+            try {
+                pointsService.awardPointsForTicketPurchase(userId, subtotal, savedTickets.get(0).getId());
+            } catch (Exception e) {
+                log.warn("Points awarding failed for user {}: {}", userId, e.getMessage());
+            }
 
             log.info("Ticket purchase recorded: {} individual tickets created for payment intent: {}", quantityToPurchase, request.getPaymentIntentId());
             

@@ -146,8 +146,12 @@ export default function BlogsSection() {
               >
                 <div className="relative w-full aspect-video sm:aspect-2/1 lg:aspect-3/1 overflow-hidden">
                   <div className="absolute left-5 sm:left-6 top-3 z-20 pointer-events-none">
-                    <span className="text-red-500 font-extrabold text-base sm:text-lg tracking-wide pr-1">XF</span>
-                    <span className="text-white font-semibold text-sm sm:text-lg tracking-wide ml-2">Mag</span>
+                    <span className="text-red-500 font-extrabold text-base sm:text-lg tracking-wide pr-1">
+                      XF
+                    </span>
+                    <span className="text-white font-semibold text-sm sm:text-lg tracking-wide ml-2">
+                      Mag
+                    </span>
                   </div>
                   {headlineBlog.coverImage ? (
                     <img
@@ -187,8 +191,14 @@ export default function BlogsSection() {
             <div className="flex gap-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory md:block md:space-y-4 md:overflow-visible">
               {latestBlogs.length > 0 ? (
                 latestBlogs.map((blog) => (
-                  <div key={blog.id} className="min-w-full max-w-full shrink-0 snap-start md:min-w-0">
-                    <Link to={`/blog/${blog.id}`} className="block cursor-pointer">
+                  <div
+                    key={blog.id}
+                    className="min-w-full max-w-full shrink-0 snap-start md:min-w-0"
+                  >
+                    <Link
+                      to={`/blog/${blog.id}`}
+                      className="block cursor-pointer"
+                    >
                       <BlogCard blog={blog} />
                     </Link>
                   </div>

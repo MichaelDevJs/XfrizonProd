@@ -66,6 +66,15 @@ const organizerApi = {
     }
   },
 
+  getEventPayoutPreview: async () => {
+    try {
+      const response = await api.get("/organizers/stripe/payouts/preview");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: error.message };
+    }
+  },
+
   // Events
   createEvent: async (eventData) => {
     try {

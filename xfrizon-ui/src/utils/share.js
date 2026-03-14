@@ -45,17 +45,29 @@ export const getReferralAwareShareUrl = (pathOrUrl) => {
 
 export const openMessageShare = ({ title = "", url = "" }) => {
   const payload = encodeURIComponent(`${title}\n${url}`.trim());
-  window.open(`https://wa.me/?text=${payload}`, "_blank", "noopener,noreferrer");
+  window.open(
+    `https://wa.me/?text=${payload}`,
+    "_blank",
+    "noopener,noreferrer",
+  );
 };
 
 export const openInstagramShare = ({ title = "", url = "" }) => {
   const payload = encodeURIComponent(`${title}\n${url}`.trim());
   // Instagram web does not support direct prefilled post/story via URL,
   // so we open Instagram and let users paste the copied link.
-  window.open(`https://www.instagram.com/?url=${payload}`, "_blank", "noopener,noreferrer");
+  window.open(
+    `https://www.instagram.com/?url=${payload}`,
+    "_blank",
+    "noopener,noreferrer",
+  );
 };
 
-export const shareNativelyOrCopy = async ({ title = "", text = "", url = "" }) => {
+export const shareNativelyOrCopy = async ({
+  title = "",
+  text = "",
+  url = "",
+}) => {
   if (navigator.share) {
     await navigator.share({ title, text, url });
     return "shared";

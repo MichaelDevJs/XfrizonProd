@@ -271,7 +271,9 @@ const Header = () => {
                       </div>
 
                       {commentNotificationsLoading ? (
-                        <p className="px-4 py-3 text-xs text-gray-500">Loading...</p>
+                        <p className="px-4 py-3 text-xs text-gray-500">
+                          Loading...
+                        </p>
                       ) : commentNotifications.length === 0 ? (
                         <p className="px-4 py-3 text-xs text-gray-500">
                           No comment activity yet
@@ -288,14 +290,18 @@ const Header = () => {
                             <button
                               key={notification.id}
                               type="button"
-                              onClick={() => handleOpenNotification(notification)}
+                              onClick={() =>
+                                handleOpenNotification(notification)
+                              }
                               className={`w-full text-left px-4 py-2.5 border-t border-zinc-800 transition-colors ${
                                 notification.isRead
                                   ? "text-gray-500 hover:bg-zinc-800"
                                   : "text-gray-300 hover:bg-zinc-800/90"
                               }`}
                             >
-                              <p className="text-xs leading-5">{notification.message}</p>
+                              <p className="text-xs leading-5">
+                                {notification.message}
+                              </p>
                               {!notification.isRead && (
                                 <p className="text-[10px] text-red-400 uppercase tracking-widest mt-1">
                                   New
@@ -350,151 +356,151 @@ const Header = () => {
                     </span>
                   </button>
 
-                {/* User Dropdown Menu */}
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-900 flex items-center gap-3">
-                      <div className="relative w-10 h-10 shrink-0">
-                        {!imageLoadError &&
-                        (organizer?.logo || organizer?.profilePicture) ? (
-                          <img
-                            key={organizer?.logo || organizer?.profilePicture}
-                            src={getImageUrl(
-                              organizer?.logo || organizer?.profilePicture,
-                            )}
-                            alt={organizer?.name}
-                            className="w-10 h-10 rounded-full object-cover border border-xf-accent"
-                            onError={() => setImageLoadError(true)}
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-linear-to-br from-xf-accent to-opacity-80 flex items-center justify-center text-white font-bold text-sm">
+                  {/* User Dropdown Menu */}
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden">
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-900 flex items-center gap-3">
+                        <div className="relative w-10 h-10 shrink-0">
+                          {!imageLoadError &&
+                          (organizer?.logo || organizer?.profilePicture) ? (
+                            <img
+                              key={organizer?.logo || organizer?.profilePicture}
+                              src={getImageUrl(
+                                organizer?.logo || organizer?.profilePicture,
+                              )}
+                              alt={organizer?.name}
+                              className="w-10 h-10 rounded-full object-cover border border-xf-accent"
+                              onError={() => setImageLoadError(true)}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-linear-to-br from-xf-accent to-opacity-80 flex items-center justify-center text-white font-bold text-sm">
+                              {organizer?.role === "ORGANIZER"
+                                ? organizer?.name?.charAt(0)?.toUpperCase() ||
+                                  organizer?.firstName?.charAt(0)?.toUpperCase()
+                                : organizer?.firstName
+                                    ?.charAt(0)
+                                    ?.toUpperCase() || "U"}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-xs uppercase tracking-widest truncate">
                             {organizer?.role === "ORGANIZER"
-                              ? organizer?.name?.charAt(0)?.toUpperCase() ||
-                                organizer?.firstName?.charAt(0)?.toUpperCase()
-                              : organizer?.firstName
-                                  ?.charAt(0)
-                                  ?.toUpperCase() || "U"}
-                          </div>
-                        )}
+                              ? organizer?.name || organizer?.firstName
+                              : organizer?.firstName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {organizer?.role === "ORGANIZER"
+                              ? "Organizer"
+                              : "Attendee"}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-xs uppercase tracking-widest truncate">
-                          {organizer?.role === "ORGANIZER"
-                            ? organizer?.name || organizer?.firstName
-                            : organizer?.firstName}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {organizer?.role === "ORGANIZER"
-                            ? "Organizer"
-                            : "Attendee"}
-                        </p>
-                      </div>
+
+                      {/* Organizer Menu Items */}
+                      {organizer.role === "ORGANIZER" && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/organizer/dashboard");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            Dashboard
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/organizer/create-event");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            Create Event
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate(
+                                organizer?.id
+                                  ? `/organizer/profile/${organizer.id}`
+                                  : "/organizer/profile-edit",
+                              );
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            View Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/organizer/profile-edit");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            Edit Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/ticket-history");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            My Tickets
+                          </button>
+                        </>
+                      )}
+
+                      {/* User Menu Items */}
+                      {organizer.role !== "ORGANIZER" && (
+                        <>
+                          <button
+                            type="button"
+                            disabled
+                            className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
+                          >
+                            View Profile
+                          </button>
+                          <button
+                            type="button"
+                            disabled
+                            className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
+                          >
+                            Edit Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/ticket-history");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            My Tickets
+                          </button>
+                          <button
+                            type="button"
+                            disabled
+                            className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
+                          >
+                            Saved Events
+                          </button>
+                        </>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          logout();
+                          navigate("/");
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-xf-accent hover:text-opacity-80 hover:bg-zinc-800 transition-all duration-200 text-xs font-light cursor-pointer uppercase tracking-widest"
+                      >
+                        Logout
+                      </button>
                     </div>
-
-                    {/* Organizer Menu Items */}
-                    {organizer.role === "ORGANIZER" && (
-                      <>
-                        <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/organizer/dashboard");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
-                        >
-                          Dashboard
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/organizer/create-event");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
-                        >
-                          Create Event
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate(
-                              organizer?.id
-                                ? `/organizer/profile/${organizer.id}`
-                                : "/organizer/profile-edit",
-                            );
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
-                        >
-                          View Profile
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/organizer/profile-edit");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
-                        >
-                          Edit Profile
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/ticket-history");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
-                        >
-                          My Tickets
-                        </button>
-                      </>
-                    )}
-
-                    {/* User Menu Items */}
-                    {organizer.role !== "ORGANIZER" && (
-                      <>
-                        <button
-                          type="button"
-                          disabled
-                          className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
-                        >
-                          View Profile
-                        </button>
-                        <button
-                          type="button"
-                          disabled
-                          className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
-                        >
-                          Edit Profile
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            navigate("/ticket-history");
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
-                        >
-                          My Tickets
-                        </button>
-                        <button
-                          type="button"
-                          disabled
-                          className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
-                        >
-                          Saved Events
-                        </button>
-                      </>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        logout();
-                        navigate("/");
-                      }}
-                      className="w-full text-left px-4 py-2.5 text-xf-accent hover:text-opacity-80 hover:bg-zinc-800 transition-all duration-200 text-xs font-light cursor-pointer uppercase tracking-widest"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                  )}
                 </div>
               </div>
             ) : (

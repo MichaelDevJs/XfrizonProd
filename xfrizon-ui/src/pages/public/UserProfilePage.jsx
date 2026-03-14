@@ -71,6 +71,31 @@ export default function UserProfilePage() {
         }
         isOwnProfile={true}
       />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-12">
+        <div className="mt-4 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-white font-semibold text-sm">XF Rewards</p>
+            <p className="text-gray-400 text-xs mt-0.5">
+              Buy tickets, earn points, redeem discounts with partner brands.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/my-rewards")}
+              className="px-4 py-2 rounded-lg bg-[#c0f24d] text-black text-xs font-bold hover:brightness-110 transition-all"
+            >
+              My Rewards
+            </button>
+            <button
+              onClick={() => navigate("/partners")}
+              className="px-4 py-2 rounded-lg border border-gray-700 text-white text-xs font-semibold hover:bg-[#1f1f1f] transition-all"
+            >
+              Partners
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

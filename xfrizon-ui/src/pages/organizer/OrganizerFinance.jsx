@@ -20,10 +20,16 @@ const OrganizerFinance = () => {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [eventPayoutPreview, setEventPayoutPreview] = useState([]);
+  const [eventPayoutLoading, setEventPayoutLoading] = useState(false);
 
   useEffect(() => {
     fetchPayoutReport();
   }, [dateRange]);
+
+  useEffect(() => {
+    fetchEventPayoutPreview();
+  }, []);
 
   // Auto-apply custom range when both dates are selected and valid
   useEffect(() => {
@@ -274,6 +280,25 @@ const OrganizerFinance = () => {
     }
   };
 
+  const fetchEventPayoutPreview = async () => {
+    try {
+      setEventPayoutLoading(true);
+      const response = await organizerApi.getEventPayoutPreview();
+      if (response?.success) {
+        setEventPayoutPreview(
+          Array.isArray(response.data) ? response.data : [],
+        );
+      } else {
+        setEventPayoutPreview([]);
+      }
+    } catch (err) {
+      console.error("Error fetching event payout preview:", err);
+      setEventPayoutPreview([]);
+    } finally {
+      setEventPayoutLoading(false);
+    }
+  };
+
   const handleClearCustomRange = () => {
     setCustomFrom("");
     setCustomTo("");
@@ -384,6 +409,62 @@ const OrganizerFinance = () => {
 
       {(payoutReport || !loading) && (
         <>
+          <div className="border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg text-gray-200">Event Payout Preview</h2>
+                <p className="text-xs text-gray-500">
+                  Payouts are released next day after event ends.
+                </p>
+              </div>
+              {eventPayoutLoading ? (
+                <FaSpinner className="w-4 h-4 text-xf-accent animate-spin" />
+              ) : null}
+            </div>
+
+            <div className="overflow-x-auto">
+              {eventPayoutPreview.length === 0 ? (
+                <div className="text-sm text-gray-500 py-4">
+                  No event payout entries yet.
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-400 border-b border-zinc-800">
+                      <th className="py-2 pr-4">Event</th>
+                      <th className="py-2 pr-4">Net Payout</th>
+                      <th className="py-2 pr-4">Release At</th>
+                      <th className="py-2 pr-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {eventPayoutPreview.map((item) => (
+                      <tr
+                        key={
+                          item.payoutId || `${item.eventId}-${item.currency}`
+                        }
+                        className="border-b border-zinc-900"
+                      >
+                        <td className="py-2 pr-4 text-gray-200">
+                          {item.eventTitle}
+                        </td>
+                        <td className="py-2 pr-4 text-green-400">
+                          {formatCurrency(item.netPayout, item.currency)}
+                        </td>
+                        <td className="py-2 pr-4 text-gray-300">
+                          {formatDate(item.releaseAt)}
+                        </td>
+                        <td className="py-2 pr-4 text-gray-200">
+                          {item.status}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
           {/* Financial Cards */}
           <div className="border border-zinc-800 bg-zinc-900/80 p-3 sm:p-4 overflow-x-auto hide-scrollbar">
             <div className="flex min-w-max gap-3 sm:gap-4">

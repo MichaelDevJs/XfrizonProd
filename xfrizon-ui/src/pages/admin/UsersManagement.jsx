@@ -74,9 +74,9 @@ export default function UsersManagement() {
   };
 
   return (
-    <div className="bg-black text-white min-h-screen">
+    <div className="admin-theme bg-[#1e1e1e] text-white min-h-screen">
       {/* Header */}
-      <div className="bg-linear-to-r from-black via-zinc-900 to-black border-b border-zinc-800 p-4">
+      <div className="bg-linear-to-r from-[#1e1e1e] via-[#252525] to-[#1e1e1e] border-b border-zinc-800/50 p-4">
         <h1 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">
           Users Management
         </h1>
@@ -86,23 +86,23 @@ export default function UsersManagement() {
       </div>
 
       {/* Search */}
-      <div className="p-3 sm:p-4 border-b border-zinc-800 bg-zinc-950">
+      <div className="p-3 sm:p-4 border-b border-zinc-800/50 bg-[#242424]">
         <input
           type="text"
           placeholder="Search by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-black border border-zinc-800 px-3 py-2 rounded-lg text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
+          className="w-full bg-[#1e1e1e] border border-zinc-700/60 px-3 py-2 rounded-lg text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
         />
       </div>
 
       {/* Table */}
       <div className="p-3 sm:p-4">
-        <div className="border border-zinc-800 bg-zinc-950 rounded-lg overflow-hidden">
+        <div className="border border-zinc-800/50 bg-[#232323] rounded-lg overflow-hidden">
           <div className="max-h-96 overflow-y-auto hide-scrollbar">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
-                <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
+                <thead className="sticky top-0 bg-[#262626] border-b border-zinc-800/50">
                   <tr>
                     <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
                       ID
@@ -128,7 +128,7 @@ export default function UsersManagement() {
                   {filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="border-b border-zinc-800 hover:bg-zinc-900"
+                      className="border-b border-zinc-800/40 hover:bg-zinc-900/40"
                     >
                       <td className="px-2 sm:px-3 py-2 text-zinc-400 border-r border-zinc-800 font-mono text-[10px] sm:text-xs">
                         {user.id}
@@ -179,7 +179,7 @@ export default function UsersManagement() {
               </table>
             </div>
           </div>
-          <div className="bg-zinc-950 border-t border-zinc-800 px-3 py-2 text-xs text-zinc-500">
+          <div className="bg-[#202020] border-t border-zinc-800/50 px-3 py-2 text-xs text-zinc-500">
             Records:{" "}
             <span className="font-mono font-bold text-zinc-300">
               {filteredUsers.length}

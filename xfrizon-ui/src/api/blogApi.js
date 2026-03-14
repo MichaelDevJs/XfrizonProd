@@ -94,7 +94,9 @@ const blogApi = {
   // Toggle like on a comment
   toggleBlogCommentLike: async (blogId, commentId) => {
     try {
-      const response = await api.post(`/blogs/${blogId}/comments/${commentId}/likes`);
+      const response = await api.post(
+        `/blogs/${blogId}/comments/${commentId}/likes`,
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: error.message };
@@ -114,7 +116,9 @@ const blogApi = {
   // Mark one notification as read
   markCommentNotificationRead: async (notificationId) => {
     try {
-      const response = await api.patch(`/blogs/comments/notifications/${notificationId}/read`);
+      const response = await api.patch(
+        `/blogs/comments/notifications/${notificationId}/read`,
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: error.message };
@@ -124,7 +128,9 @@ const blogApi = {
   // Mark all notifications as read
   markAllCommentNotificationsRead: async () => {
     try {
-      const response = await api.patch("/blogs/comments/notifications/read-all");
+      const response = await api.patch(
+        "/blogs/comments/notifications/read-all",
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: error.message };

@@ -185,28 +185,28 @@
     font-size: 0.875rem;
     width: 100%;
   }
-  
+
   .react-datepicker__day-name,
   .react-datepicker__day {
     width: 2.25rem;
     line-height: 2.25rem;
     margin: 0.15rem;
   }
-  
+
   .react-datepicker__time-list-item {
     padding: 0.75rem;
     font-size: 1rem;
   }
-  
+
   .react-datepicker__navigation {
     width: 2.5rem;
     height: 2.5rem;
   }
-  
+
   .react-datepicker__current-month {
     font-size: 1.125rem;
   }
-  
+
   .react-datepicker__portal .react-datepicker {
     max-width: 95vw;
   }
@@ -256,6 +256,42 @@
 
 .Toastify__progress-bar {
   background: linear-gradient(to right, #ef4444, #f59e0b) !important;
+}
+
+/* XF Admin Theme Smoothing */
+.admin-theme {
+  background-color: #1e1e1e;
+  color: #f4f4f5;
+}
+
+.admin-theme .bg-black,
+.admin-theme .bg-zinc-950 {
+  background-color: #1e1e1e !important;
+}
+
+.admin-theme .bg-zinc-900,
+.admin-theme .bg-zinc-900\/50,
+.admin-theme .bg-zinc-900\/60,
+.admin-theme .bg-zinc-900\/70,
+.admin-theme .bg-zinc-900\/80 {
+  background-color: #252525 !important;
+}
+
+.admin-theme .bg-zinc-800,
+.admin-theme .bg-zinc-800\/50 {
+  background-color: #2a2a2a !important;
+}
+
+.admin-theme .border-zinc-800,
+.admin-theme .border-zinc-700,
+.admin-theme .border-zinc-600 {
+  border-color: rgba(113, 113, 122, 0.4) !important;
+}
+
+.admin-theme .hover\:bg-zinc-900:hover,
+.admin-theme .hover\:bg-zinc-800:hover,
+.admin-theme .hover\:bg-zinc-700:hover {
+  background-color: rgba(63, 63, 70, 0.42) !important;
 }
 
 .Toastify__toast--success .Toastify__progress-bar {

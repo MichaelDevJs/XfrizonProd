@@ -19,6 +19,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
@@ -91,11 +92,20 @@ public class UploadController {
     }
 
     private ResponseEntity<?> uploadToCloudinary(MultipartFile file, String prefix) {
+        Path tempFile = null;
         try {
             String originalFilename = file.getOriginalFilename();
             String publicId = prefix + "_" + UUID.randomUUID();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf('.'));
+            }
+
+            tempFile = Files.createTempFile("xfrizon-cloudinary-", extension);
+            Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+
             Map<?, ?> result = cloudinary.uploader().upload(
-                    file.getBytes(),
+                    tempFile.toFile(),
                     ObjectUtils.asMap(
                             "resource_type", "auto",
                             "folder", cloudinaryFolder,
@@ -120,6 +130,14 @@ public class UploadController {
             log.error("Cloudinary upload failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload file to Cloudinary: " + e.getMessage());
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException deleteError) {
+                    log.warn("Failed to delete temporary upload file: {}", tempFile, deleteError);
+                }
+            }
         }
     }
 

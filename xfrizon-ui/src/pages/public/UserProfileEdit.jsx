@@ -298,7 +298,9 @@ export default function UserProfileEdit() {
               accept="image/*"
               className="hidden"
             />
-            <p className="text-xs text-gray-500 p-3">Recommended size: 1200x400px.</p>
+            <p className="text-xs text-gray-500 p-3">
+              Recommended size: 1200x400px.
+            </p>
           </div>
 
           {/* Profile Photo & Basic Info */}

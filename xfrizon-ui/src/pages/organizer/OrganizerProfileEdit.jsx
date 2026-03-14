@@ -612,7 +612,9 @@ export default function OrganizerProfileEdit() {
                   ? "Change Cover Media"
                   : "Upload Cover Media"}
               </button>
-              <p className="mt-2 text-xs text-gray-500">Supports image or video.</p>
+              <p className="mt-2 text-xs text-gray-500">
+                Supports image or video.
+              </p>
             </div>
           </div>
 

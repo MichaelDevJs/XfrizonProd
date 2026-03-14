@@ -20,6 +20,11 @@ import SavedEventsPage from "./pages/public/SavedEventsPage";
 import OrganizerStorePage from "./pages/public/OrganizerStorePage";
 import BlogDetailPage from "./pages/public/blog/BlogDetailPage";
 import AllBlogs from "./pages/public/AllBlogs";
+import PartnersPage from "./pages/public/PartnersPage";
+import MyRewardsPage from "./pages/public/MyRewardsPage";
+import PartnerScannerPage from "./pages/public/PartnerScannerPage";
+import PartnerRegisterPage from "./pages/public/PartnerRegisterPage";
+import PartnerProfilePage from "./pages/public/PartnerProfilePage";
 
 import OrganizerRegister from "./pages/organizer/OrganizerRegister";
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard";
@@ -52,11 +57,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import BlogManagement from "./pages/admin/BlogManagement";
 import UsersManagement from "./pages/admin/UsersManagement";
 import OrganizersManagement from "./pages/admin/OrganizersManagement";
-import OrganizerVerificationSystem from "./pages/admin/OrganizerVerificationSystem";
 import MessagesManagement from "./pages/admin/MessagesManagement";
 import AdminHomeBlocksPage from "./pages/admin/AdminHomeBlocksPage";
 import AdminBlogHeroBlocksPage from "./pages/admin/AdminBlogHeroBlocksPage";
 import AdminPayoutManagement from "./pages/admin/AdminPayoutManagement";
+import AdminPartnersPage from "./pages/admin/AdminPartnersPage";
 import { captureReferralFromUrl } from "./utils/share";
 
 function RootApp() {
@@ -96,6 +101,13 @@ function RootApp() {
               path="/organizer/:organizerId/store"
               element={<OrganizerStorePage />}
             />
+            <Route path="/partners" element={<PartnersPage />} />
+            <Route
+              path="/partners/:partnerId"
+              element={<PartnerProfilePage />}
+            />
+            <Route path="/partner-register" element={<PartnerRegisterPage />} />
+            <Route path="/partner-scanner" element={<PartnerScannerPage />} />
 
             {/* User Profile (Public) */}
             <Route path="/user/:userId" element={<UserProfile />} />
@@ -136,6 +148,16 @@ function RootApp() {
               element={
                 <UserRoute>
                   <UserProfilePage />
+                </UserRoute>
+              }
+            />
+
+            {/* User Rewards */}
+            <Route
+              path="/my-rewards"
+              element={
+                <UserRoute>
+                  <MyRewardsPage />
                 </UserRoute>
               }
             />
@@ -207,12 +229,9 @@ function RootApp() {
               <Route path="users" element={<UsersManagement />} />
               <Route path="organizers" element={<OrganizersManagement />} />
               <Route path="home-blocks" element={<AdminHomeBlocksPage />} />
-              <Route
-                path="verify-organizers"
-                element={<OrganizerVerificationSystem />}
-              />
               <Route path="messages" element={<MessagesManagement />} />
               <Route path="payouts" element={<AdminPayoutManagement />} />
+              <Route path="partners" element={<AdminPartnersPage />} />
             </Route>
           </Routes>
         </App>

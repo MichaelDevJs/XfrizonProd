@@ -219,7 +219,7 @@ export default function AdminDashboard() {
                 <p className="text-lg font-mono text-zinc-100">
                   {loadingReferrals
                     ? "..."
-                    : referralAnalytics?.totalSignups ?? 0}
+                    : (referralAnalytics?.totalSignups ?? 0)}
                 </p>
               </div>
               <div className="border border-zinc-800 rounded p-2 bg-[#1e1e1e]">
@@ -227,15 +227,17 @@ export default function AdminDashboard() {
                 <p className="text-lg font-mono text-zinc-100">
                   {loadingReferrals
                     ? "..."
-                    : referralAnalytics?.totalTicketPurchases ?? 0}
+                    : (referralAnalytics?.totalTicketPurchases ?? 0)}
                 </p>
               </div>
               <div className="border border-zinc-800 rounded p-2 bg-[#1e1e1e]">
-                <p className="text-[10px] uppercase text-zinc-500">Conversions</p>
+                <p className="text-[10px] uppercase text-zinc-500">
+                  Conversions
+                </p>
                 <p className="text-lg font-mono text-zinc-100">
                   {loadingReferrals
                     ? "..."
-                    : referralAnalytics?.totalConversions ?? 0}
+                    : (referralAnalytics?.totalConversions ?? 0)}
                 </p>
               </div>
               <div className="border border-zinc-800 rounded p-2 bg-[#1e1e1e]">
@@ -243,7 +245,7 @@ export default function AdminDashboard() {
                 <p className="text-lg font-mono text-zinc-100">
                   {loadingReferrals
                     ? "..."
-                    : referralAnalytics?.uniqueReferrers ?? 0}
+                    : (referralAnalytics?.uniqueReferrers ?? 0)}
                 </p>
               </div>
             </div>

@@ -85,9 +85,9 @@ export default function MessagesManagement() {
   const unreadCount = messages.filter((msg) => !msg.isRead).length;
 
   return (
-    <div className="bg-black min-h-screen text-zinc-100 p-6">
+    <div className="admin-theme bg-[#1e1e1e] min-h-screen text-zinc-100 p-6">
       {/* Header */}
-      <div className="border-b-2 border-t-2 border-zinc-700 bg-linear-to-r from-black via-zinc-900 to-black px-4 py-3 mb-6">
+      <div className="border-b border-zinc-700/60 bg-linear-to-r from-[#1e1e1e] via-[#252525] to-[#1e1e1e] px-4 py-3 mb-6 rounded-lg">
         <h1 className="text-2xl font-bold uppercase tracking-wider">
           MESSAGES
         </h1>
@@ -98,8 +98,8 @@ export default function MessagesManagement() {
 
       <div className="grid grid-cols-3 gap-4">
         {/* Messages List Column */}
-        <div className="col-span-2 border-2 border-zinc-700 bg-zinc-950">
-          <div className="border-b-2 border-zinc-700 bg-black px-4 py-2">
+        <div className="col-span-2 border border-zinc-700/60 bg-[#232323] rounded-lg overflow-hidden">
+          <div className="border-b border-zinc-700/60 bg-[#202020] px-4 py-2">
             <div className="grid grid-cols-12 gap-2 text-xs font-bold uppercase text-zinc-100">
               <div className="col-span-1">ID</div>
               <div className="col-span-2">FROM</div>
@@ -118,7 +118,7 @@ export default function MessagesManagement() {
                   setSelectedMessage(msg);
                   handleMarkAsRead(msg.id);
                 }}
-                className="border-b border-zinc-700 px-4 py-2 hover:bg-zinc-800 cursor-pointer transition-colors text-xs"
+                className="border-b border-zinc-700/50 px-4 py-2 hover:bg-zinc-800/40 cursor-pointer transition-colors text-xs"
               >
                 <div className="grid grid-cols-12 gap-2 items-center">
                   <div className="col-span-1 font-mono text-zinc-300">
@@ -154,17 +154,17 @@ export default function MessagesManagement() {
             ))}
           </div>
 
-          <div className="border-t-2 border-zinc-700 bg-black px-4 py-2 text-xs text-zinc-400 font-mono">
+          <div className="border-t border-zinc-700/60 bg-[#202020] px-4 py-2 text-xs text-zinc-400 font-mono">
             Records: {messages.length} / Total: {messages.length}
           </div>
         </div>
 
         {/* Detail Panel */}
-        <div className="border-2 border-zinc-700 bg-zinc-950 flex flex-col">
+        <div className="border border-zinc-700/60 bg-[#232323] flex flex-col rounded-lg overflow-hidden">
           {selectedMessage ? (
             <>
               {/* Detail Header */}
-              <div className="border-b-2 border-zinc-700 bg-black px-4 py-2">
+              <div className="border-b border-zinc-700/60 bg-[#202020] px-4 py-2">
                 <h2 className="text-sm font-bold uppercase text-zinc-100">
                   {selectedMessage.subject}
                 </h2>
@@ -218,14 +218,14 @@ export default function MessagesManagement() {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     rows="3"
-                    className="w-full bg-black border border-zinc-600 text-zinc-100 p-1 font-mono text-xs focus:outline-none focus:border-red-600"
+                    className="w-full bg-[#1e1e1e] border border-zinc-600/70 text-zinc-100 p-1 font-mono text-xs focus:outline-none focus:border-red-600"
                     placeholder="Type reply..."
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="border-t-2 border-zinc-700 bg-black px-4 py-2 flex gap-1">
+              <div className="border-t border-zinc-700/60 bg-[#202020] px-4 py-2 flex gap-1">
                 <button
                   onClick={handleReply}
                   className="flex-1 border border-red-600 text-red-600 hover:bg-red-950 px-2 py-1 font-mono text-xs uppercase font-bold transition-colors"

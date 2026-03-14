@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { toAbsoluteSiteUrl } from "../utils/siteUrl";
 
 const upsertMetaTag = (selector, createAttrs, content) => {
   let tag = document.head.querySelector(selector);
@@ -42,8 +43,8 @@ export default function useSeo({
     const pageUrl =
       url ||
       (typeof window !== "undefined"
-        ? window.location.href
-        : "https://xfrizon.up.railway.app/");
+        ? `${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`
+        : toAbsoluteSiteUrl("/"));
     const pageImage = image || "";
 
     document.title = pageTitle;

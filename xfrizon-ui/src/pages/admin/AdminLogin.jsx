@@ -26,13 +26,16 @@ export default function AdminLogin() {
       if (response.data.success && response.data.token) {
         // Store the real JWT token as adminToken
         localStorage.setItem("adminToken", response.data.token);
-        localStorage.setItem("adminUser", JSON.stringify({
-          id: response.data.userId,
-          email: response.data.email,
-          role: response.data.role,
-          name: response.data.name || response.data.firstName,
-        }));
-        
+        localStorage.setItem(
+          "adminUser",
+          JSON.stringify({
+            id: response.data.userId,
+            email: response.data.email,
+            role: response.data.role,
+            name: response.data.name || response.data.firstName,
+          }),
+        );
+
         toast.success("✓ Admin login successful!");
 
         // Add small delay to ensure token is persisted before navigation
@@ -54,14 +57,16 @@ export default function AdminLogin() {
       }
     } catch (error) {
       console.error("Admin login error:", error);
-      const errorMsg = error?.response?.data?.message || "Invalid credentials. Please try again.";
+      const errorMsg =
+        error?.response?.data?.message ||
+        "Invalid credentials. Please try again.";
       toast.error(errorMsg);
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#1e1e1e] flex items-center justify-center px-4 py-8">
+    <div className="admin-theme min-h-screen bg-[#1e1e1e] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -77,7 +82,7 @@ export default function AdminLogin() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-8">
+        <div className="bg-zinc-950/70 rounded-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
             <div>

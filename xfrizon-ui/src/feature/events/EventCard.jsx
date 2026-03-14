@@ -23,12 +23,12 @@ const resolveFlyerUrl = (path) => {
   if (path.startsWith("http")) return path;
   // Ensure path starts with /
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  
+
   // In production, use relative paths; in dev, prepend API base
   if (import.meta.env.PROD) {
     return normalized;
   }
-  
+
   // Development: prepend localhost
   if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
     return `http://localhost:8081${normalized}`;
@@ -181,7 +181,9 @@ export default function EventCard({ event, onSaveChange }) {
       if (result === "copied") {
         toast.success("Event link copied");
       } else {
-        toast.info("Choose Instagram, WhatsApp, or any app from share options.");
+        toast.info(
+          "Choose Instagram, WhatsApp, or any app from share options.",
+        );
       }
     } catch {
       toast.error("Unable to share this event");

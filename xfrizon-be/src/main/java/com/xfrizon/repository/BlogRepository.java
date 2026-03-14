@@ -10,9 +10,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public interface BlogRepository extends JpaRepository<Blog, Long> {
+
+    interface BlogSitemapEntry {
+        Long getId();
+        LocalDateTime getLastModified();
+    }
 
     // Find all blogs that are not deleted
     @Query("SELECT b FROM Blog b WHERE b.deletedAt IS NULL ORDER BY b.createdAt DESC")
@@ -52,4 +58,14 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
 
     @Query("SELECT COUNT(b) FROM Blog b WHERE b.deletedAt IS NULL")
     long countActiveBlogs();
+
+        @Query("""
+                SELECT b.id AS id,
+                             COALESCE(b.updatedAt, b.publishedAt, b.createdAt) AS lastModified
+                FROM Blog b
+                WHERE b.status = com.xfrizon.entity.Blog$BlogStatus.PUBLISHED
+                    AND b.deletedAt IS NULL
+                ORDER BY COALESCE(b.updatedAt, b.publishedAt, b.createdAt) DESC
+                """)
+        List<BlogSitemapEntry> findPublishedBlogSitemapEntries();
 }

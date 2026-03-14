@@ -84,4 +84,20 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate
     );
+
+    @Query("""
+        SELECT
+            pr.event.id,
+            pr.event.organizer.id,
+            pr.currency,
+            COALESCE(SUM(pr.amount), 0),
+            COALESCE(SUM(pr.serviceFeeAmount), 0),
+            COALESCE(SUM(pr.organizerAmount), 0),
+            COUNT(pr),
+            MAX(pr.createdAt)
+        FROM PaymentRecord pr
+        WHERE pr.status = 'SUCCEEDED'
+        GROUP BY pr.event.id, pr.event.organizer.id, pr.currency
+        """)
+    List<Object[]> summarizeSucceededPaymentsByEventAndCurrency();
 }

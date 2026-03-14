@@ -1,5 +1,31 @@
 import api from "./axios";
 
+const normalizePendingPayoutsPage = (payload) => {
+  const source = payload?.data ?? payload ?? {};
+
+  if (Array.isArray(source)) {
+    return {
+      content: source,
+      totalElements: source.length,
+      pageNumber: 0,
+      pageSize: source.length,
+    };
+  }
+
+  const content =
+    source?.content ??
+    source?.items ??
+    source?.records ??
+    source?.rows ??
+    source?.payouts ??
+    source?.data;
+
+  return {
+    ...source,
+    content: Array.isArray(content) ? content : [],
+  };
+};
+
 /**
  * Stripe Connect Onboarding APIs
  */
@@ -58,13 +84,29 @@ export const createManualPayout = async (payoutData) => {
 };
 
 export const getPendingPayouts = async (page = 0, size = 20) => {
-  const response = await api.get("/admin/payouts/pending", {
-    params: { page, size },
-  });
-  if (response?.data?.success === false) {
-    throw new Error(response?.data?.message || "Failed to load payouts");
+  try {
+    const response = await api.get("/admin/payouts/pending", {
+      params: { page, size },
+    });
+    if (response?.data?.success === false) {
+      throw new Error(response?.data?.message || "Failed to load payouts");
+    }
+    return normalizePendingPayoutsPage(response.data);
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status !== 404 && status !== 500) {
+      throw error;
+    }
+
+    // Backward-compatible fallback for environments still on legacy manual payout routes.
+    const legacyResponse = await api.get("/admin/manual-payouts/pending");
+    if (legacyResponse?.data?.success === false) {
+      throw new Error(
+        legacyResponse?.data?.message || "Failed to load payouts",
+      );
+    }
+    return normalizePendingPayoutsPage(legacyResponse.data);
   }
-  return response.data;
 };
 
 export const getOrganizerPayoutPreview = async ({
@@ -105,5 +147,42 @@ export const getOrganizerPayouts = async (organizerId, page = 0, size = 20) => {
   const response = await api.get(`/admin/payouts/organizer/${organizerId}`, {
     params: { page, size },
   });
+  return response.data;
+};
+
+export const getEventPayoutPreview = async (status) => {
+  const response = await api.get("/admin/payouts/events/preview", {
+    params: status ? { status } : {},
+  });
+  if (response?.data?.success === false) {
+    throw new Error(response?.data?.message || "Failed to load event payout preview");
+  }
+  return response.data;
+};
+
+export const holdEventPayout = async (payoutId, reason = "") => {
+  const response = await api.post(`/admin/payouts/events/${payoutId}/hold`, null, {
+    params: reason ? { reason } : {},
+  });
+  return response.data;
+};
+
+export const releaseEventPayout = async (payoutId) => {
+  const response = await api.post(`/admin/payouts/events/${payoutId}/release`);
+  return response.data;
+};
+
+export const payEventPayoutNow = async (payoutId) => {
+  const response = await api.post(`/admin/payouts/events/${payoutId}/pay-now`);
+  return response.data;
+};
+
+export const retryFailedEventPayout = async (payoutId) => {
+  const response = await api.post(`/admin/payouts/events/${payoutId}/retry`);
+  return response.data;
+};
+
+export const retryAllFailedEventPayouts = async () => {
+  const response = await api.post("/admin/payouts/events/retry-failed");
   return response.data;
 };

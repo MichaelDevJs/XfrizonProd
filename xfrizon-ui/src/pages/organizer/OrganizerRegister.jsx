@@ -190,10 +190,7 @@ const OrganizerRegister = () => {
 
         <p className="text-center text-gray-400 text-sm font-light">
           Already have an account?{" "}
-          <a
-            href="/auth/login"
-            className="text-red-500 hover:text-red-400"
-          >
+          <a href="/auth/login" className="text-red-500 hover:text-red-400">
             Login here
           </a>
         </p>

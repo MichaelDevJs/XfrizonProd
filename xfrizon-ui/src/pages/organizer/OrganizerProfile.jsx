@@ -76,7 +76,8 @@ const OrganizerProfile = () => {
 
         try {
           const organizerRes = await api.get(`/organizers/${profileId}`);
-          organizerDetails = organizerRes?.data?.data || organizerRes?.data || {};
+          organizerDetails =
+            organizerRes?.data?.data || organizerRes?.data || {};
         } catch {
           organizerDetails = {};
         }
@@ -112,7 +113,8 @@ const OrganizerProfile = () => {
 
           try {
             const organizerRes = await api.get(`/organizers/${currentUser.id}`);
-            organizerDetails = organizerRes?.data?.data || organizerRes?.data || {};
+            organizerDetails =
+              organizerRes?.data?.data || organizerRes?.data || {};
           } catch {
             organizerDetails = {};
           }
@@ -202,7 +204,7 @@ const OrganizerProfile = () => {
       // Production: return relative path for front-end served with backend
       return normalized;
     }
-    
+
     // Development: prepend localhost
     if (normalized.startsWith("/api") || normalized.startsWith("/uploads")) {
       return `http://localhost:8081${normalized}`;
@@ -247,7 +249,10 @@ const OrganizerProfile = () => {
   };
 
   const organizerProfile =
-    organizer?.profile || organizer?.organizerProfile || organizer?.details || {};
+    organizer?.profile ||
+    organizer?.organizerProfile ||
+    organizer?.details ||
+    {};
   const instagramLink = normalizeUrl(
     firstNonEmpty(
       organizer?.instagram,
@@ -291,8 +296,11 @@ const OrganizerProfile = () => {
       .map((item, idx) => ({
         id: item.id || `gallery-${idx}`,
         url: getImageUrl(item.url) || item.url,
-        type: item.type ||
-          (String(item.url).toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)(\?|$)/)
+        type:
+          item.type ||
+          (String(item.url)
+            .toLowerCase()
+            .match(/\.(mp4|webm|ogg|mov|m4v)(\?|$)/)
             ? "video"
             : "image"),
       }));
@@ -359,23 +367,33 @@ const OrganizerProfile = () => {
               {organizer?.name || organizer?.organizerName || "Organizer"}
             </p>
             <div className="mt-1 max-w-2xl mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light tracking-[0.02em] text-gray-200/90">
-              {(organizer?.location || organizer?.city || organizer?.country) && (
+              {(organizer?.location ||
+                organizer?.city ||
+                organizer?.country) && (
                 <span>
-                  {organizer?.location || [organizer?.city, organizer?.country].filter(Boolean).join(", ")}
+                  {organizer?.location ||
+                    [organizer?.city, organizer?.country]
+                      .filter(Boolean)
+                      .join(", ")}
                 </span>
               )}
-              {(organizer?.location || organizer?.city || organizer?.country) && organizer?.createdAt && (
-                <span className="text-gray-500">|</span>
-              )}
+              {(organizer?.location || organizer?.city || organizer?.country) &&
+                organizer?.createdAt && (
+                  <span className="text-gray-500">|</span>
+                )}
               {organizer?.createdAt && (
                 <span>
-                  Joined {new Date(organizer.createdAt).toLocaleDateString("en-US", {
+                  Joined{" "}
+                  {new Date(organizer.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "short",
                   })}
                 </span>
               )}
-              {((organizer?.location || organizer?.city || organizer?.country) || organizer?.createdAt) &&
+              {(organizer?.location ||
+                organizer?.city ||
+                organizer?.country ||
+                organizer?.createdAt) &&
                 (instagramLink || websiteLink || emailLink) && (
                   <span className="text-gray-500">|</span>
                 )}
@@ -459,7 +477,9 @@ const OrganizerProfile = () => {
           <div className="space-y-8">
             {/* Featured Upcoming Events */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Featured Events</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Featured Events
+              </h3>
               {upcomingEvents.length > 0 ? (
                 <div className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory pb-2 hide-scrollbar">
                   {upcomingEvents.slice(0, 4).map((event) => (
@@ -521,7 +541,9 @@ const OrganizerProfile = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-400">No gallery media yet.</p>
+                    <p className="text-sm text-gray-400">
+                      No gallery media yet.
+                    </p>
                   )}
                 </div>
               </div>
@@ -538,7 +560,9 @@ const OrganizerProfile = () => {
                       />
                     ) : (
                       <div className="w-20 h-20 sm:w-24 sm:h-24 bg-linear-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white text-3xl sm:text-4xl font-bold tracking-tight shadow-2xl">
-                        {(organizer?.name || organizer?.organizerName || "O")[0]?.toUpperCase()}
+                        {(organizer?.name ||
+                          organizer?.organizerName ||
+                          "O")[0]?.toUpperCase()}
                       </div>
                     )}
                   </div>
@@ -546,23 +570,38 @@ const OrganizerProfile = () => {
                     {organizer?.name || organizer?.organizerName || "Organizer"}
                   </p>
                   <div className="mt-1 max-w-2xl mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light tracking-[0.02em] text-gray-200/90">
-                    {(organizer?.location || organizer?.city || organizer?.country) && (
+                    {(organizer?.location ||
+                      organizer?.city ||
+                      organizer?.country) && (
                       <span>
-                        {organizer?.location || [organizer?.city, organizer?.country].filter(Boolean).join(", ")}
+                        {organizer?.location ||
+                          [organizer?.city, organizer?.country]
+                            .filter(Boolean)
+                            .join(", ")}
                       </span>
                     )}
-                    {(organizer?.location || organizer?.city || organizer?.country) && organizer?.createdAt && (
-                      <span className="text-gray-500">|</span>
-                    )}
+                    {(organizer?.location ||
+                      organizer?.city ||
+                      organizer?.country) &&
+                      organizer?.createdAt && (
+                        <span className="text-gray-500">|</span>
+                      )}
                     {organizer?.createdAt && (
                       <span>
-                        Joined {new Date(organizer.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                        })}
+                        Joined{" "}
+                        {new Date(organizer.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                          },
+                        )}
                       </span>
                     )}
-                    {((organizer?.location || organizer?.city || organizer?.country) || organizer?.createdAt) &&
+                    {(organizer?.location ||
+                      organizer?.city ||
+                      organizer?.country ||
+                      organizer?.createdAt) &&
                       (instagramLink || websiteLink || emailLink) && (
                         <span className="text-gray-500">|</span>
                       )}
@@ -600,7 +639,9 @@ const OrganizerProfile = () => {
                       )}
                     </div>
                     {(instagramLink || websiteLink || emailLink) &&
-                      organizer?.address && <span className="text-gray-500">|</span>}
+                      organizer?.address && (
+                        <span className="text-gray-500">|</span>
+                      )}
                     {organizer?.address && <span>{organizer.address}</span>}
                   </div>
                   <p className="mt-3 max-w-2xl mx-auto max-h-35 overflow-y-auto hide-scrollbar text-left text-sm text-gray-300 leading-relaxed">

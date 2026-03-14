@@ -504,18 +504,17 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                   <HeroSlideshow items={blogHeadlineSlideshow} />
                 </div>
               </div>
-
             </>
           )}
-
-
         </div>
 
         <div className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-zinc-800 bg-black/95 backdrop-blur-sm p-3">
           <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
             <div className="text-xs text-gray-300">
               <span className="text-gray-400">Selected: </span>
-              <span className="font-mono text-gray-100">{getTotalSelectedTickets()}</span>
+              <span className="font-mono text-gray-100">
+                {getTotalSelectedTickets()}
+              </span>
               <span className="ml-1">tickets</span>
             </div>
             <button

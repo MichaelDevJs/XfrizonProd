@@ -142,7 +142,9 @@ export default function OrganizerSignUp() {
           }),
         );
 
-        const referralCode = (localStorage.getItem("xfrizon_referral") || "").trim();
+        const referralCode = (
+          localStorage.getItem("xfrizon_referral") || ""
+        ).trim();
         if (referralCode) {
           localStorage.removeItem("xfrizon_referral");
         }

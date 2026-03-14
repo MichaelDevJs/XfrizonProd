@@ -86,8 +86,8 @@ export default function VideoManager({ formData, setFormData }) {
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
         <p className="text-xs text-amber-800">
-          💡 <strong>Tip:</strong> Supports MP4, WebM, AVI. For
-          larger videos, use YouTube links instead.
+          💡 <strong>Tip:</strong> Supports MP4, WebM, AVI. For larger videos,
+          use YouTube links instead.
         </p>
       </div>
     </div>
