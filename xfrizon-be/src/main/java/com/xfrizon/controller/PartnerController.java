@@ -1,11 +1,14 @@
 package com.xfrizon.controller;
 
 import com.xfrizon.dto.ApiResponse;
+import com.xfrizon.dto.PartnerProfileUpdateRequest;
 import com.xfrizon.dto.PartnerRegistrationRequest;
 import com.xfrizon.dto.PartnerResponse;
 import com.xfrizon.dto.RedemptionVerifyResponse;
 import com.xfrizon.service.PartnerService;
 import com.xfrizon.service.PointsService;
+import com.xfrizon.util.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ public class PartnerController {
 
     private final PartnerService partnerService;
     private final PointsService pointsService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /** GET /api/v1/partners — all active partners */
     @GetMapping
@@ -83,6 +87,55 @@ public class PartnerController {
         }
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<PartnerResponse>> getMyPartnerProfile(HttpServletRequest request) {
+        Long userId = getAuthenticatedUserId(request);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", 401));
+        }
+
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    partnerService.getOwnProfile(userId),
+                    "Partner profile retrieved"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), 404));
+        } catch (Exception e) {
+            log.error("getMyPartnerProfile error", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(e.getMessage(), 500));
+        }
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<PartnerResponse>> updateMyPartnerProfile(
+            HttpServletRequest request,
+            @Valid @RequestBody PartnerProfileUpdateRequest req
+    ) {
+        Long userId = getAuthenticatedUserId(request);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", 401));
+        }
+
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    partnerService.updateOwnProfile(userId, req),
+                    "Partner profile updated"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("updateMyPartnerProfile error", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(e.getMessage(), 500));
+        }
+    }
+
     /**
      * GET /api/v1/partners/verify/{token}
      * Called by partner when they scan a user's QR code.
@@ -96,5 +149,19 @@ public class PartnerController {
         RedemptionVerifyResponse result = pointsService.verifyAndUse(token, partnerKey, partnerService);
         int status = result.isValid() ? 200 : 400;
         return ResponseEntity.status(status).body(result);
+    }
+
+    private Long getAuthenticatedUserId(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = bearerToken.substring(7);
+        if (!jwtTokenProvider.validateToken(token)) {
+            return null;
+        }
+
+        return jwtTokenProvider.getUserIdFromToken(token);
     }
 }

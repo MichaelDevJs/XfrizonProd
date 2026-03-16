@@ -23,4 +23,5 @@ public class PartnerRegistrationRequest {
     private String address;
     private String contactEmail;
     private String contactPhone;
+    private String loginPassword;
 }

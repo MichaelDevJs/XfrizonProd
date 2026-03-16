@@ -26,3 +26,4 @@ public class XfrizonApplication {
         return new ObjectMapper();
     }
 }
+

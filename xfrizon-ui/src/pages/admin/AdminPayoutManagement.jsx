@@ -5,6 +5,8 @@ import {
   holdEventPayout,
   releaseEventPayout,
   payEventPayoutNow,
+  retryFailedEventPayout,
+  retryAllFailedEventPayouts,
   markPayoutAsSent,
   cancelPayout,
 } from "../../api/payoutApi";
@@ -14,6 +16,8 @@ import {
   FaTimes,
   FaSpinner,
   FaMoneyBillWave,
+  FaDownload,
+  FaRedo,
 } from "react-icons/fa";
 import CreateManualPayoutModal from "../../component/admin/CreateManualPayoutModal";
 
@@ -138,6 +142,42 @@ export default function AdminPayoutManagement() {
     }
   };
 
+  const handleRetryFailedPayout = async (payoutId) => {
+    try {
+      setProcessing(`retry-${payoutId}`);
+      await retryFailedEventPayout(payoutId);
+      toast.success("Retry triggered");
+      loadEventPayoutPreview();
+    } catch (error) {
+      console.error("Error retrying failed payout:", error);
+      toast.error("Failed to retry payout");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleRetryAllFailed = async () => {
+    try {
+      setProcessing("retry-all");
+      const response = await retryAllFailedEventPayouts();
+      const retriedCount =
+        Number.isFinite(Number(response?.data?.retriedCount))
+          ? Number(response.data.retriedCount)
+          : null;
+      toast.success(
+        retriedCount !== null
+          ? `Retried ${retriedCount} failed payout(s)`
+          : "Retry triggered for failed payouts",
+      );
+      loadEventPayoutPreview();
+    } catch (error) {
+      console.error("Error retrying all failed payouts:", error);
+      toast.error("Failed to retry all failed payouts");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const handleMarkAsSent = async (payoutId) => {
     try {
       setProcessing(payoutId);
@@ -206,6 +246,65 @@ export default function AdminPayoutManagement() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const toCsvSafe = (value) => {
+    const safeValue = value === null || value === undefined ? "" : String(value);
+    const escaped = safeValue.replace(/"/g, '""');
+    return `"${escaped}"`;
+  };
+
+  const exportEventPayoutCsv = () => {
+    if (!eventPayoutPreview.length) {
+      toast.info("No event payout data to export");
+      return;
+    }
+
+    const headers = [
+      "Payout ID",
+      "Event ID",
+      "Event",
+      "Organizer",
+      "Organizer Email",
+      "Currency",
+      "Net Payout",
+      "Event End",
+      "Release At",
+      "Status",
+      "Stripe Transfer ID",
+      "Last Error",
+      "Updated At",
+    ];
+
+    const rows = eventPayoutPreview.map((item) => [
+      item.payoutId,
+      item.eventId,
+      item.eventTitle,
+      item.organizerName,
+      item.organizerEmail,
+      item.currency,
+      item.netPayout,
+      item.eventEndAt,
+      item.releaseAt,
+      item.status,
+      item.stripeTransferId,
+      item.lastError,
+      item.updatedAt,
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => toCsvSafe(value)).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const filterSuffix = previewStatus ? `-${previewStatus.toLowerCase()}` : "";
+    const dateStamp = new Date().toISOString().split("T")[0];
+    link.href = url;
+    link.download = `event-payout-preview${filterSuffix}-${dateStamp}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -289,7 +388,7 @@ export default function AdminPayoutManagement() {
             </div>
           </div>
 
-          <div className="px-6 py-4 border-b border-zinc-800 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="px-6 py-4 border-b border-zinc-800 grid grid-cols-1 md:grid-cols-5 gap-3">
             <select
               value={previewStatus}
               onChange={(e) => setPreviewStatus(e.target.value)}
@@ -315,6 +414,28 @@ export default function AdminPayoutManagement() {
               className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded"
             >
               Reset
+            </button>
+
+            <button
+              onClick={handleRetryAllFailed}
+              disabled={processing === "retry-all"}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {processing === "retry-all" ? (
+                <FaSpinner className="animate-spin" />
+              ) : (
+                <FaRedo />
+              )}
+              Retry Failed
+            </button>
+
+            <button
+              onClick={exportEventPayoutCsv}
+              disabled={!eventPayoutPreview.length}
+              className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FaDownload />
+              Export CSV
             </button>
           </div>
 
@@ -358,6 +479,8 @@ export default function AdminPayoutManagement() {
                       processing === `hold-${item.payoutId}`;
                     const isProcessingRelease =
                       processing === `release-${item.payoutId}`;
+                    const isProcessingRetry =
+                      processing === `retry-${item.payoutId}`;
                     return (
                       <tr
                         key={`${item.payoutId}`}
@@ -423,6 +546,17 @@ export default function AdminPayoutManagement() {
                                 className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded disabled:opacity-50"
                               >
                                 Pay Now
+                              </button>
+                            )}
+                            {item.status === "FAILED" && (
+                              <button
+                                onClick={() =>
+                                  handleRetryFailedPayout(item.payoutId)
+                                }
+                                disabled={isProcessingRetry}
+                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded disabled:opacity-50"
+                              >
+                                {isProcessingRetry ? "Retrying" : "Retry"}
                               </button>
                             )}
                           </div>

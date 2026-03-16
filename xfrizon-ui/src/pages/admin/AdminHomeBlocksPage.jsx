@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import HomePageBlockManager from "../../component/admin/HomePageBlockManager";
 import HeroSlideshow from "../../component/HeroSlideshow/HeroSlideshow";
 import api from "../../api/axios";
+import partnersApi from "../../api/partnersApi";
 import { toast } from "react-toastify";
 import { COUNTRIES_DATA } from "../../data/countriesData";
 
@@ -35,8 +36,19 @@ export default function AdminHomeBlocksPage() {
     { id: "centeredBanner", label: "Centered Banner" },
     { id: "heroSection", label: "Hero Section" },
     { id: "blogsSection", label: "Blogs Section" },
+    { id: "partnersSection", label: "Partners Section" },
     { id: "eventSection", label: "Event Section" },
   ]);
+  const [allPartners, setAllPartners] = useState([]);
+  const [selectedPartnerIds, setSelectedPartnerIds] = useState([]);
+  const [loadingPartners, setLoadingPartners] = useState(false);
+  const [partnerFilters, setPartnerFilters] = useState({
+    query: "",
+    location: "all",
+    industry: "all",
+    logoUpload: "all",
+    selectedOnly: false,
+  });
   const [newBannerText, setNewBannerText] = useState("");
   const [featureOrganizerId, setFeatureOrganizerId] = useState("");
   const [featureBlogId, setFeatureBlogId] = useState("");
@@ -556,7 +568,23 @@ export default function AdminHomeBlocksPage() {
 
   useEffect(() => {
     fetchSettings();
+    fetchPartners();
   }, []);
+
+  const fetchPartners = async () => {
+    try {
+      setLoadingPartners(true);
+      const partners = await partnersApi.getAllAdmin();
+      const normalized = Array.isArray(partners) ? partners : [];
+      setAllPartners(normalized);
+    } catch (error) {
+      console.error("Error fetching partners:", error);
+      toast.error("Failed to load partners for homepage section");
+      setAllPartners([]);
+    } finally {
+      setLoadingPartners(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -600,11 +628,23 @@ export default function AdminHomeBlocksPage() {
             centeredBanner: "Centered Banner",
             heroSection: "Hero Section",
             blogsSection: "Blogs Section",
+            partnersSection: "Partners Section",
             eventSection: "Event Section",
           };
           setBlockOrder(order.map((id) => ({ id, label: blockMap[id] || id })));
         } catch (e) {
           console.error("Error parsing block order:", e);
+        }
+      }
+
+      if (settings.partnersSectionPartnerIds) {
+        try {
+          const parsed = JSON.parse(settings.partnersSectionPartnerIds);
+          setSelectedPartnerIds(
+            Array.isArray(parsed) ? parsed.map((id) => String(id)) : [],
+          );
+        } catch (e) {
+          console.error("Error parsing partners section IDs:", e);
         }
       }
 
@@ -642,6 +682,7 @@ export default function AdminHomeBlocksPage() {
         heroSlideshow: JSON.stringify(processedSlides),
         bannerTexts: JSON.stringify(bannerTexts),
         blockOrder: JSON.stringify(blockOrder.map((block) => block.id)),
+        partnersSectionPartnerIds: JSON.stringify(selectedPartnerIds),
       });
 
       toast.success("Homepage settings saved successfully!");
@@ -898,6 +939,13 @@ export default function AdminHomeBlocksPage() {
             }
           : slide,
       ),
+    );
+  };
+
+  const toggleFeaturedPartner = (partnerId) => {
+    const key = String(partnerId);
+    setSelectedPartnerIds((prev) =>
+      prev.includes(key) ? prev.filter((id) => id !== key) : [...prev, key],
     );
   };
 
@@ -1845,6 +1893,149 @@ export default function AdminHomeBlocksPage() {
         />
       </div>
 
+      {/* Partners Section Control */}
+      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="text-xl font-semibold text-white">
+            Partners Block Content
+          </h2>
+          <span className="text-xs text-zinc-400">
+            Selected: {selectedPartnerIds.length}
+          </span>
+        </div>
+        <p className="text-sm text-gray-400 mb-4">
+          Choose which partners appear in the homepage partners carousel.
+        </p>
+
+
+        {(() => {
+          const filteredPartners = allPartners.filter((partner) => {
+            const id = String(partner?.id ?? "");
+            const location = String(partner?.location || partner?.city || partner?.country || "").trim();
+            const industry = String(partner?.industry || partner?.category || "").trim();
+            const logoUploaded = Boolean(partner?.logoUrl || partner?.logo || partner?.profilePhotoUrl || partner?.profilePicture || partner?.photoUrl || partner?.image || partner?.avatar);
+            const selected = selectedPartnerIds.includes(id);
+            const name = String(partner?.name || "").toLowerCase();
+            const email = String(partner?.contactEmail || partner?.email || "").toLowerCase();
+            const query = partnerFilters.query.trim().toLowerCase();
+
+            const matchesQuery = !query || name.includes(query) || email.includes(query) || location.toLowerCase().includes(query) || industry.toLowerCase().includes(query);
+            const matchesLocation = partnerFilters.location === "all" || location === partnerFilters.location;
+            const matchesIndustry = partnerFilters.industry === "all" || industry === partnerFilters.industry;
+            const matchesLogo = partnerFilters.logoUpload === "all" || (partnerFilters.logoUpload === "yes" && logoUploaded) || (partnerFilters.logoUpload === "no" && !logoUploaded);
+            const matchesSelected = !partnerFilters.selectedOnly || selected;
+
+            return matchesQuery && matchesLocation && matchesIndustry && matchesLogo && matchesSelected;
+          });
+
+          const locationOptions = [...new Set(allPartners.map((p) => String(p?.location || p?.city || p?.country || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+          const industryOptions = [...new Set(allPartners.map((p) => String(p?.industry || p?.category || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+          if (loadingPartners) {
+            return <div className="text-sm text-zinc-400">Loading partners...</div>;
+          }
+
+          if (allPartners.length === 0) {
+            return <div className="text-sm text-zinc-400">No partners found.</div>;
+          }
+
+          return (
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2 mb-4">
+                <input
+                  type="text"
+                  value={partnerFilters.query}
+                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, query: e.target.value }))}
+                  placeholder="Search name, email, location, industry"
+                  className="xl:col-span-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                />
+                <select
+                  value={partnerFilters.location}
+                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, location: e.target.value }))}
+                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                >
+                  <option value="all">All Locations</option>
+                  {locationOptions.map((location) => (
+                    <option key={location} value={location}>{location}</option>
+                  ))}
+                </select>
+                <select
+                  value={partnerFilters.industry}
+                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, industry: e.target.value }))}
+                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                >
+                  <option value="all">All Industries</option>
+                  {industryOptions.map((industry) => (
+                    <option key={industry} value={industry}>{industry}</option>
+                  ))}
+                </select>
+                <select
+                  value={partnerFilters.logoUpload}
+                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, logoUpload: e.target.value }))}
+                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                >
+                  <option value="all">Logo/Photo: All</option>
+                  <option value="yes">Logo/Photo Uploaded</option>
+                  <option value="no">No Logo/Photo</option>
+                </select>
+              </div>
+
+              <label className="inline-flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none mb-3">
+                <input
+                  type="checkbox"
+                  checked={partnerFilters.selectedOnly}
+                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, selectedOnly: e.target.checked }))}
+                  className="h-4 w-4 accent-[#c0f24d]"
+                />
+                Show selected only
+              </label>
+
+              <div className="text-xs text-zinc-400 mb-2">Showing {filteredPartners.length} / {allPartners.length} partners</div>
+
+              <div className="border border-zinc-700 rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <div className={filteredPartners.length > 10 ? "max-h-130 overflow-y-auto hide-scrollbar" : ""}>
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-zinc-800">
+                        <tr className="text-left text-zinc-300 border-b border-zinc-700">
+                          <th className="px-3 py-2 w-14">Show</th>
+                          <th className="px-3 py-2 min-w-45">Partner</th>
+                          <th className="px-3 py-2 min-w-35">Location</th>
+                          <th className="px-3 py-2 min-w-35">Industry</th>
+                          <th className="px-3 py-2 w-28">Logo/Photo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPartners.length === 0 ? (
+                          <tr><td colSpan="5" className="px-3 py-6 text-center text-zinc-400">No partners match current filters.</td></tr>
+                        ) : (
+                          filteredPartners.map((partner) => {
+                            const id = String(partner.id);
+                            const checked = selectedPartnerIds.includes(id);
+                            const location = String(partner?.location || partner?.city || partner?.country || "").trim() || "N/A";
+                            const industry = String(partner?.industry || partner?.category || "").trim() || "N/A";
+                            const logoUploaded = Boolean(partner?.logoUrl || partner?.logo || partner?.profilePhotoUrl || partner?.profilePicture || partner?.photoUrl || partner?.image || partner?.avatar);
+                            return (
+                              <tr key={partner.id} className={`border-b border-zinc-800/80 hover:bg-zinc-800/40 ${checked ? "bg-[#c0f24d]/10" : "bg-zinc-900"}`}>
+                                <td className="px-3 py-2"><input type="checkbox" checked={checked} onChange={() => toggleFeaturedPartner(partner.id)} className="h-4 w-4 accent-[#c0f24d]" /></td>
+                                <td className="px-3 py-2"><p className="text-white truncate">{partner.name || "N/A"}</p><p className="text-xs text-zinc-400 truncate">{partner.contactEmail || partner.email || "No email"}</p></td>
+                                <td className="px-3 py-2 text-zinc-300">{location}</td>
+                                <td className="px-3 py-2 text-zinc-300">{industry}</td>
+                                <td className="px-3 py-2 text-zinc-300">{logoUploaded ? "Uploaded" : "Missing"}</td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
       {/* Save Button at Bottom */}
       <div className="flex justify-end">
         <button
@@ -1858,3 +2049,12 @@ export default function AdminHomeBlocksPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+

@@ -32,7 +32,7 @@ public class HomePageSettingsController {
         if (settings.isEmpty()) {
             settings.put("heroSlideshow", "[{\"id\":\"1\",\"type\":\"video\",\"url\":\"/assets/Xfrizon-Hero-Vid.mp4\",\"duration\":10000,\"order\":0}]");
             settings.put("bannerTexts", "[\"Promoting Afrocentric Events\",\"Discover Events Near You\",\"Celebrate Culture Together\"]");
-            settings.put("blockOrder", "[\"centeredBanner\",\"heroSection\",\"blogsSection\",\"eventSection\"]");
+            settings.put("blockOrder", "[\"centeredBanner\",\"heroSection\",\"blogsSection\",\"partnersSection\",\"eventSection\"]");
         }
         
         return ResponseEntity.ok(settings);

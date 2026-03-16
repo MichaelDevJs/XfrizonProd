@@ -5,6 +5,8 @@ import {
   FaCalendar,
   FaSpinner,
   FaInfoCircle,
+  FaBell,
+  FaTimes,
 } from "react-icons/fa";
 import StripeConnectSetup from "../../component/organizer/StripeConnectSetup";
 import BankDetailsForm from "../../component/organizer/BankDetailsForm";
@@ -22,6 +24,7 @@ const OrganizerFinance = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [eventPayoutPreview, setEventPayoutPreview] = useState([]);
   const [eventPayoutLoading, setEventPayoutLoading] = useState(false);
+  const [payoutAlerts, setPayoutAlerts] = useState([]);
 
   useEffect(() => {
     fetchPayoutReport();
@@ -29,7 +32,17 @@ const OrganizerFinance = () => {
 
   useEffect(() => {
     fetchEventPayoutPreview();
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+
+    const interval = window.setInterval(() => {
+      fetchEventPayoutPreview({ silent: true });
+    }, 90000);
+
+    return () => window.clearInterval(interval);
+  }, [user?.id]);
 
   // Auto-apply custom range when both dates are selected and valid
   useEffect(() => {
@@ -280,23 +293,89 @@ const OrganizerFinance = () => {
     }
   };
 
-  const fetchEventPayoutPreview = async () => {
+  const formatDateTime = (value) => {
+    if (!value) return "-";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "-";
+    return parsed.toLocaleString();
+  };
+
+  const fetchEventPayoutPreview = async ({ silent = false } = {}) => {
     try {
-      setEventPayoutLoading(true);
+      if (!silent) {
+        setEventPayoutLoading(true);
+      }
       const response = await organizerApi.getEventPayoutPreview();
-      if (response?.success) {
-        setEventPayoutPreview(
-          Array.isArray(response.data) ? response.data : [],
-        );
-      } else {
-        setEventPayoutPreview([]);
+      const rows = response?.success && Array.isArray(response?.data) ? response.data : [];
+      setEventPayoutPreview(rows);
+
+      const storageKey = user?.id
+        ? `xf-organizer-payout-status-${user.id}`
+        : null;
+
+      if (storageKey) {
+        let previousSnapshot = {};
+        try {
+          previousSnapshot = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        } catch {
+          previousSnapshot = {};
+        }
+
+        const nextSnapshot = {};
+        const statusAlerts = [];
+
+        rows.forEach((item) => {
+          const rowKey = String(
+            item?.payoutId ?? `${item?.eventId || "event"}-${item?.currency || "USD"}`,
+          );
+
+          nextSnapshot[rowKey] = {
+            status: item?.status || "",
+            eventTitle: item?.eventTitle || "Event",
+          };
+
+          const previous = previousSnapshot?.[rowKey];
+          if (!previous || previous.status === item?.status) {
+            return;
+          }
+
+          const baseAlert = {
+            id: `${Date.now()}-${rowKey}-${item?.status || "status"}`,
+            title: item?.eventTitle || "Event payout",
+            message: `Payout status changed from ${previous.status} to ${item?.status}.`,
+          };
+
+          if (item?.status === "PAID") {
+            statusAlerts.push({ ...baseAlert, type: "success" });
+          } else if (item?.status === "FAILED") {
+            statusAlerts.push({ ...baseAlert, type: "error" });
+          } else {
+            statusAlerts.push({ ...baseAlert, type: "info" });
+          }
+        });
+
+        if (statusAlerts.length > 0) {
+          setPayoutAlerts((prev) => [...statusAlerts, ...prev].slice(0, 5));
+        }
+
+        localStorage.setItem(storageKey, JSON.stringify(nextSnapshot));
       }
     } catch (err) {
       console.error("Error fetching event payout preview:", err);
       setEventPayoutPreview([]);
     } finally {
-      setEventPayoutLoading(false);
+      if (!silent) {
+        setEventPayoutLoading(false);
+      }
     }
+  };
+
+  const dismissPayoutAlert = (alertId) => {
+    setPayoutAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+  };
+
+  const clearAllPayoutAlerts = () => {
+    setPayoutAlerts([]);
   };
 
   const handleClearCustomRange = () => {
@@ -407,6 +486,54 @@ const OrganizerFinance = () => {
         </div>
       )}
 
+      {payoutAlerts.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">Payout updates</p>
+            <button
+              type="button"
+              onClick={clearAllPayoutAlerts}
+              className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              Clear all
+            </button>
+          </div>
+          {payoutAlerts.map((alert) => {
+            const toneClass =
+              alert.type === "success"
+                ? "border-green-700 bg-green-500/10 text-green-300"
+                : alert.type === "error"
+                  ? "border-red-700 bg-red-500/10 text-red-300"
+                  : "border-blue-700 bg-blue-500/10 text-blue-300";
+
+            return (
+              <div
+                key={alert.id}
+                className={`border rounded-lg px-4 py-3 ${toneClass}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <FaBell className="mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">{alert.title}</p>
+                      <p className="text-xs opacity-90">{alert.message}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => dismissPayoutAlert(alert.id)}
+                    className="opacity-80 hover:opacity-100"
+                    aria-label="Dismiss payout update"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {(payoutReport || !loading) && (
         <>
           <div className="border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5 rounded-lg">
@@ -452,7 +579,7 @@ const OrganizerFinance = () => {
                           {formatCurrency(item.netPayout, item.currency)}
                         </td>
                         <td className="py-2 pr-4 text-gray-300">
-                          {formatDate(item.releaseAt)}
+                          {formatDateTime(item.releaseAt)}
                         </td>
                         <td className="py-2 pr-4 text-gray-200">
                           {item.status}

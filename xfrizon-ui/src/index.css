@@ -309,3 +309,23 @@
 .Toastify__toast--info .Toastify__progress-bar {
   background: #3b82f6 !important;
 }
+
+@keyframes partners-marquee {
+  0% {
+    transform: translateX(100vw);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.partners-marquee-track {
+  width: max-content;
+  transform: translateX(100vw);
+  animation: partners-marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.partners-marquee-track:hover {
+  animation-play-state: paused;
+}

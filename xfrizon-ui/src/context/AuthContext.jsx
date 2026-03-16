@@ -13,6 +13,17 @@ const safeJsonParse = (value) => {
   }
 };
 
+const hasPartnerRole = (role, roles) => {
+  if (role === "PARTNER") return true;
+  const roleTokens = Array.isArray(roles)
+    ? roles
+    : String(roles || "")
+        .split(",")
+        .map((item) => item.trim().toUpperCase())
+        .filter(Boolean);
+  return roleTokens.includes("PARTNER");
+};
+
 const AuthProvider = ({ children }) => {
   const [organizer, setOrganizer] = useState(() => {
     const storedUser = localStorage.getItem("user");
@@ -118,16 +129,20 @@ const AuthProvider = ({ children }) => {
   const fetchUserData = async () => {
     try {
       const response = await api.get("/auth/user");
+      const isPartner = hasPartnerRole(response.data.role, response.data.roles);
       setOrganizer({
         id: response.data.id,
         name:
           response.data.role === "ORGANIZER"
             ? response.data.name || response.data.firstName || ""
-            : `${response.data.firstName} ${response.data.lastName}`,
+            : isPartner
+              ? response.data.name || response.data.firstName || ""
+              : `${response.data.firstName} ${response.data.lastName}`,
         email: response.data.email,
         firstName: response.data.firstName,
         lastName: response.data.lastName,
         role: response.data.role,
+        roles: response.data.roles,
         logo: response.data.logo || response.data.profilePicture,
         profilePicture: response.data.profilePicture || response.data.logo,
         phoneNumber: response.data.phoneNumber,
@@ -153,10 +168,13 @@ const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
+        const isPartner = hasPartnerRole(response.data.role, response.data.roles);
         const nameForDisplay =
           response.data.role === "ORGANIZER"
             ? response.data.name || response.data.firstName
-            : `${response.data.firstName} ${response.data.lastName}`;
+            : isPartner
+              ? response.data.name || response.data.firstName
+              : `${response.data.firstName} ${response.data.lastName}`;
 
         const userData = {
           id: response.data.userId,
@@ -165,6 +183,7 @@ const AuthProvider = ({ children }) => {
           firstName: response.data.firstName,
           lastName: response.data.lastName,
           role: response.data.role,
+          roles: response.data.roles,
           logo: response.data.logo || response.data.profilePicture,
           profilePicture: response.data.profilePicture || response.data.logo,
           phoneNumber: response.data.phoneNumber,
@@ -217,6 +236,7 @@ const AuthProvider = ({ children }) => {
             firstName: response.data.firstName,
             lastName: response.data.lastName,
             role: response.data.role,
+            roles: response.data.roles,
             profilePicture: response.data.profilePicture,
           }),
         );
@@ -228,6 +248,7 @@ const AuthProvider = ({ children }) => {
           firstName: response.data.firstName,
           lastName: response.data.lastName,
           role: response.data.role,
+          roles: response.data.roles,
           profilePicture: response.data.profilePicture,
         });
 
@@ -263,6 +284,7 @@ const AuthProvider = ({ children }) => {
       lastName: userData.lastName || organizer?.lastName,
       email: userData.email || organizer?.email,
       role: userData.role || organizer?.role,
+      roles: userData.roles || organizer?.roles,
       // Profile image fields
       logo:
         userData.logo ||

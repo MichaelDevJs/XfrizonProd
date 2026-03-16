@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import partnersApi from "../../api/partnersApi";
+import { useAuth } from "../../hooks/useAuth";
 
 const INDUSTRIES = [
   "FOOD",
@@ -14,6 +15,7 @@ const INDUSTRIES = [
 const TYPES = ["ONLINE", "IN_PERSON", "BOTH"];
 
 export default function PartnerRegisterPage() {
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,6 +31,7 @@ export default function PartnerRegisterPage() {
     address: "",
     contactEmail: "",
     contactPhone: "",
+    loginPassword: "",
   });
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
@@ -38,9 +41,31 @@ export default function PartnerRegisterPage() {
     setSubmitting(true);
     setMessage("");
     setError("");
+
     try {
+      if (!user) {
+        if (!form.contactEmail) {
+          setError("Contact email is required.");
+          return;
+        }
+        if (!form.loginPassword) {
+          setError("Password is required.");
+          return;
+        }
+      }
+
       const res = await partnersApi.register(form);
-      setMessage(res?.message || "Registration submitted. Awaiting approval.");
+
+      if (!user) {
+        await login(form.contactEmail, form.loginPassword);
+        navigate("/partner-dashboard", { replace: true });
+        return;
+      }
+
+      setMessage(
+        res?.message || "Registration submitted. You can now browse the partner area.",
+      );
+
       setForm((prev) => ({
         ...prev,
         name: "",
@@ -51,11 +76,10 @@ export default function PartnerRegisterPage() {
         address: "",
         contactEmail: "",
         contactPhone: "",
+        loginPassword: "",
       }));
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Could not submit partner registration",
-      );
+      setError(err?.response?.data?.message || err?.message || "Could not submit partner registration");
     } finally {
       setSubmitting(false);
     }
@@ -68,13 +92,16 @@ export default function PartnerRegisterPage() {
           onClick={() => navigate(-1)}
           className="text-xs text-gray-400 hover:text-white mb-4"
         >
-          ← Back
+          Back
         </button>
         <div className="bg-[#121212] border border-gray-800 rounded-2xl p-6">
           <h1 className="text-2xl font-bold">Become a Xfrizon Partner</h1>
           <p className="text-gray-400 text-sm mt-1 mb-6">
             Register your brand. After approval, your profile appears publicly
             and users can redeem points with you.
+          </p>
+          <p className="text-xs text-[#c0f24d] mb-4">
+            Use your account password. If no user account exists yet, this partner signup will create it.
           </p>
 
           <form
@@ -154,12 +181,13 @@ export default function PartnerRegisterPage() {
               />
             </Field>
 
-            <Field label="Contact Email" className="md:col-span-1">
+            <Field label="Contact Email" required={!user} className="md:col-span-1">
               <input
                 value={form.contactEmail}
                 onChange={(e) => update("contactEmail", e.target.value)}
                 className="input"
                 type="email"
+                required={!user}
               />
             </Field>
 
@@ -168,6 +196,17 @@ export default function PartnerRegisterPage() {
                 value={form.contactPhone}
                 onChange={(e) => update("contactPhone", e.target.value)}
                 className="input"
+              />
+            </Field>
+
+            <Field label="Password" required={!user} className="md:col-span-2">
+              <input
+                value={form.loginPassword}
+                onChange={(e) => update("loginPassword", e.target.value)}
+                className="input"
+                type="password"
+                required={!user}
+                placeholder={!user ? "Your account password" : "Optional"}
               />
             </Field>
 
@@ -187,7 +226,11 @@ export default function PartnerRegisterPage() {
                 disabled={submitting}
                 className="bg-[#c0f24d] text-black px-5 py-2.5 rounded-lg font-semibold text-sm hover:brightness-110 disabled:opacity-60"
               >
-                {submitting ? "Submitting..." : "Submit Registration"}
+                {submitting
+                  ? "Submitting..."
+                  : !user
+                    ? "Submit & Login"
+                    : "Submit Registration"}
               </button>
               {message && <p className="text-xs text-green-400">{message}</p>}
               {error && <p className="text-xs text-red-400">{error}</p>}
@@ -212,3 +255,4 @@ function Field({ label, required, children, className = "" }) {
     </div>
   );
 }
+

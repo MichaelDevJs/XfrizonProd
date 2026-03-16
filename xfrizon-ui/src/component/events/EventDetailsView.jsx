@@ -307,7 +307,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
               {/* About Event */}
               {event.description && (
                 <div className="w-full max-w-lg mx-auto mb-6 space-y-3">
-                  <h2 className="text-sm font-medium tracking-wide uppercase text-gray-200">
+                  <h2 className="text-sm font-medium tracking-wide uppercase text-gray-200 text-center">
                     About Event
                   </h2>
                   <p className="text-[12px] text-gray-400 font-light leading-relaxed max-h-[7.5em] overflow-y-auto hide-scrollbar pr-1">

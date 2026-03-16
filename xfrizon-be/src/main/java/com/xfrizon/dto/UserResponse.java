@@ -31,6 +31,8 @@ public class UserResponse {
 
     private String role;
 
+    private String roles;
+
     private Boolean isActive;
 
     private Boolean isEmailVerified;

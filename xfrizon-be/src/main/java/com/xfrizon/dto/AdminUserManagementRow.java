@@ -5,45 +5,28 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthResponse {
-
-    private String token;
-
-    private String type = "Bearer";
+public class AdminUserManagementRow {
 
     private Long userId;
-
-    private String email;
-
-    private String firstName;
-
-    private String lastName;
-
     private String name;
-
+    private String email;
     private String role;
-
     private String roles;
-
-    private String message;
-
-    private Boolean success;
-
-    private String logo;
-
-    private String profilePicture;
-
-    private String phoneNumber;
-
     private String location;
-
+    private Integer ticketsBought;
+    private BigDecimal amountSpent;
+    private String phoneNumber;
     private String address;
-
+    private String website;
+    private String instagram;
+    private String twitter;
     private String bio;
-
-    private String coverPhoto;
+    private LocalDateTime dateJoined;
 }

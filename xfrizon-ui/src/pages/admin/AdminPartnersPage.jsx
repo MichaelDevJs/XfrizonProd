@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import partnersApi from "../../api/partnersApi";
 
 const CATEGORIES = [
@@ -16,6 +16,7 @@ export default function AdminPartnersPage() {
   const [loading, setLoading] = useState(false);
   const [seedStatus, setSeedStatus] = useState("");
   const [keyOutput, setKeyOutput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -34,6 +35,22 @@ export default function AdminPartnersPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const filteredPartners = useMemo(() => {
+    const query = searchTerm.toLowerCase();
+    return partners.filter((partner) => {
+      const category = partner?.category || partner?.industry || "";
+      return (
+        String(partner?.name || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(partner?.contactEmail || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(category).toLowerCase().includes(query)
+      );
+    });
+  }, [partners, searchTerm]);
 
   const seedDefaults = async () => {
     setSeedStatus("Seeding defaults...");
@@ -85,44 +102,124 @@ export default function AdminPartnersPage() {
       </div>
 
       <div className="bg-[#121212] border border-gray-800 rounded-xl p-4">
-        <h3 className="text-base font-semibold mb-3">Partner API Keys</h3>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h3 className="text-base font-semibold">Partners Table</h3>
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search partner, email, category"
+            className="w-full max-w-sm bg-black border border-zinc-700 px-3 py-2 rounded-lg text-xs text-zinc-200 placeholder-zinc-500"
+          />
+        </div>
+
         {loading ? (
           <p className="text-sm text-gray-400">Loading...</p>
         ) : (
-          <div className="space-y-2">
-            {partners.map((p) => (
-              <div
-                key={p.id}
-                className="bg-[#0f0f0f] border border-gray-800 rounded-lg px-3 py-2 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-sm text-white font-medium">{p.name}</p>
-                  <p className="text-[11px] text-gray-500">
-                    {p.category} · {p.type} ·{" "}
-                    {p.isActive ? "APPROVED" : "PENDING"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
-                      partnersApi.toggle(p.id, !p.isActive).then(load)
-                    }
-                    className="text-xs px-3 py-1.5 rounded border border-gray-700 hover:bg-[#1a1a1a]"
-                  >
-                    {p.isActive ? "Set Pending" : "Approve"}
-                  </button>
-                  <button
-                    onClick={() => rotateKey(p.id)}
-                    className="text-xs px-3 py-1.5 rounded border border-gray-700 hover:bg-[#1a1a1a]"
-                  >
-                    Rotate Key
-                  </button>
-                </div>
+          <div className="border border-zinc-800 bg-[#0f0f0f] rounded-lg overflow-hidden">
+            <div className="max-h-[28rem] overflow-y-auto hide-scrollbar">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead className="sticky top-0 bg-black border-b border-zinc-800">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-zinc-300 border-r border-zinc-800">
+                        ID
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-zinc-300 border-r border-zinc-800">
+                        NAME
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-zinc-300 border-r border-zinc-800">
+                        CATEGORY
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-zinc-300 border-r border-zinc-800">
+                        TYPE
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-zinc-300 border-r border-zinc-800">
+                        CONTACT
+                      </th>
+                      <th className="px-3 py-2 text-center font-semibold text-zinc-300 border-r border-zinc-800">
+                        OFFERS
+                      </th>
+                      <th className="px-3 py-2 text-center font-semibold text-zinc-300 border-r border-zinc-800">
+                        STATUS
+                      </th>
+                      <th className="px-3 py-2 text-center font-semibold text-zinc-300">
+                        ACTIONS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPartners.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="8"
+                          className="px-3 py-8 text-center text-zinc-500"
+                        >
+                          No partners found.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPartners.map((p) => (
+                        <tr
+                          key={p.id}
+                          className="border-b border-zinc-800/70 hover:bg-zinc-900/60"
+                        >
+                          <td className="px-3 py-2 text-zinc-400 border-r border-zinc-800">
+                            {p.id}
+                          </td>
+                          <td className="px-3 py-2 text-white border-r border-zinc-800">
+                            {p.name}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300 border-r border-zinc-800">
+                            {p.category || p.industry || "N/A"}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300 border-r border-zinc-800">
+                            {p.type || "N/A"}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-400 border-r border-zinc-800">
+                            {p.contactEmail || "N/A"}
+                          </td>
+                          <td className="px-3 py-2 text-center text-zinc-300 border-r border-zinc-800">
+                            {Array.isArray(p.offers) ? p.offers.length : 0}
+                          </td>
+                          <td className="px-3 py-2 text-center border-r border-zinc-800">
+                            <span
+                              className={
+                                p.isActive
+                                  ? "text-green-400 font-semibold"
+                                  : "text-amber-400 font-semibold"
+                              }
+                            >
+                              {p.isActive ? "APPROVED" : "PENDING"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() =>
+                                  partnersApi.toggle(p.id, !p.isActive).then(load)
+                                }
+                                className="text-[11px] px-2.5 py-1 rounded border border-zinc-700 hover:bg-zinc-800"
+                              >
+                                {p.isActive ? "Set Pending" : "Approve"}
+                              </button>
+                              <button
+                                onClick={() => rotateKey(p.id)}
+                                className="text-[11px] px-2.5 py-1 rounded border border-zinc-700 hover:bg-zinc-800"
+                              >
+                                Rotate Key
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-            ))}
-            {partners.length === 0 && (
-              <p className="text-xs text-gray-500">No partners yet.</p>
-            )}
+            </div>
+            <div className="bg-black border-t border-zinc-800 px-3 py-2 text-xs text-zinc-500">
+              Records: {filteredPartners.length} / Total: {partners.length}
+            </div>
           </div>
         )}
 

@@ -4,12 +4,22 @@ import CompactFilterBar from "../../feature/home/CompactFilterBar";
 import EventSection from "../../feature/home/EventSection";
 import CenteredBanner from "../../component/CenteredBanner/CenteredBanner";
 import BlogsSection from "../../feature/home/blogs/BlogsSection";
+import PartnersShowcaseSection from "../../feature/home/PartnersShowcaseSection";
 import FilterProvider from "../../context/FilterContext";
 import api from "../../api/axios";
 import useSeo from "../../hooks/useSeo";
 import { getSiteBaseUrl } from "../../utils/siteUrl";
+import partnersApi from "../../api/partnersApi";
 
 export default function HomePage() {
+  const defaultBlockOrder = [
+    "centeredBanner",
+    "heroSection",
+    "blogsSection",
+    "partnersSection",
+    "eventSection",
+  ];
+
   const [loading, setLoading] = useState(true);
   const [heroSlideshow, setHeroSlideshow] = useState([
     {
@@ -27,12 +37,9 @@ export default function HomePage() {
     "Discover Events Near You",
     "Celebrate Culture Together",
   ]);
-  const [blockOrder, setBlockOrder] = useState([
-    "centeredBanner",
-    "heroSection",
-    "blogsSection",
-    "eventSection",
-  ]);
+  const [blockOrder, setBlockOrder] = useState(defaultBlockOrder);
+  const [featuredPartnerIds, setFeaturedPartnerIds] = useState([]);
+  const [featuredPartners, setFeaturedPartners] = useState([]);
 
   useSeo({
     title: "Xfrizon | Discover Events and Culture Blogs",
@@ -111,6 +118,10 @@ export default function HomePage() {
     fetchHomePageSettings();
   }, []);
 
+  useEffect(() => {
+    fetchFeaturedPartners();
+  }, [JSON.stringify(featuredPartnerIds)]);
+
   const fetchHomePageSettings = async () => {
     try {
       const response = await api.get("/homepage-settings");
@@ -152,10 +163,29 @@ export default function HomePage() {
         try {
           const order = JSON.parse(settings.blockOrder);
           if (Array.isArray(order) && order.length > 0) {
-            setBlockOrder(order);
+            const filteredOrder = order.filter((id) =>
+              defaultBlockOrder.includes(id),
+            );
+            const missingBlocks = defaultBlockOrder.filter(
+              (id) => !filteredOrder.includes(id),
+            );
+            setBlockOrder([...filteredOrder, ...missingBlocks]);
           }
         } catch (e) {
           console.error("Error parsing block order:", e);
+        }
+      }
+
+      if (settings.partnersSectionPartnerIds) {
+        try {
+          const partnerIds = JSON.parse(settings.partnersSectionPartnerIds);
+          setFeaturedPartnerIds(
+            Array.isArray(partnerIds)
+              ? partnerIds.map((id) => String(id))
+              : [],
+          );
+        } catch (e) {
+          console.error("Error parsing partners section partner IDs:", e);
         }
       }
 
@@ -164,6 +194,35 @@ export default function HomePage() {
       console.error("Error fetching homepage settings:", error);
       // Continue with defaults
       setLoading(false);
+    }
+  };
+
+  const fetchFeaturedPartners = async () => {
+    try {
+      const allPartners = await partnersApi.getAll();
+      const activePartners = Array.isArray(allPartners) ? allPartners : [];
+
+      if (!featuredPartnerIds.length) {
+        setFeaturedPartners(activePartners.slice(0, 12));
+        return;
+      }
+
+      const selectedSet = new Set(featuredPartnerIds.map((id) => String(id)));
+      const selectedPartners = activePartners.filter((partner) =>
+        selectedSet.has(String(partner.id)),
+      );
+
+      // Preserve admin-selected order for homepage display.
+      const sortedBySelection = featuredPartnerIds
+        .map((id) =>
+          selectedPartners.find((partner) => String(partner.id) === String(id)),
+        )
+        .filter(Boolean);
+
+      setFeaturedPartners(sortedBySelection);
+    } catch (error) {
+      console.error("Error fetching featured partners:", error);
+      setFeaturedPartners([]);
     }
   };
 
@@ -200,6 +259,13 @@ export default function HomePage() {
             <CompactFilterBar />
             <div className="h-6" />
             <EventSection />
+          </div>
+        );
+
+      case "partnersSection":
+        return (
+          <div key="partnersSection" className="mt-8 sm:mt-10">
+            <PartnersShowcaseSection partners={featuredPartners} />
           </div>
         );
 

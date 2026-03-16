@@ -329,6 +329,12 @@ export default function EventDetailsPage() {
 
       await Promise.all(ticketPromises);
 
+      window.dispatchEvent(
+        new CustomEvent("points:refresh", {
+          detail: { source: "ticket-purchase", paymentIntentId },
+        }),
+      );
+
       toast.success("Ticket purchased successfully!");
       setShowCheckoutModal(false);
       setSelectedTicketsToPurchase({});

@@ -1,102 +1,154 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import adminUsersApi from "../../api/adminUsersApi";
 
 export default function UsersManagement() {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      joinDate: "Jan 15, 2026",
-      status: "ACTIVE",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      email: "john@example.com",
-      joinDate: "Feb 5, 2026",
-      status: "ACTIVE",
-    },
-    {
-      id: 3,
-      name: "Emma Wilson",
-      email: "emma@example.com",
-      joinDate: "Feb 18, 2026",
-      status: "ACTIVE",
-    },
-    {
-      id: 4,
-      name: "Michael Smith",
-      email: "michael@example.com",
-      joinDate: "Feb 10, 2026",
-      status: "LOCKED",
-    },
-    {
-      id: 5,
-      name: "Lisa Anderson",
-      email: "lisa@example.com",
-      joinDate: "Feb 1, 2026",
-      status: "ACTIVE",
-    },
-    {
-      id: 6,
-      name: "David Brown",
-      email: "david@example.com",
-      joinDate: "Jan 25, 2026",
-      status: "ACTIVE",
-    },
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const normalizeUserRow = (row) => {
+    const id = row?.userId ?? row?.id ?? null;
+    const firstName = row?.firstName || "";
+    const lastName = row?.lastName || "";
+    const composedName = `${firstName} ${lastName}`.trim();
 
-  const handleToggleStatus = (id) => {
-    setUsers(
-      users.map((user) =>
-        user.id === id
-          ? { ...user, status: user.status === "ACTIVE" ? "LOCKED" : "ACTIVE" }
-          : user,
-      ),
-    );
-    toast.success("User status updated");
+    const socialLinks = [
+      row?.instagram ? `IG: ${row.instagram}` : null,
+      row?.twitter ? `X: ${row.twitter}` : null,
+      row?.website ? `Web: ${row.website}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
+    const ticketsBoughtRaw =
+      row?.ticketsBought ??
+      row?.ticketBought ??
+      row?.ticketsCount ??
+      row?.ticketCount ??
+      row?.totalTicketsBought ??
+      row?.purchasedTickets ??
+      0;
+
+    const amountSpentRaw =
+      row?.amountSpent ?? row?.totalSpent ?? row?.spentAmount ?? row?.totalPaid ?? 0;
+
+    const roleRaw = row?.roles || row?.role || "USER";
+    const normalizedRoles = String(roleRaw)
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join(", ");
+
+    const amountSpent = Number(amountSpentRaw);
+
+    return {
+      id,
+      name: row?.name || composedName || "N/A",
+      email: row?.email || "N/A",
+      role: row?.role || "USER",
+      roles: normalizedRoles || "USER",
+      location: row?.location || "N/A",
+      ticketsBought: Number.isFinite(Number(ticketsBoughtRaw))
+        ? Number(ticketsBoughtRaw)
+        : 0,
+      amountSpent: Number.isFinite(amountSpent) ? amountSpent : 0,
+      phoneNumber: row?.phoneNumber || "N/A",
+      address: row?.address || "N/A",
+      socialLinks: socialLinks || "N/A",
+      bio: row?.bio || "N/A",
+      joinDate: row?.dateJoined || row?.createdAt || null,
+    };
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Delete this user?")) {
-      setUsers(users.filter((user) => user.id !== id));
-      toast.success("User deleted");
-    }
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        const rows = await adminUsersApi.getAll();
+        const normalized = Array.isArray(rows) ? rows.map(normalizeUserRow) : [];
+        setUsers(normalized);
+      } catch (error) {
+        console.error("Failed to load users:", error);
+        toast.error(error?.response?.data?.message || "Failed to load users");
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUsers();
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const query = searchTerm.toLowerCase();
+    return users.filter(
+      (user) =>
+        String(user.name || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.email || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.roles || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.location || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.phoneNumber || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.address || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.socialLinks || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(user.bio || "")
+          .toLowerCase()
+          .includes(query),
+    );
+  }, [searchTerm, users]);
+
+  const formatDate = (value) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatAmount = (value) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return "$0.00";
+    return `$${numeric.toFixed(2)}`;
   };
 
   return (
     <div className="admin-theme bg-[#1e1e1e] text-white min-h-screen">
-      {/* Header */}
       <div className="bg-linear-to-r from-[#1e1e1e] via-[#252525] to-[#1e1e1e] border-b border-zinc-800/50 p-4">
         <h1 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">
           Users Management
         </h1>
         <p className="text-zinc-500 text-xs uppercase mt-1">
-          User accounts management & moderation
+          Users table fetched from database
         </p>
       </div>
 
-      {/* Search */}
       <div className="p-3 sm:p-4 border-b border-zinc-800/50 bg-[#242424]">
         <input
           type="text"
-          placeholder="Search by name or email..."
+          placeholder="Search by name, email, roles, location, phone, address..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-[#1e1e1e] border border-zinc-700/60 px-3 py-2 rounded-lg text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
         />
       </div>
 
-      {/* Table */}
       <div className="p-3 sm:p-4">
         <div className="border border-zinc-800/50 bg-[#232323] rounded-lg overflow-hidden">
           <div className="max-h-96 overflow-y-auto hide-scrollbar">
@@ -114,80 +166,98 @@ export default function UsersManagement() {
                       EMAIL
                     </th>
                     <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
-                      JOIN DATE
+                      ROLES
+                    </th>
+                    <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      LOCATION
                     </th>
                     <th className="px-2 sm:px-3 py-2 text-center font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
-                      STATUS
+                      TICKETS
                     </th>
-                    <th className="px-2 sm:px-3 py-2 text-center font-bold text-zinc-300 text-[10px] sm:text-xs">
-                      ACTIONS
+                    <th className="px-2 sm:px-3 py-2 text-right font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      AMOUNT SPENT
+                    </th>
+                    <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      PHONE
+                    </th>
+                    <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      ADDRESS
+                    </th>
+                    <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      SOCIAL LINKS
+                    </th>
+                    <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      BIO
+                    </th>
+                    <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                      JOIN DATE
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b border-zinc-800/40 hover:bg-zinc-900/40"
-                    >
-                      <td className="px-2 sm:px-3 py-2 text-zinc-400 border-r border-zinc-800 font-mono text-[10px] sm:text-xs">
-                        {user.id}
-                      </td>
-                      <td className="px-2 sm:px-3 py-2 text-white border-r border-zinc-800 font-semibold text-[10px] sm:text-xs">
-                        {user.name}
-                      </td>
-                      <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 truncate text-[10px] sm:text-xs">
-                        {user.email}
-                      </td>
-                      <td className="px-2 sm:px-3 py-2 text-zinc-400 border-r border-zinc-800 text-[10px] sm:text-xs">
-                        {user.joinDate}
-                      </td>
-                      <td className="px-2 sm:px-3 py-2 text-center border-r border-zinc-800">
-                        <span
-                          className={
-                            user.status === "ACTIVE"
-                              ? "text-green-400 font-bold text-[10px] sm:text-xs"
-                              : "text-red-400 font-bold text-[10px] sm:text-xs"
-                          }
-                        >
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="px-2 sm:px-3 py-2 text-center">
-                        <div className="flex gap-1 justify-center">
-                          <button
-                            onClick={() => handleToggleStatus(user.id)}
-                            className={`${
-                              user.status === "ACTIVE"
-                                ? "bg-yellow-700 hover:bg-yellow-600 border-yellow-600"
-                                : "bg-green-700 hover:bg-green-600 border-green-600"
-                            } text-white px-2 py-1 text-[10px] font-bold border rounded`}
-                          >
-                            LOCK
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.id)}
-                            className="bg-red-700 hover:bg-red-600 text-white px-2 py-1 text-[10px] font-bold border border-red-600 rounded"
-                          >
-                            DEL
-                          </button>
-                        </div>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="12" className="px-3 py-8 text-center text-zinc-400">
+                        Loading users...
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="12" className="px-3 py-8 text-center text-zinc-400">
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="border-b border-zinc-800/40 hover:bg-zinc-900/40"
+                      >
+                        <td className="px-2 sm:px-3 py-2 text-zinc-400 border-r border-zinc-800 font-mono text-[10px] sm:text-xs">
+                          {user.id}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-white border-r border-zinc-800 font-semibold text-[10px] sm:text-xs">
+                          {user.name}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 truncate text-[10px] sm:text-xs">
+                          {user.email}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                          {user.roles}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                          {user.location}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-center text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                          {user.ticketsBought}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-right text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+                          {formatAmount(user.amountSpent)}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs">
+                          {user.phoneNumber}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs truncate max-w-xs">
+                          {user.address}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs truncate max-w-xs">
+                          {user.socialLinks}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-300 border-r border-zinc-800 text-[10px] sm:text-xs truncate max-w-xs">
+                          {user.bio}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 text-zinc-400 border-r border-zinc-800 text-[10px] sm:text-xs">
+                          {formatDate(user.joinDate)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
           <div className="bg-[#202020] border-t border-zinc-800/50 px-3 py-2 text-xs text-zinc-500">
-            Records:{" "}
-            <span className="font-mono font-bold text-zinc-300">
-              {filteredUsers.length}
-            </span>{" "}
-            / Total:{" "}
-            <span className="font-mono font-bold text-zinc-300">
-              {users.length}
-            </span>
+            Records: {filteredUsers.length} / Total: {users.length}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import pointsApi from "../../api/pointsApi";
 
 const TIER_CONFIG = {
@@ -38,15 +38,39 @@ export default function PointsWallet() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("wallet"); // "wallet" | "history"
 
+  const loadPointsData = useCallback(async () => {
+    try {
+      if (!wallet && !ledger) {
+        setLoading(true);
+      }
+
+      const [w, l] = await Promise.all([
+        pointsApi.getWallet(),
+        pointsApi.getLedger(0, 10),
+      ]);
+      setWallet(w);
+      setLedger(l);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet, ledger]);
+
   useEffect(() => {
-    Promise.all([pointsApi.getWallet(), pointsApi.getLedger(0, 10)])
-      .then(([w, l]) => {
-        setWallet(w);
-        setLedger(l);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    loadPointsData();
+  }, [loadPointsData]);
+
+  useEffect(() => {
+    const handlePointsRefresh = () => {
+      loadPointsData();
+    };
+
+    window.addEventListener("points:refresh", handlePointsRefresh);
+    return () => {
+      window.removeEventListener("points:refresh", handlePointsRefresh);
+    };
+  }, [loadPointsData]);
 
   if (loading) {
     return (

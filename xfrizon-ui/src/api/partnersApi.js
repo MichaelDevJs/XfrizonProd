@@ -37,6 +37,16 @@ const partnersApi = {
     return res.data;
   },
 
+  getMine: async () => {
+    const res = await api.get("/partners/me");
+    return res.data.data;
+  },
+
+  updateMine: async (data) => {
+    const res = await api.put("/partners/me", data);
+    return res.data.data;
+  },
+
   verifyScan: async (token, partnerKey) => {
     const res = await api.get(`/partners/verify/${token}`, {
       headers: {

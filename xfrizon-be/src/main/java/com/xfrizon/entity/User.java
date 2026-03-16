@@ -35,6 +35,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    @Column(name = "roles", length = 255)
+    private String roles;
     @Column(nullable = false)
     private Boolean isActive = true;
 
@@ -63,7 +65,7 @@ public class User {
 
     private String twitter;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "LONGTEXT")
     private String bio;
 
     private String coverPhoto;
@@ -175,3 +177,5 @@ public class User {
         CRITICAL          // Immediate action required
     }
 }
+
+

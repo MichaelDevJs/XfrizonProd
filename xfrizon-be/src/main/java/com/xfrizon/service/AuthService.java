@@ -4,7 +4,9 @@ import com.xfrizon.dto.LoginRequest;
 import com.xfrizon.dto.RegisterRequest;
 import com.xfrizon.dto.AuthResponse;
 import com.xfrizon.dto.UserResponse;
+import com.xfrizon.entity.Partner;
 import com.xfrizon.entity.User;
+import com.xfrizon.repository.PartnerRepository;
 import com.xfrizon.repository.UserRepository;
 import com.xfrizon.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +23,7 @@ import java.util.List;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final PartnerRepository partnerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
@@ -52,6 +55,7 @@ public class AuthService {
                 .phoneNumber(request.getPhoneNumber())
                 .profilePicture(request.getProfilePicture())
                 .role(User.UserRole.USER)
+                .roles(User.UserRole.USER.name())
                 .isActive(true)
                 .isEmailVerified(false)
                 .build();
@@ -72,6 +76,7 @@ public class AuthService {
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().toString())
+            .roles(savedUser.getRoles())
                 .build();
     }
 
@@ -101,6 +106,7 @@ public class AuthService {
                 .phoneNumber(request.getPhoneNumber())
                 .profilePicture(request.getProfilePicture())
                 .role(User.UserRole.ORGANIZER)
+                .roles(User.UserRole.ORGANIZER.name())
                 .isActive(true)
                 .isEmailVerified(false)
                 .build();
@@ -121,6 +127,7 @@ public class AuthService {
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().toString())
+            .roles(savedUser.getRoles())
                 .build();
     }
 
@@ -159,6 +166,7 @@ public class AuthService {
                 .phoneNumber(request.getPhoneNumber())
                 .profilePicture(request.getProfilePicture())
                 .role(User.UserRole.ADMIN)
+                .roles(User.UserRole.ADMIN.name())
                 .isActive(true)
                 .isEmailVerified(true)
                 .build();
@@ -179,6 +187,7 @@ public class AuthService {
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().toString())
+            .roles(savedUser.getRoles())
                 .build();
     }
 
@@ -188,9 +197,14 @@ public class AuthService {
                 .orElse(null);
 
         if (user == null) {
+            Partner partner = partnerRepository.findFirstByContactEmailIgnoreCase(request.getEmail())
+                .orElse(null);
+
             return AuthResponse.builder()
                     .success(false)
-                    .message("User not found")
+                .message(partner != null
+                    ? "Partner profile found, but no login account exists for this email yet"
+                    : "User not found")
                     .build();
         }
 
@@ -224,6 +238,7 @@ public class AuthService {
                 .lastName(user.getLastName())
                 .name(user.getName())
                 .role(user.getRole().toString())
+            .roles(user.getRoles())
                 .logo(user.getLogo() != null ? user.getLogo() : user.getProfilePicture())
                 .profilePicture(user.getProfilePicture() != null ? user.getProfilePicture() : user.getLogo())
                 .phoneNumber(user.getPhoneNumber())
@@ -347,6 +362,7 @@ public class AuthService {
                 .bio(user.getBio() != null ? user.getBio() : "")
                 .coverPhoto(user.getCoverPhoto() != null ? user.getCoverPhoto() : "")
                 .name(user.getName())
+                .roles(user.getRoles())
                 .favoriteArtists(favoriteArtists)
                 .media(media)
                 .role(user.getRole().toString())
@@ -357,3 +373,5 @@ public class AuthService {
                 .build();
     }
 }
+
+

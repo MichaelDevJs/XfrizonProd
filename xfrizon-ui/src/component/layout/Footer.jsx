@@ -29,6 +29,24 @@ export default function Footer() {
               Events
             </Link>
             <Link
+              to="/partners"
+              className="py-1.5 hover:text-white transition-colors duration-300"
+            >
+              Partners
+            </Link>
+            <Link
+              to="/partner-register"
+              className="py-1.5 hover:text-white transition-colors duration-300"
+            >
+              Become Partner
+            </Link>
+            <Link
+              to="/partner-scanner"
+              className="py-1.5 hover:text-white transition-colors duration-300"
+            >
+              Partner Scanner
+            </Link>
+            <Link
               to="/artists"
               className="py-1.5 hover:text-white transition-colors duration-300"
             >
@@ -98,6 +116,22 @@ export default function Footer() {
 
         <div className="border-t border-zinc-900 my-6" />
 
+                <div className="mb-6 p-3 rounded-lg border border-zinc-800/70 bg-zinc-950/40">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500 mb-2">
+            Partner Flow
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Link to="/partner-register" className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors">
+              1. Register Brand
+            </Link>
+            <Link to="/partners" className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors">
+              2. Public Profile
+            </Link>
+            <Link to="/partner-scanner" className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors">
+              3. Scan & Apply Discount
+            </Link>
+          </div>
+        </div>
         <div className="text-xs text-gray-600 font-light text-center md:text-left">
           © {currentYear} Xfrizon. All rights reserved.
         </div>
@@ -105,3 +139,4 @@ export default function Footer() {
     </footer>
   );
 }
+

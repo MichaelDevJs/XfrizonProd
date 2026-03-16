@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    actor U as User (Buyer)
+    participant UI as User UI (EventDetails)
+    participant BE as Backend API
+    participant EP as EventPayoutService
+    participant ST as Stripe
+    participant OUI as Organizer UI (Finance)
+    participant AUI as Admin UI (Payout Mgmt)
+
+    U->>UI: Select ticket tiers and checkout
+    UI->>BE: POST /payments/{paymentIntentId}/confirm
+    UI->>BE: POST /user-tickets (eventId, tierId, qty, paymentIntentId)
+    BE-->>UI: Ticket records created
+    UI-->>U: Navigate /payment-success + tickets/QR
+
+    Note over BE,EP: Scheduled every 15 minutes\nSync payouts + auto-release job
+    BE->>EP: summarize succeeded payments by event/currency
+    EP->>EP: Create/Update EventPayout row\nreleaseAt = eventEndAt + 1 day\nstatus = SCHEDULED|READY|HELD|PAID|FAILED
+
+    alt releaseAt reached + Stripe connected + not manual
+        EP->>ST: Create Transfer(netPayout)
+        ST-->>EP: transfer id or error
+        EP->>EP: status -> PAID or FAILED
+    else not eligible yet
+        EP->>EP: keep SCHEDULED/READY
+    end
+
+    OUI->>BE: GET /organizers/stripe/payouts/preview
+    BE-->>OUI: Event payout preview rows
+    OUI-->>U: Show Event, Net, ReleaseAt, Status
+    OUI-->>U: Show status-change banners (dismiss / clear all)
+
+    AUI->>BE: GET /admin/payouts/events/preview?status=
+    BE-->>AUI: Event payout preview rows
+    AUI-->>AUI: Filter by SCHEDULED|READY|HELD|PAID|FAILED
+    AUI->>BE: Hold / Release / PayNow / Retry / RetryFailedBulk
+    BE->>EP: Execute admin payout action
+    EP-->>AUI: Updated status + payout data
+
+    AUI->>BE: GET /admin/payouts/pending
+    AUI->>BE: POST /admin/payouts/manual
+    AUI->>BE: PUT /admin/payouts/{id}/sent OR DELETE /admin/payouts/{id}
+    BE-->>AUI: Manual payout lifecycle updates

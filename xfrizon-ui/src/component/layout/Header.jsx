@@ -1,8 +1,9 @@
-import { useContext, useState, useRef, useEffect } from "react";
+import { useCallback, useContext, useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import blogApi from "../../api/blogApi";
+import pointsApi from "../../api/pointsApi";
 import { FaBell } from "react-icons/fa";
 
 const Header = () => {
@@ -18,10 +19,20 @@ const Header = () => {
   const [commentNotificationsLoading, setCommentNotificationsLoading] =
     useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [userPoints, setUserPoints] = useState(null);
+  const [userPointsLoading, setUserPointsLoading] = useState(false);
   const dropdownBtnRef = useRef(null);
   const notificationRef = useRef(null);
   const genreDropdownRef = useRef(null);
   const signupDropdownRef = useRef(null);
+  const roleTokens = Array.isArray(organizer?.roles)
+    ? organizer.roles
+    : String(organizer?.roles || "")
+        .split(",")
+        .map((role) => role.trim().toUpperCase())
+        .filter(Boolean);
+  const isPartnerUser =
+    organizer?.role === "PARTNER" || roleTokens.includes("PARTNER");
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -67,6 +78,24 @@ const Header = () => {
     fetchCommentNotifications();
   }, [organizer, notificationOpen]);
 
+  const loadUserPoints = useCallback(async () => {
+    if (!organizer || organizer.role === "ORGANIZER" || isPartnerUser) {
+      setUserPoints(null);
+      setUserPointsLoading(false);
+      return;
+    }
+
+    try {
+      setUserPointsLoading(true);
+      const wallet = await pointsApi.getWallet();
+      setUserPoints(Number(wallet?.availableBalance || 0));
+    } catch {
+      setUserPoints(null);
+    } finally {
+      setUserPointsLoading(false);
+    }
+  }, [organizer, isPartnerUser]);
+
   useEffect(() => {
     if (!organizer) return;
 
@@ -77,6 +106,27 @@ const Header = () => {
 
     return () => clearInterval(intervalId);
   }, [organizer]);
+
+  useEffect(() => {
+    loadUserPoints();
+  }, [loadUserPoints, location.pathname]);
+
+  useEffect(() => {
+    const handlePointsRefresh = () => {
+      loadUserPoints();
+    };
+
+    window.addEventListener("points:refresh", handlePointsRefresh);
+    return () => {
+      window.removeEventListener("points:refresh", handlePointsRefresh);
+    };
+  }, [loadUserPoints]);
+
+  useEffect(() => {
+    if (!dropdownOpen || organizer?.role === "ORGANIZER" || isPartnerUser)
+      return;
+    loadUserPoints();
+  }, [dropdownOpen, organizer?.role, isPartnerUser, loadUserPoints]);
 
   const fetchCommentNotifications = async () => {
     try {
@@ -155,7 +205,7 @@ const Header = () => {
     return `http://localhost:8081/api/v1${normalized}`;
   };
 
-  const categories = ["Events", "For Organizers"];
+  const categories = ["Events", "Partners", "For Organizers"];
 
   const isOrganizerDashboardArea =
     location.pathname === "/organizer" ||
@@ -344,15 +394,21 @@ const Header = () => {
                           {organizer?.role === "ORGANIZER"
                             ? organizer?.name?.charAt(0)?.toUpperCase() ||
                               organizer?.firstName?.charAt(0)?.toUpperCase()
-                            : organizer?.firstName?.charAt(0)?.toUpperCase() ||
-                              "U"}
+                            : isPartnerUser
+                              ? organizer?.name?.charAt(0)?.toUpperCase() ||
+                                organizer?.firstName?.charAt(0)?.toUpperCase() ||
+                                "P"
+                              : organizer?.firstName?.charAt(0)?.toUpperCase() ||
+                                "U"}
                         </div>
                       )}
                     </div>
                     <span className="hidden sm:inline text-xs uppercase tracking-widest">
                       {organizer?.role === "ORGANIZER"
                         ? (organizer?.name || "Organizer").split(" ")[0]
-                        : organizer?.firstName}
+                        : isPartnerUser
+                          ? (organizer?.name || organizer?.firstName || "Partner").split(" ")[0]
+                          : organizer?.firstName}
                     </span>
                   </button>
 
@@ -378,9 +434,13 @@ const Header = () => {
                               {organizer?.role === "ORGANIZER"
                                 ? organizer?.name?.charAt(0)?.toUpperCase() ||
                                   organizer?.firstName?.charAt(0)?.toUpperCase()
-                                : organizer?.firstName
-                                    ?.charAt(0)
-                                    ?.toUpperCase() || "U"}
+                                : isPartnerUser
+                                  ? organizer?.name?.charAt(0)?.toUpperCase() ||
+                                    organizer?.firstName?.charAt(0)?.toUpperCase() ||
+                                    "P"
+                                  : organizer?.firstName
+                                      ?.charAt(0)
+                                      ?.toUpperCase() || "U"}
                             </div>
                           )}
                         </div>
@@ -388,15 +448,32 @@ const Header = () => {
                           <p className="font-semibold text-white text-xs uppercase tracking-widest truncate">
                             {organizer?.role === "ORGANIZER"
                               ? organizer?.name || organizer?.firstName
-                              : organizer?.firstName}
+                              : isPartnerUser
+                                ? organizer?.name || organizer?.firstName
+                                : organizer?.firstName}
                           </p>
                           <p className="text-xs text-gray-500">
                             {organizer?.role === "ORGANIZER"
                               ? "Organizer"
-                              : "Attendee"}
+                              : isPartnerUser
+                                ? "Partner"
+                                : "Attendee"}
                           </p>
                         </div>
                       </div>
+
+                      {organizer.role !== "ORGANIZER" && !isPartnerUser && (
+                        <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/60">
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+                            XF Points
+                          </p>
+                          <p className="text-sm font-semibold text-[#c0f24d] mt-0.5">
+                            {userPointsLoading
+                              ? "Loading..."
+                              : `${Number(userPoints || 0).toLocaleString()} pts`}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Organizer Menu Items */}
                       {organizer.role === "ORGANIZER" && (
@@ -444,6 +521,15 @@ const Header = () => {
                           <button
                             onClick={() => {
                               setDropdownOpen(false);
+                              navigate("/my-rewards");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            My Rewards
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
                               navigate("/ticket-history");
                             }}
                             className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
@@ -453,8 +539,40 @@ const Header = () => {
                         </>
                       )}
 
+                      {isPartnerUser && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/partner-dashboard");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            Dashboard
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/partner-scanner");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            Scanner
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/partner-profile-edit");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
+                          >
+                            Edit Profile
+                          </button>
+                        </>
+                      )}
+
                       {/* User Menu Items */}
-                      {organizer.role !== "ORGANIZER" && (
+                      {organizer.role !== "ORGANIZER" && !isPartnerUser && (
                         <>
                           <button
                             type="button"
@@ -550,3 +668,4 @@ const Header = () => {
 };
 
 export default Header;
+

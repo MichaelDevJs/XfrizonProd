@@ -142,6 +142,11 @@ export default function PaymentSuccessPage() {
         setTicketData(purchasedTickets[0]);
         setAllPurchasedTickets(purchasedTickets);
         setError(null);
+        window.dispatchEvent(
+          new CustomEvent("points:refresh", {
+            detail: { source: "payment-success", paymentIntentId },
+          }),
+        );
         console.log("✓ Ticket data set:", purchasedTickets);
         console.log("✓ Total tickets purchased:", purchasedTickets.length);
       } else {

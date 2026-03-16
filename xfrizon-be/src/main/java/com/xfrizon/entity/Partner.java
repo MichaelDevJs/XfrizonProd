@@ -27,11 +27,50 @@ public class Partner {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    @Column(name = "cover_photo", columnDefinition = "LONGTEXT")
+    private String coverPhoto;
+
+    @Column(name = "cover_media", columnDefinition = "LONGTEXT")
+    private String coverMedia;
+
+    @Column(name = "gallery_media", columnDefinition = "LONGTEXT")
+    private String galleryMedia;
+
     @Column(name = "contact_email", length = 180)
     private String contactEmail;
 
     @Column(name = "contact_phone", length = 50)
     private String contactPhone;
+
+    @Column(name = "instagram", length = 500)
+    private String instagram;
+
+    @Column(name = "twitter", length = 500)
+    private String twitter;
+
+    @Column(name = "about_primary_title", length = 255)
+    private String aboutPrimaryTitle;
+
+    @Column(name = "about_primary_body", columnDefinition = "LONGTEXT")
+    private String aboutPrimaryBody;
+
+    @Column(name = "about_secondary_title", length = 255)
+    private String aboutSecondaryTitle;
+
+    @Column(name = "about_secondary_body", columnDefinition = "LONGTEXT")
+    private String aboutSecondaryBody;
+
+    @Column(name = "headline_title", length = 255)
+    private String headlineTitle;
+
+    @Column(name = "headline_body", columnDefinition = "LONGTEXT")
+    private String headlineBody;
+
+    @Column(name = "headline_link_label", length = 120)
+    private String headlineLinkLabel;
+
+    @Column(name = "headline_link_url", length = 1000)
+    private String headlineLinkUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

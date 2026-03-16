@@ -5,6 +5,23 @@ import { toast } from "react-toastify";
 import { AuthContext } from "../../../context/AuthContext";
 
 export default function Login() {
+  const hasPartnerRole = (role, roles) => {
+    if (role === "PARTNER") return true;
+    const roleTokens = Array.isArray(roles)
+      ? roles
+      : String(roles || "")
+          .split(",")
+          .map((item) => item.trim().toUpperCase())
+          .filter(Boolean);
+    return roleTokens.includes("PARTNER");
+  };
+
+  const getFallbackPathByRole = (role, roles) => {
+    if (role === "ORGANIZER") return "/organizer/dashboard";
+    if (hasPartnerRole(role, roles)) return "/partner-dashboard";
+    return "/";
+  };
+
   const navigate = useNavigate();
   const location = useLocation();
   const { login: loginUser } = useContext(AuthContext);
@@ -89,8 +106,10 @@ export default function Login() {
               from?.pathname === "/auth/login" ||
               from?.pathname === "/admin-login";
 
-            const fallback =
-              response.role === "ORGANIZER" ? "/organizer/dashboard" : "/";
+            const fallback = getFallbackPathByRole(
+              response.role,
+              response.roles,
+            );
 
             navigate(!isFromLogin && fromPath ? fromPath : fallback, {
               replace: true,

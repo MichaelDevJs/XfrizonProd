@@ -5,6 +5,9 @@ const API_BASE_URL = import.meta.env.PROD
   ? "/api/v1"
   : configuredBaseUrl || "http://localhost:8081/api/v1";
 
+const LOCAL_API_BASE_URL = "http://localhost:8081/api/v1";
+const SAME_ORIGIN_API_BASE_URL = "/api/v1";
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 20000,
@@ -75,6 +78,21 @@ api.interceptors.response.use(
         return new Promise((resolve) => {
           setTimeout(() => resolve(api(config)), NETWORK_RETRY_DELAY_MS);
         });
+      }
+    }
+
+    // If localhost API is unreachable, retry once against same-origin API.
+    // This helps when frontend is opened on deployed domains while env still points to localhost.
+    if (
+      config &&
+      isRetryableNetworkError(error) &&
+      !config.__sameOriginFallbackTried
+    ) {
+      const requestBaseUrl = String(config.baseURL || api.defaults.baseURL || "");
+      if (requestBaseUrl.includes(LOCAL_API_BASE_URL)) {
+        config.__sameOriginFallbackTried = true;
+        config.baseURL = SAME_ORIGIN_API_BASE_URL;
+        return api(config);
       }
     }
 

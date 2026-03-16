@@ -8,26 +8,25 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class PartnerResponse {
-    private Long id;
+public class PartnerProfileUpdateRequest {
+
     private String name;
     private String description;
     private String logoUrl;
     private String profilePhotoUrl;
-    private String industry;
+    private String coverPhoto;
     private String category;
     private String type;
+    private String location;
+    private String address;
     private String website;
     private String instagram;
     private String twitter;
-    private String location;
-    private String address;
     private String contactEmail;
     private String contactPhone;
-    private String coverPhoto;
-    private List<MediaItem> coverMedia;
-    private List<MediaItem> gallery;
     private String aboutPrimaryTitle;
     private String aboutPrimaryBody;
     private String aboutSecondaryTitle;
@@ -36,8 +35,8 @@ public class PartnerResponse {
     private String headlineBody;
     private String headlineLinkLabel;
     private String headlineLinkUrl;
-    private Boolean isActive;
-    private List<PartnerOfferResponse> offers;
+    private List<MediaItem> coverMedia;
+    private List<MediaItem> gallery;
 
     @Data
     @NoArgsConstructor

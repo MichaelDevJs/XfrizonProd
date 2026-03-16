@@ -25,6 +25,8 @@ import MyRewardsPage from "./pages/public/MyRewardsPage";
 import PartnerScannerPage from "./pages/public/PartnerScannerPage";
 import PartnerRegisterPage from "./pages/public/PartnerRegisterPage";
 import PartnerProfilePage from "./pages/public/PartnerProfilePage";
+import PartnerDashboardPage from "./pages/public/PartnerDashboardPage";
+import PartnerProfileEditPage from "./pages/public/PartnerProfileEditPage";
 
 import OrganizerRegister from "./pages/organizer/OrganizerRegister";
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard";
@@ -47,6 +49,7 @@ import StripeRefreshPage from "./pages/organizer/StripeRefreshPage";
 import ProtectedRoute from "./component/ProtectedRoute";
 import RoleBasedRoute from "./component/RoleBasedRoute";
 import UserRoute from "./component/UserRoute";
+import PartnerRoute from "./component/PartnerRoute";
 import AdminRoute from "./component/admin/AdminRoute";
 import UnauthorizedRedirectListener from "./component/UnauthorizedRedirectListener";
 
@@ -108,6 +111,22 @@ function RootApp() {
             />
             <Route path="/partner-register" element={<PartnerRegisterPage />} />
             <Route path="/partner-scanner" element={<PartnerScannerPage />} />
+            <Route
+              path="/partner-profile-edit"
+              element={
+                <PartnerRoute>
+                  <PartnerProfileEditPage />
+                </PartnerRoute>
+              }
+            />
+            <Route
+              path="/partner-dashboard"
+              element={
+                <PartnerRoute>
+                  <PartnerDashboardPage />
+                </PartnerRoute>
+              }
+            />
 
             {/* User Profile (Public) */}
             <Route path="/user/:userId" element={<UserProfile />} />

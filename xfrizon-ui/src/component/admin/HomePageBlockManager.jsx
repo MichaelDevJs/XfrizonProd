@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -11,6 +11,7 @@ const DEFAULT_BLOCKS = [
   { id: "centeredBanner", label: "Centered Banner" },
   { id: "heroSection", label: "Hero Section" },
   { id: "blogsSection", label: "Blogs Section" },
+  { id: "partnersSection", label: "Partners Section" },
   { id: "eventSection", label: "Event Section" },
 ];
 
@@ -19,6 +20,10 @@ export default function HomePageBlockManager({
   onChange,
 }) {
   const [items, setItems] = useState(blocks);
+
+  useEffect(() => {
+    setItems(blocks);
+  }, [blocks]);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
