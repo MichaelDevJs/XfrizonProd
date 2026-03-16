@@ -36,6 +36,9 @@ public class UploadController {
     @Value("${cloudinary.enabled:false}")
     private boolean cloudinaryEnabled;
 
+    @Value("${cloudinary.required:false}")
+    private boolean cloudinaryRequired;
+
     @Value("${cloudinary.cloud-name:}")
     private String cloudinaryCloudName;
 
@@ -60,6 +63,11 @@ public class UploadController {
                 return;
             }
 
+            if (cloudinaryRequired) {
+                throw new IllegalStateException(
+                        "Cloudinary is required but not configured. Set CLOUDINARY_URL or explicit Cloudinary credentials.");
+            }
+
             if (cloudinaryEnabled) {
                 log.warn("Cloudinary enabled but credentials are incomplete. Falling back to local disk uploads.");
             }
@@ -78,6 +86,7 @@ public class UploadController {
             log.info("Uploads configured at: {}", new File(uploadDir).getAbsolutePath());
         } catch (Exception e) {
             log.error("Error initializing upload directory", e);
+            throw new IllegalStateException("UploadController initialization failed", e);
         }
     }
 
