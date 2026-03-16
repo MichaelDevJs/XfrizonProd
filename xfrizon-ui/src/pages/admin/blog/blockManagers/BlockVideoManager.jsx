@@ -11,11 +11,12 @@ export default function BlockVideoManager({ block, updateBlock }) {
         videos: [
           ...(block.videos || []),
           {
-            id: Date.now(),
+            id: Date.now() + Math.random(),
             name: file.name,
             size: (file.size / 1024 / 1024).toFixed(2),
             type: file.type,
             uploadedAt: new Date().toLocaleDateString(),
+            file,
           },
         ],
       });

@@ -1,9 +1,115 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import blogApi from "../../api/blogApi";
+import api from "../../api/axios";
 import BlogEditor from "./blog/BlogEditor";
 import BlogList from "./blog/BlogList";
+
+const isDataUrl = (value) =>
+  typeof value === "string" && value.startsWith("data:");
+
+const isBlobUrl = (value) =>
+  typeof value === "string" && value.startsWith("blob:");
+
+const createUploadCandidates = (endpoints) => {
+  const baseUrl = String(api?.defaults?.baseURL || "");
+  const origin = baseUrl.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
+  const originCandidates = [];
+
+  if (origin) {
+    originCandidates.push(origin);
+  }
+  if (typeof window !== "undefined" && window.location?.origin) {
+    originCandidates.push(window.location.origin.replace(/\/$/, ""));
+  }
+  if (import.meta.env.DEV) {
+    originCandidates.push("http://localhost:8081");
+  }
+
+  const candidates = [];
+  endpoints.forEach((endpoint) => {
+    originCandidates.forEach((candidateOrigin) => {
+      if (candidateOrigin) {
+        candidates.push(`${candidateOrigin}${endpoint}`);
+      }
+    });
+  });
+
+  return [...new Set(candidates)];
+};
+
+const uploadFileWithFallback = async (endpoints, file) => {
+  const uploadCandidates = createUploadCandidates(endpoints);
+  const token =
+    localStorage.getItem("adminToken") || localStorage.getItem("userToken");
+  let lastError = null;
+
+  for (const url of uploadCandidates) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const headers = { "Content-Type": "multipart/form-data" };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await axios.post(url, formData, {
+        headers,
+        timeout: 30000,
+      });
+
+      if (response?.data?.url) {
+        return response.data.url;
+      }
+    } catch (error) {
+      lastError = error;
+      const status = error?.response?.status;
+      if (
+        status === 400 ||
+        status === 404 ||
+        status === 405 ||
+        (typeof status === "number" && status >= 500)
+      ) {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError || new Error("Upload failed");
+};
+
+const dataUrlToFile = async (dataUrl, filename) => {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], filename, {
+    type: blob.type || "application/octet-stream",
+  });
+};
+
+const sanitizeUploadedImage = (image, src) => ({
+  ...image,
+  src,
+  file: undefined,
+  preview: undefined,
+});
+
+const sanitizeUploadedVideo = (video, src) => ({
+  ...video,
+  src,
+  file: undefined,
+  preview: undefined,
+});
+
+const sanitizeUploadedAudioTrack = (track, src) => ({
+  ...track,
+  src,
+  file: undefined,
+  preview: undefined,
+});
 
 export default function BlogManagement() {
   const navigate = useNavigate();
@@ -88,15 +194,159 @@ export default function BlogManagement() {
 
   // Save blog (create or update)
   const handleSaveBlog = async (formData) => {
-    const readCoverImage = (coverImage) => {
-      if (!coverImage) return Promise.resolve(null);
-      if (typeof coverImage === "string") return Promise.resolve(coverImage);
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error("Failed to read cover image"));
-        reader.readAsDataURL(coverImage);
-      });
+    const uploadCoverImage = async (coverImage) => {
+      if (!coverImage) return null;
+      if (typeof coverImage === "string" && !isDataUrl(coverImage)) {
+        return coverImage;
+      }
+
+      const fileToUpload =
+        coverImage instanceof File
+          ? coverImage
+          : await dataUrlToFile(coverImage, "blog-cover-image");
+
+      return uploadFileWithFallback(["/uploads/cover-photo"], fileToUpload);
+    };
+
+    const uploadBlockImages = async (blocks) => {
+      return Promise.all(
+        blocks.map(async (block) => {
+          if (block.type !== "image" || !Array.isArray(block.images)) {
+            return block;
+          }
+
+          const uploadedImages = await Promise.all(
+            block.images.map(async (image, index) => {
+              const currentSrc = image?.src || image?.url;
+              if (
+                typeof currentSrc === "string" &&
+                !isDataUrl(currentSrc) &&
+                !isBlobUrl(currentSrc)
+              ) {
+                return sanitizeUploadedImage(image, currentSrc);
+              }
+
+              const fileToUpload =
+                image?.file instanceof File
+                  ? image.file
+                  : await dataUrlToFile(
+                      currentSrc,
+                      image?.name || `blog-block-image-${index + 1}`,
+                    );
+
+              const uploadedUrl = await uploadFileWithFallback(
+                ["/uploads/cover-photo", "/uploads/media"],
+                fileToUpload,
+              );
+
+              return sanitizeUploadedImage(image, uploadedUrl);
+            }),
+          );
+
+          return {
+            ...block,
+            images: uploadedImages,
+          };
+        }),
+      );
+    };
+
+    const uploadBlockVideos = async (blocks) => {
+      return Promise.all(
+        blocks.map(async (block) => {
+          if (block.type !== "video" || !Array.isArray(block.videos)) {
+            return block;
+          }
+
+          const uploadedVideos = await Promise.all(
+            block.videos.map(async (video, index) => {
+              const currentSrc = video?.src || video?.url;
+              if (
+                typeof currentSrc === "string" &&
+                !isDataUrl(currentSrc) &&
+                !isBlobUrl(currentSrc)
+              ) {
+                return sanitizeUploadedVideo(video, currentSrc);
+              }
+
+              if (!(video?.file instanceof File) && !isDataUrl(currentSrc)) {
+                return video;
+              }
+
+              const fileToUpload =
+                video?.file instanceof File
+                  ? video.file
+                  : await dataUrlToFile(
+                      currentSrc,
+                      video?.name || `blog-block-video-${index + 1}`,
+                    );
+
+              const uploadedUrl = await uploadFileWithFallback(
+                ["/uploads/upload", "/uploads/media"],
+                fileToUpload,
+              );
+
+              return sanitizeUploadedVideo(video, uploadedUrl);
+            }),
+          );
+
+          return {
+            ...block,
+            videos: uploadedVideos,
+          };
+        }),
+      );
+    };
+
+    const uploadAudioTracks = async (blocks) => {
+      return Promise.all(
+        blocks.map(async (block) => {
+          if (block.type !== "audio" || !Array.isArray(block.audioTracks)) {
+            return block;
+          }
+
+          const uploadedTracks = await Promise.all(
+            block.audioTracks.map(async (track, index) => {
+              if (track?.type !== "local") {
+                return track;
+              }
+
+              const currentSrc = track?.src || track?.url;
+              if (
+                typeof currentSrc === "string" &&
+                !isDataUrl(currentSrc) &&
+                !isBlobUrl(currentSrc)
+              ) {
+                return sanitizeUploadedAudioTrack(track, currentSrc);
+              }
+
+              if (!(track?.file instanceof File) && !isDataUrl(currentSrc)) {
+                return track;
+              }
+
+              const fileToUpload =
+                track?.file instanceof File
+                  ? track.file
+                  : await dataUrlToFile(
+                      currentSrc,
+                      track?.name || `blog-audio-track-${index + 1}`,
+                    );
+
+              const uploadedUrl = await uploadFileWithFallback(
+                ["/uploads/upload"],
+                fileToUpload,
+              );
+
+              return sanitizeUploadedAudioTrack(track, uploadedUrl);
+            }),
+          );
+
+          return {
+            ...block,
+            audioTracks: uploadedTracks,
+          };
+        }),
+      );
     };
 
     // Extract content summary and all media from blocks
@@ -105,19 +355,34 @@ export default function BlogManagement() {
       .map((b) => b.content)
       .join("\n\n");
 
-    const allImages = formData.blocks
+    let coverImageValue = null;
+    let normalizedBlocks = formData.blocks;
+
+    try {
+      coverImageValue = await uploadCoverImage(formData.coverImage);
+
+      normalizedBlocks = await uploadBlockImages(formData.blocks);
+      normalizedBlocks = await uploadBlockVideos(normalizedBlocks);
+      normalizedBlocks = await uploadAudioTracks(normalizedBlocks);
+    } catch (uploadError) {
+      console.error("Failed to upload blog media:", uploadError);
+      toast.error("Failed to upload one or more blog media files");
+      return;
+    }
+
+    const allImages = normalizedBlocks
       .filter((b) => b.type === "image")
       .flatMap((b) => b.images || []);
 
-    const allVideos = formData.blocks
+    const allVideos = normalizedBlocks
       .filter((b) => b.type === "video")
       .flatMap((b) => b.videos || []);
 
-    const allYoutube = formData.blocks
+    const allYoutube = normalizedBlocks
       .filter((b) => b.type === "youtube")
       .flatMap((b) => b.youtubeLinks || []);
 
-    const allAudio = formData.blocks
+    const allAudio = normalizedBlocks
       .filter((b) => b.type === "audio")
       .flatMap((b) => b.audioTracks || []);
 
@@ -132,15 +397,6 @@ export default function BlogManagement() {
       return;
     }
 
-    let coverImageValue = null;
-    try {
-      coverImageValue = await readCoverImage(formData.coverImage);
-    } catch (readError) {
-      console.error("Failed to read cover image:", readError);
-      toast.error("Failed to read cover image");
-      return;
-    }
-
     // Prepare blog data
     const blogData = {
       title: formData.title,
@@ -151,7 +407,7 @@ export default function BlogManagement() {
       coverImage: coverImageValue,
       excerpt: formData.excerpt,
       content: textContent,
-      blocks: formData.blocks,
+      blocks: normalizedBlocks,
       images: allImages,
       videos: allVideos,
       youtubeLinks: allYoutube,

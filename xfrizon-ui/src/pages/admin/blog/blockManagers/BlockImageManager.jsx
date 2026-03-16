@@ -12,7 +12,12 @@ export default function BlockImageManager({ block, updateBlock }) {
         updateBlock(block.id, {
           images: [
             ...(block.images || []),
-            { id: Date.now(), src: reader.result, name: file.name },
+            {
+              id: Date.now() + Math.random(),
+              src: reader.result,
+              name: file.name,
+              file,
+            },
           ],
         });
         toast.success(`Image "${file.name}" added`);

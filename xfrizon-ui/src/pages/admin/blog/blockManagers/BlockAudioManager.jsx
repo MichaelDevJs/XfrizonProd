@@ -12,11 +12,12 @@ export default function BlockAudioManager({ block, updateBlock }) {
         audioTracks: [
           ...(block.audioTracks || []),
           {
-            id: Date.now(),
+            id: Date.now() + Math.random(),
             type: "local",
             name: file.name,
             size: (file.size / 1024 / 1024).toFixed(2),
             uploadedAt: new Date().toLocaleDateString(),
+            file,
           },
         ],
       });
