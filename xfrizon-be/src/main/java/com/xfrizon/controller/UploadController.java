@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,6 +45,9 @@ public class UploadController {
     @Value("${cloudinary.api-secret:}")
     private String cloudinaryApiSecret;
 
+    @Value("${cloudinary.url:}")
+    private String cloudinaryUrl;
+
     @Value("${cloudinary.folder:xfrizon}")
     private String cloudinaryFolder;
 
@@ -52,17 +56,7 @@ public class UploadController {
     @PostConstruct
     public void init() {
         try {
-            if (cloudinaryEnabled
-                    && !cloudinaryCloudName.isBlank()
-                    && !cloudinaryApiKey.isBlank()
-                    && !cloudinaryApiSecret.isBlank()) {
-                this.cloudinary = new Cloudinary(ObjectUtils.asMap(
-                        "cloud_name", cloudinaryCloudName,
-                        "api_key", cloudinaryApiKey,
-                        "api_secret", cloudinaryApiSecret,
-                        "secure", true
-                ));
-                log.info("Cloudinary uploads enabled for cloud '{}'", cloudinaryCloudName);
+            if (configureCloudinaryIfAvailable()) {
                 return;
             }
 
@@ -85,6 +79,76 @@ public class UploadController {
         } catch (Exception e) {
             log.error("Error initializing upload directory", e);
         }
+    }
+
+    private boolean configureCloudinaryIfAvailable() {
+        boolean hasExplicitCredentials = !cloudinaryCloudName.isBlank()
+                && !cloudinaryApiKey.isBlank()
+                && !cloudinaryApiSecret.isBlank();
+        boolean hasCloudinaryUrl = cloudinaryUrl != null && !cloudinaryUrl.isBlank();
+
+        if (!cloudinaryEnabled && !hasExplicitCredentials && !hasCloudinaryUrl) {
+            return false;
+        }
+
+        if (hasExplicitCredentials) {
+            this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+                    "cloud_name", cloudinaryCloudName,
+                    "api_key", cloudinaryApiKey,
+                    "api_secret", cloudinaryApiSecret,
+                    "secure", true
+            ));
+            log.info("Cloudinary uploads enabled for cloud '{}' via explicit credentials", cloudinaryCloudName);
+            return true;
+        }
+
+        if (hasCloudinaryUrl) {
+            try {
+                Map<String, Object> parsedConfig = parseCloudinaryUrl(cloudinaryUrl);
+                this.cloudinary = new Cloudinary(parsedConfig);
+                log.info("Cloudinary uploads enabled via CLOUDINARY_URL for cloud '{}'", parsedConfig.get("cloud_name"));
+                return true;
+            } catch (Exception parseError) {
+                log.warn("Invalid CLOUDINARY_URL format. Falling back to local disk uploads.", parseError);
+            }
+        }
+
+        if (cloudinaryEnabled) {
+            log.warn("Cloudinary enabled but credentials are incomplete. Falling back to local disk uploads.");
+        }
+
+        return false;
+    }
+
+    private Map<String, Object> parseCloudinaryUrl(String rawUrl) {
+        URI uri = URI.create(rawUrl.trim());
+        if (!"cloudinary".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException("CLOUDINARY_URL must start with cloudinary://");
+        }
+
+        String userInfo = uri.getUserInfo();
+        if (userInfo == null || !userInfo.contains(":")) {
+            throw new IllegalArgumentException("CLOUDINARY_URL is missing api_key or api_secret");
+        }
+
+        String[] credentials = userInfo.split(":", 2);
+        String apiKey = credentials[0];
+        String apiSecret = credentials[1];
+        String cloudName = uri.getHost();
+        if ((cloudName == null || cloudName.isBlank()) && uri.getPath() != null) {
+            cloudName = uri.getPath().replaceFirst("^/", "");
+        }
+
+        if (apiKey.isBlank() || apiSecret.isBlank() || cloudName == null || cloudName.isBlank()) {
+            throw new IllegalArgumentException("CLOUDINARY_URL is missing required values");
+        }
+
+        return ObjectUtils.asMap(
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret,
+                "secure", true
+        );
     }
 
     private boolean isCloudinaryActive() {
