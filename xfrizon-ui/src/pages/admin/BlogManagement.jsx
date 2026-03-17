@@ -13,6 +13,16 @@ const isDataUrl = (value) =>
 const isBlobUrl = (value) =>
   typeof value === "string" && value.startsWith("blob:");
 
+const isLocalUploadUrl = (value) => {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.startsWith("/uploads/") ||
+    normalized.includes("/api/v1/uploads/") ||
+    normalized.includes("/uploads/")
+  );
+};
+
 const createUploadCandidates = (endpoints) => {
   const baseUrl = String(api?.defaults?.baseURL || "");
   const origin = baseUrl.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
@@ -90,6 +100,41 @@ const dataUrlToFile = async (dataUrl, filename) => {
   });
 };
 
+const mediaSourceToFile = async (source, fallbackName) => {
+  if (source instanceof File) {
+    return source;
+  }
+
+  const sourceValue = String(source || "").trim();
+  if (!sourceValue) {
+    throw new Error("Invalid media source");
+  }
+
+  const baseUrl = String(api?.defaults?.baseURL || "");
+  const origin = baseUrl.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
+  const fetchableUrl = /^https?:\/\//i.test(sourceValue)
+    ? sourceValue
+    : sourceValue.startsWith("/")
+      ? `${origin}${sourceValue}`
+      : `${origin}/${sourceValue}`;
+
+  const response = await fetch(fetchableUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch media source: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const extensionFromType = blob?.type?.split("/")?.[1] || "bin";
+  const safeName = String(fallbackName || "media-file").replace(/\s+/g, "-");
+  const filename = safeName.includes(".")
+    ? safeName
+    : `${safeName}.${extensionFromType}`;
+
+  return new File([blob], filename, {
+    type: blob.type || "application/octet-stream",
+  });
+};
+
 const sanitizeUploadedImage = (image, src) => ({
   ...image,
   src,
@@ -125,6 +170,22 @@ const containsDataUrl = (value) => {
 
   if (value && typeof value === "object") {
     return Object.values(value).some((entry) => containsDataUrl(entry));
+  }
+
+  return false;
+};
+
+const containsUnsafeMediaValue = (value) => {
+  if (typeof value === "string") {
+    return isDataUrl(value) || isBlobUrl(value) || isLocalUploadUrl(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => containsUnsafeMediaValue(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).some((entry) => containsUnsafeMediaValue(entry));
   }
 
   return false;
@@ -218,7 +279,8 @@ export default function BlogManagement() {
       if (
         typeof coverImage === "string" &&
         !isDataUrl(coverImage) &&
-        !isBlobUrl(coverImage)
+        !isBlobUrl(coverImage) &&
+        !isLocalUploadUrl(coverImage)
       ) {
         return coverImage;
       }
@@ -226,7 +288,7 @@ export default function BlogManagement() {
       const fileToUpload =
         coverImage instanceof File
           ? coverImage
-          : await dataUrlToFile(coverImage, "blog-cover-image");
+          : await mediaSourceToFile(coverImage, "blog-cover-image");
 
       return uploadFileWithFallback(["/uploads/cover-photo"], fileToUpload);
     };
@@ -244,7 +306,8 @@ export default function BlogManagement() {
               if (
                 typeof currentSrc === "string" &&
                 !isDataUrl(currentSrc) &&
-                !isBlobUrl(currentSrc)
+                !isBlobUrl(currentSrc) &&
+                !isLocalUploadUrl(currentSrc)
               ) {
                 return sanitizeUploadedImage(image, currentSrc);
               }
@@ -252,7 +315,7 @@ export default function BlogManagement() {
               const fileToUpload =
                 image?.file instanceof File
                   ? image.file
-                  : await dataUrlToFile(
+                  : await mediaSourceToFile(
                       currentSrc,
                       image?.name || `blog-block-image-${index + 1}`,
                     );
@@ -287,19 +350,25 @@ export default function BlogManagement() {
               if (
                 typeof currentSrc === "string" &&
                 !isDataUrl(currentSrc) &&
-                !isBlobUrl(currentSrc)
+                !isBlobUrl(currentSrc) &&
+                !isLocalUploadUrl(currentSrc)
               ) {
                 return sanitizeUploadedVideo(video, currentSrc);
               }
 
-              if (!(video?.file instanceof File) && !isDataUrl(currentSrc)) {
+              if (
+                !(video?.file instanceof File) &&
+                !isDataUrl(currentSrc) &&
+                !isBlobUrl(currentSrc) &&
+                !isLocalUploadUrl(currentSrc)
+              ) {
                 return video;
               }
 
               const fileToUpload =
                 video?.file instanceof File
                   ? video.file
-                  : await dataUrlToFile(
+                  : await mediaSourceToFile(
                       currentSrc,
                       video?.name || `blog-block-video-${index + 1}`,
                     );
@@ -338,19 +407,25 @@ export default function BlogManagement() {
               if (
                 typeof currentSrc === "string" &&
                 !isDataUrl(currentSrc) &&
-                !isBlobUrl(currentSrc)
+                !isBlobUrl(currentSrc) &&
+                !isLocalUploadUrl(currentSrc)
               ) {
                 return sanitizeUploadedAudioTrack(track, currentSrc);
               }
 
-              if (!(track?.file instanceof File) && !isDataUrl(currentSrc)) {
+              if (
+                !(track?.file instanceof File) &&
+                !isDataUrl(currentSrc) &&
+                !isBlobUrl(currentSrc) &&
+                !isLocalUploadUrl(currentSrc)
+              ) {
                 return track;
               }
 
               const fileToUpload =
                 track?.file instanceof File
                   ? track.file
-                  : await dataUrlToFile(
+                  : await mediaSourceToFile(
                       currentSrc,
                       track?.name || `blog-audio-track-${index + 1}`,
                     );
@@ -439,8 +514,8 @@ export default function BlogManagement() {
       titleStyle: formData.titleStyle || {},
     };
 
-    if (containsDataUrl(blogData)) {
-      toast.error("Some media is still using base64 data. Please retry upload.");
+    if (containsUnsafeMediaValue(blogData)) {
+      toast.error("Some media is still local/base64. Please retry upload.");
       return;
     }
 
@@ -539,7 +614,8 @@ export default function BlogManagement() {
             if (
               typeof source === "string" &&
               !isDataUrl(source) &&
-              !isBlobUrl(source)
+              !isBlobUrl(source) &&
+              !isLocalUploadUrl(source)
             ) {
               return item;
             }
@@ -548,7 +624,7 @@ export default function BlogManagement() {
               return item;
             }
 
-            const fileToUpload = await dataUrlToFile(
+            const fileToUpload = await mediaSourceToFile(
               source,
               `${filenamePrefix}-${index + 1}`,
             );
@@ -609,12 +685,14 @@ export default function BlogManagement() {
                     const source = track?.src || track?.url;
                     if (
                       typeof source !== "string" ||
-                      (!isDataUrl(source) && !isBlobUrl(source))
+                      (!isDataUrl(source) &&
+                        !isBlobUrl(source) &&
+                        !isLocalUploadUrl(source))
                     ) {
                       return track;
                     }
 
-                    const fileToUpload = await dataUrlToFile(
+                    const fileToUpload = await mediaSourceToFile(
                       source,
                       `blog-duplicate-audio-${index + 1}`,
                     );
@@ -642,10 +720,12 @@ export default function BlogManagement() {
 
       const normalizedCoverImage =
         typeof blog.coverImage === "string" &&
-        (isDataUrl(blog.coverImage) || isBlobUrl(blog.coverImage))
+        (isDataUrl(blog.coverImage) ||
+          isBlobUrl(blog.coverImage) ||
+          isLocalUploadUrl(blog.coverImage))
           ? await uploadFileWithFallback(
               ["/uploads/cover-photo"],
-              await dataUrlToFile(blog.coverImage, "blog-duplicate-cover"),
+              await mediaSourceToFile(blog.coverImage, "blog-duplicate-cover"),
             )
           : blog.coverImage;
 
@@ -709,8 +789,10 @@ export default function BlogManagement() {
         status: "DRAFT",
       };
 
-      if (containsDataUrl(duplicatedBlog)) {
-        toast.error("Duplicate blocked: media still contains base64 data.");
+      if (containsUnsafeMediaValue(duplicatedBlog)) {
+        toast.error(
+          "Duplicate blocked: media still contains local/base64 sources.",
+        );
         return;
       }
 
