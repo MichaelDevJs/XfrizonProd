@@ -4,30 +4,40 @@ import { toast } from "react-toastify";
 export default function MediaGallery({ formData, setFormData }) {
   const fileInputRef = useRef(null);
 
+  const getPreviewUrl = (image) => image?.preview || image?.src;
+
+  const revokePreview = (image) => {
+    const url = getPreviewUrl(image);
+    if (typeof url === "string" && url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          images: [
-            ...prev.images,
-            {
-              id: Date.now() + Math.random(),
-              src: reader.result,
-              name: file.name,
-              uploadedAt: new Date().toLocaleString(),
-            },
-          ],
-        }));
-        toast.success(`Image "${file.name}" added`);
-      };
-      reader.readAsDataURL(file);
+      const previewUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        images: [
+          ...prev.images,
+          {
+            id: Date.now() + Math.random(),
+            src: previewUrl,
+            preview: previewUrl,
+            file,
+            name: file.name,
+            uploadedAt: new Date().toLocaleString(),
+          },
+        ],
+      }));
+      toast.success(`Image "${file.name}" added`);
     });
   };
 
   const removeImage = (id) => {
+    const target = formData.images.find((img) => img.id === id);
+    revokePreview(target);
     setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((img) => img.id !== id),

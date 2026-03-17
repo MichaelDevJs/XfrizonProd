@@ -16,6 +16,26 @@ const api = axios.create({
 const RETRYABLE_METHODS = new Set(["get", "head", "options"]);
 const MAX_NETWORK_RETRIES = 1;
 const NETWORK_RETRY_DELAY_MS = 700;
+const WRITE_METHODS = new Set(["post", "put", "patch"]);
+
+const hasDataUrl = (value) => {
+  if (typeof value === "string") {
+    return value.startsWith("data:");
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasDataUrl(item));
+  }
+
+  if (value && typeof value === "object") {
+    if (value instanceof File || value instanceof Blob || value instanceof FormData) {
+      return false;
+    }
+    return Object.values(value).some((entry) => hasDataUrl(entry));
+  }
+
+  return false;
+};
 
 const isRetryableNetworkError = (error) => {
   const code = error?.code;
@@ -31,6 +51,17 @@ const isRetryableNetworkError = (error) => {
 
 // Add JWT token to request headers
 api.interceptors.request.use((config) => {
+  const method = String(config?.method || "get").toLowerCase();
+  if (
+    WRITE_METHODS.has(method) &&
+    !(config?.data instanceof FormData) &&
+    hasDataUrl(config?.data)
+  ) {
+    throw new Error(
+      "Blocked request containing base64 data URL. Upload media first and send URL.",
+    );
+  }
+
   const token = localStorage.getItem("userToken");
   const adminToken = localStorage.getItem("adminToken");
   const isAdminRequest = String(config?.url || "").includes("/admin/");
@@ -39,8 +70,6 @@ api.interceptors.request.use((config) => {
   if (isAdminRequest) {
     if (adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`;
-    } else if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
     }
   } else if (token) {
     config.headers.Authorization = `Bearer ${token}`;

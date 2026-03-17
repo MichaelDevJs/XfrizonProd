@@ -4,32 +4,42 @@ import { toast } from "react-toastify";
 export default function VideoManager({ formData, setFormData }) {
   const fileInputRef = useRef(null);
 
+  const getPreviewUrl = (video) => video?.preview || video?.src;
+
+  const revokePreview = (video) => {
+    const url = getPreviewUrl(video);
+    if (typeof url === "string" && url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
+  };
+
   const handleVideoUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          videos: [
-            ...prev.videos,
-            {
-              id: Date.now() + Math.random(),
-              src: reader.result,
-              name: file.name,
-              size: (file.size / (1024 * 1024)).toFixed(2),
-              uploadedAt: new Date().toLocaleString(),
-              type: file.type,
-            },
-          ],
-        }));
-        toast.success(`Video "${file.name}" uploaded`);
-      };
-      reader.readAsDataURL(file);
+      const previewUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        videos: [
+          ...prev.videos,
+          {
+            id: Date.now() + Math.random(),
+            src: previewUrl,
+            preview: previewUrl,
+            file,
+            name: file.name,
+            size: (file.size / (1024 * 1024)).toFixed(2),
+            uploadedAt: new Date().toLocaleString(),
+            type: file.type,
+          },
+        ],
+      }));
+      toast.success(`Video "${file.name}" uploaded`);
     });
   };
 
   const removeVideo = (id) => {
+    const target = formData.videos.find((vid) => vid.id === id);
+    revokePreview(target);
     setFormData((prev) => ({
       ...prev,
       videos: prev.videos.filter((vid) => vid.id !== id),
