@@ -738,24 +738,61 @@ export default function AdminHomeBlocksPage() {
       setUploadingFile(true);
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("type", newSlideType);
+      const inferredType = String(file.type || "").startsWith("video/")
+        ? "video"
+        : "image";
+      formData.append("type", inferredType);
 
-      const response = await api.post("/admin/upload/hero-slide", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        timeout: 60000,
-      });
+      const endpoints = [
+        "/admin/upload/hero-slide",
+        inferredType === "video" ? "/uploads/upload" : "/uploads/cover-photo",
+        "/uploads/media",
+      ];
 
-      console.log("Upload response:", response.data);
-      return {
-        url: response.data.url || response.data.filePath,
-        type: String(response.data.type || "").toLowerCase(),
-      };
+      let lastError = null;
+      for (const endpoint of endpoints) {
+        try {
+          const response = await api.post(endpoint, formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            timeout: inferredType === "video" ? 180000 : 60000,
+          });
+
+          const uploadedUrl = response?.data?.url || response?.data?.filePath;
+          if (uploadedUrl) {
+            return {
+              url: uploadedUrl,
+              type: String(response?.data?.type || inferredType).toLowerCase(),
+            };
+          }
+        } catch (error) {
+          lastError = error;
+          const status = error?.response?.status;
+          const canFallback =
+            !status ||
+            status === 400 ||
+            status === 404 ||
+            status === 405 ||
+            status === 413 ||
+            status === 415 ||
+            (status >= 500 && status < 600) ||
+            String(error?.code || "").toUpperCase() === "ECONNABORTED";
+
+          if (!canFallback) {
+            throw error;
+          }
+        }
+      }
+
+      throw lastError || new Error("Upload failed");
     } catch (error) {
       console.error("Error uploading file:", error);
+      const isVideo = String(file.type || "").startsWith("video/");
       toast.error(
-        "Failed to upload file. Make sure backend upload endpoint is available.",
+        isVideo
+          ? "Video upload failed or timed out. Try a smaller file or re-upload."
+          : "Image upload failed. Please retry.",
       );
       return null;
     } finally {
