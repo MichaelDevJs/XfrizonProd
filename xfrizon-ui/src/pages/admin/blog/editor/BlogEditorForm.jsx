@@ -137,27 +137,6 @@ export default function BlogEditorForm({
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                Genre
-              </label>
-              <select
-                name="genre"
-                value={formData.genre || ""}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-[#1e1e1e] border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-600 text-xs text-white"
-              >
-                <option value="">Select Genre</option>
-                <option value="Hip-Hop">Hip-Hop</option>
-                <option value="Pop">Pop</option>
-                <option value="Rock">Rock</option>
-                <option value="Jazz">Jazz</option>
-                <option value="Electronic">Electronic</option>
-                <option value="Classical">Classical</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-300 mb-1.5">
                 Tags (comma separated)

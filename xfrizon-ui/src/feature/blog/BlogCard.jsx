@@ -48,6 +48,17 @@ export default function BlogCard({ blog }) {
     blog?.coverImage?.src || blog?.coverImage || blog?.image,
   );
   const shareUrl = getReferralAwareShareUrl(`/blog/${blog?.id}`);
+  const categoryTextColor = {
+    General: "text-zinc-200",
+    News: "text-blue-300",
+    Culture: "text-cyan-300",
+    Events: "text-violet-300",
+    Arts: "text-fuchsia-300",
+    Music: "text-purple-300",
+    Fashion: "text-pink-300",
+    Reviews: "text-amber-300",
+    Food: "text-lime-300",
+  };
 
   const handleShare = async (event) => {
     event.preventDefault();
@@ -106,7 +117,11 @@ export default function BlogCard({ blog }) {
         {/* Content overlay at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
           <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest text-zinc-300">
-            <span className="truncate">{category}</span>
+            <span
+              className={`truncate ${categoryTextColor[category] || "text-zinc-200"}`}
+            >
+              {category}
+            </span>
             {publishedDate && <span className="shrink-0">{publishedDate}</span>}
           </div>
 

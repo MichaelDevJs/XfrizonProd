@@ -71,13 +71,15 @@ export default function AdminHomeBlocksPage() {
   const [loadingBlogs, setLoadingBlogs] = useState(false);
 
   const blogCategories = [
+    "General",
     "News",
+    "Culture",
+    "Events",
+    "Arts",
+    "Music",
     "Fashion",
     "Reviews",
-    "Diaspora",
-    "Music",
-    "Politics",
-    "General",
+    "Food",
   ];
 
   // Xfrizon allowed countries

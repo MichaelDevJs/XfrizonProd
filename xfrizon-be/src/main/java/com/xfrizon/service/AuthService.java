@@ -249,6 +249,57 @@ public class AuthService {
                 .build();
     }
 
+            public AuthResponse loginAdmin(LoginRequest request) {
+            User user = userRepository.findByEmail(request.getEmail())
+                .orElse(null);
+
+            if (user == null) {
+                return AuthResponse.builder()
+                    .success(false)
+                    .message("User not found")
+                    .build();
+            }
+
+            if (!Boolean.TRUE.equals(user.getIsActive())) {
+                return AuthResponse.builder()
+                    .success(false)
+                    .message("User account is inactive")
+                    .build();
+            }
+
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                return AuthResponse.builder()
+                    .success(false)
+                    .message("Invalid password")
+                    .build();
+            }
+
+            if (user.getRole() != User.UserRole.ADMIN) {
+                return AuthResponse.builder()
+                    .success(false)
+                    .message("Access denied. Admin account required")
+                    .build();
+            }
+
+            String token = jwtTokenProvider.generateToken(user.getEmail(), user.getId());
+
+            return AuthResponse.builder()
+                .success(true)
+                .message("Admin login successful")
+                .token(token)
+                .type("Bearer")
+                .userId(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .name(user.getName())
+                .role(user.getRole().toString())
+                .roles(user.getRoles())
+                .logo(user.getLogo() != null ? user.getLogo() : user.getProfilePicture())
+                .profilePicture(user.getProfilePicture() != null ? user.getProfilePicture() : user.getLogo())
+                .build();
+            }
+
     public UserResponse getUserById(Long userId) {
         User user = userRepository.findByIdAndIsActiveTrue(userId)
                 .orElse(null);

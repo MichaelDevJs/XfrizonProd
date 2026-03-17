@@ -27,13 +27,15 @@ export default function AdminBlogHeroBlocksPage() {
 
   const blogCategories = [
     "All Blogs",
+    "General",
     "News",
+    "Culture",
+    "Events",
+    "Arts",
+    "Music",
     "Fashion",
     "Reviews",
-    "Diaspora",
-    "Music",
-    "Politics",
-    "General",
+    "Food",
   ];
 
   const isVideoUrl = (url = "") => {

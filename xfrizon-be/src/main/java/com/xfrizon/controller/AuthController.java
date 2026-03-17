@@ -62,6 +62,15 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @PostMapping("/admin-login")
+    public ResponseEntity<AuthResponse> adminLogin(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.loginAdmin(request);
+        if (response.getSuccess()) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
     @GetMapping("/user")
     public ResponseEntity<UserResponse> getCurrentUser(HttpServletRequest request) {
         String token = getTokenFromRequest(request);

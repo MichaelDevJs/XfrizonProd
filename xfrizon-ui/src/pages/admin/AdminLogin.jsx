@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaShieldAlt, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -12,18 +12,27 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Call real backend login endpoint
-      const response = await api.post("/auth/login", {
+      // Admin-only login endpoint
+      const response = await api.post("/auth/admin-login", {
         email,
         password,
       });
 
-      if (response.data.success && response.data.token) {
+      if (
+        response.data.success &&
+        response.data.token &&
+        String(response.data.role || "").toUpperCase() === "ADMIN"
+      ) {
         // Store the real JWT token as adminToken
         localStorage.setItem("adminToken", response.data.token);
         localStorage.setItem(
@@ -52,7 +61,7 @@ export default function AdminLogin() {
           });
         }, 100);
       } else {
-        toast.error("Login failed. Please check your credentials.");
+        toast.error("Access denied. Admin account required.");
         setLoading(false);
       }
     } catch (error) {

@@ -582,25 +582,13 @@ export default function BlogDetailPage() {
       }
     }
 
-    // XF Mag stamp on share card (always render)
-    const stampX = width - 330;
-    const stampY = 80;
-    const stampW = 240;
-    const stampH = 82;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(stampX, stampY, stampW, stampH, 14);
-      ctx.fill();
-    } else {
-      ctx.fillRect(stampX, stampY, stampW, stampH);
-    }
-    ctx.font = "700 44px Arial";
-    ctx.fillStyle = "#ef4444";
-    ctx.fillText("XF", stampX + 22, stampY + 53);
-    ctx.font = "600 32px Arial";
-    ctx.fillStyle = "#f3f4f6";
-    ctx.fillText("Mag", stampX + 98, stampY + 52);
+    // Top-left brand + CTA
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 38px Arial";
+    ctx.fillText("XF EVENTS", 100, 110);
+    ctx.fillStyle = "#f87171";
+    ctx.font = "600 34px Arial";
+    ctx.fillText("Read full story on xfrizon", 100, 160);
 
     // Lower card area
     ctx.fillStyle = "rgba(18, 18, 18, 0.92)";
@@ -670,14 +658,6 @@ export default function BlogDetailPage() {
     const authorText = blog.author || "Unknown";
     ctx.fillText(dateText, 100, 1635);
     ctx.fillText(`by ${authorText}`, 100, 1685);
-
-    // Footer brand + CTA
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "700 38px Arial";
-    ctx.fillText("XF EVENTS", 100, 1760);
-    ctx.fillStyle = "#f87171";
-    ctx.font = "600 34px Arial";
-    ctx.fillText("Read full story on xfrizon", 100, 1810);
 
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -1393,7 +1373,6 @@ export default function BlogDetailPage() {
                       </div>
                     )}
                   </div>
-                  {blog.genre && <span>{blog.genre}</span>}
                 </div>
                 {shareStatus && (
                   <p className="mt-3 text-[11px] normal-case tracking-normal text-gray-300">
@@ -1471,7 +1450,7 @@ export default function BlogDetailPage() {
         {/* Related Articles CTA */}
         <div className="mt-10">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/blogs")}
             className="w-full text-red-500 hover:text-red-400 font-light uppercase tracking-widest text-xs transition-colors"
           >
             Read More Articles

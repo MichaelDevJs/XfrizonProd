@@ -24,7 +24,6 @@ export default function BlogEditor({
     author: blog?.author || "",
     category: blog?.category || "General",
     location: blog?.location || "",
-    genre: blog?.genre || "",
     excerpt: blog?.excerpt || "",
     coverImage: blog?.coverImage || null,
     blocks: initializeBlocks(blog),

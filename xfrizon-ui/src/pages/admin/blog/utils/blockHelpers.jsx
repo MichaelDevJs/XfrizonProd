@@ -238,11 +238,13 @@ export const BLOCK_COLORS = {
 };
 
 export const CATEGORIES = [
+  "General",
   "News",
+  "Culture",
+  "Events",
+  "Arts",
+  "Music",
   "Fashion",
   "Reviews",
-  "Diaspora",
-  "Music",
-  "Politics",
-  "General",
+  "Food",
 ];

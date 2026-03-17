@@ -24,7 +24,6 @@ export default function AllBlogs() {
     search: searchParams.get("search") || "",
     category: searchParams.get("category") || "",
     location: searchParams.get("location") || "",
-    genre: searchParams.get("genre") || "",
     tags: searchParams.get("tags") || "",
     sortBy: searchParams.get("sortBy") || "newest",
   });
@@ -33,22 +32,15 @@ export default function AllBlogs() {
 
   // Unique values for filters
   const categories = [
+    "General",
     "News",
+    "Culture",
+    "Events",
+    "Arts",
+    "Music",
     "Fashion",
     "Reviews",
-    "Diaspora",
-    "Music",
-    "Politics",
-    "General",
-  ];
-  const genres = [
-    "Hip-Hop",
-    "Pop",
-    "Rock",
-    "Jazz",
-    "Electronic",
-    "Classical",
-    "Other",
+    "Food",
   ];
 
   useEffect(() => {
@@ -185,11 +177,6 @@ export default function AllBlogs() {
       );
     }
 
-    // Genre filter
-    if (filterObj.genre) {
-      result = result.filter((blog) => blog.genre === filterObj.genre);
-    }
-
     // Tags filter
     if (filterObj.tags) {
       result = result.filter((blog) =>
@@ -234,7 +221,6 @@ export default function AllBlogs() {
     if (filterObj.search) params.set("search", filterObj.search);
     if (filterObj.category) params.set("category", filterObj.category);
     if (filterObj.location) params.set("location", filterObj.location);
-    if (filterObj.genre) params.set("genre", filterObj.genre);
     if (filterObj.tags) params.set("tags", filterObj.tags);
     if (filterObj.sortBy !== "newest") params.set("sortBy", filterObj.sortBy);
     setSearchParams(params);
@@ -245,7 +231,6 @@ export default function AllBlogs() {
       search: "",
       category: "",
       location: "",
-      genre: "",
       tags: "",
       sortBy: "newest",
     };
@@ -258,7 +243,6 @@ export default function AllBlogs() {
     filters.search ||
     filters.category ||
     filters.location ||
-    filters.genre ||
     filters.tags ||
     filters.sortBy !== "newest";
 
@@ -308,7 +292,6 @@ export default function AllBlogs() {
     if (filters.search) count += 1;
     if (filters.category) count += 1;
     if (filters.location) count += 1;
-    if (filters.genre) count += 1;
     if (filters.tags) count += 1;
     if (filters.sortBy !== "newest") count += 1;
     return count;
@@ -379,7 +362,8 @@ export default function AllBlogs() {
               </div>
             )}
 
-            {/* Compact Filter Bar Below Hero */}
+            {/* Compact Filter Bar + Category Tags */}
+            <div className="space-y-2">
             <div className="bg-zinc-950/70 border border-zinc-800 rounded-lg px-3 sm:px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="text-xs uppercase tracking-widest text-zinc-500">
@@ -430,22 +414,6 @@ export default function AllBlogs() {
                       {categories.map((cat) => (
                         <option key={cat} value={cat}>
                           {cat}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Genre */}
-                    <select
-                      value={filters.genre}
-                      onChange={(e) =>
-                        handleFilterChange("genre", e.target.value)
-                      }
-                      className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
-                    >
-                      <option value="">All Genres</option>
-                      {genres.map((genre) => (
-                        <option key={genre} value={genre}>
-                          {genre}
                         </option>
                       ))}
                     </select>
@@ -504,6 +472,41 @@ export default function AllBlogs() {
                   </div>
                 </div>
               )}
+
+            </div>
+
+            {/* Category Quick-Filter Tags */}
+            {(() => {
+              const categoryColors = {
+                General:  { active: "bg-zinc-700 text-zinc-100 border-zinc-500",         inactive: "bg-zinc-900 text-zinc-400 border-zinc-700 hover:text-zinc-200 hover:border-zinc-500" },
+                Music:    { active: "bg-purple-900/60 text-purple-300 border-purple-600", inactive: "bg-zinc-900 text-purple-400/70 border-zinc-700 hover:text-purple-300 hover:border-purple-600/50" },
+                News:     { active: "bg-blue-900/60 text-blue-300 border-blue-600",       inactive: "bg-zinc-900 text-blue-400/70 border-zinc-700 hover:text-blue-300 hover:border-blue-600/50" },
+                Culture:  { active: "bg-cyan-900/60 text-cyan-300 border-cyan-600",       inactive: "bg-zinc-900 text-cyan-400/70 border-zinc-700 hover:text-cyan-300 hover:border-cyan-600/50" },
+                Events:   { active: "bg-violet-900/60 text-violet-300 border-violet-600", inactive: "bg-zinc-900 text-violet-400/70 border-zinc-700 hover:text-violet-300 hover:border-violet-600/50" },
+                Arts:     { active: "bg-fuchsia-900/60 text-fuchsia-300 border-fuchsia-600", inactive: "bg-zinc-900 text-fuchsia-400/70 border-zinc-700 hover:text-fuchsia-300 hover:border-fuchsia-600/50" },
+                Fashion:  { active: "bg-pink-900/60 text-pink-300 border-pink-600",       inactive: "bg-zinc-900 text-pink-400/70 border-zinc-700 hover:text-pink-300 hover:border-pink-600/50" },
+                Reviews:  { active: "bg-amber-900/60 text-amber-300 border-amber-600",    inactive: "bg-zinc-900 text-amber-400/70 border-zinc-700 hover:text-amber-300 hover:border-amber-600/50" },
+                Food:     { active: "bg-lime-900/60 text-lime-300 border-lime-600",       inactive: "bg-zinc-900 text-lime-400/70 border-zinc-700 hover:text-lime-300 hover:border-lime-600/50" },
+              };
+              return (
+                <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                  {categories.map((cat) => {
+                    const isActive = filters.category === cat;
+                    const colors = categoryColors[cat] || categoryColors.General;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => handleFilterChange("category", isActive ? "" : cat)}
+                        className={`shrink-0 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border transition-colors ${isActive ? colors.active : colors.inactive}`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             </div>
 
             {/* Results Count */}
