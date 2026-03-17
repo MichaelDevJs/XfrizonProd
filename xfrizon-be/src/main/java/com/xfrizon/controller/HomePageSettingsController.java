@@ -1,7 +1,10 @@
 package com.xfrizon.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xfrizon.entity.HomePageSettings;
 import com.xfrizon.repository.HomePageSettingsRepository;
+import com.xfrizon.service.CloudinaryMediaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/homepage-settings")
@@ -19,6 +24,47 @@ public class HomePageSettingsController {
 
     @Autowired
     private HomePageSettingsRepository settingsRepository;
+
+    @Autowired
+    private CloudinaryMediaService cloudinaryMediaService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private Set<String> extractCloudinaryUrls(String jsonValue) {
+        Set<String> urls = new LinkedHashSet<>();
+        if (jsonValue == null || jsonValue.isBlank()) {
+            return urls;
+        }
+
+        try {
+            JsonNode node = objectMapper.readTree(jsonValue);
+            collectCloudinaryUrls(node, urls);
+        } catch (Exception e) {
+            logger.warn("Failed to parse homepage setting JSON for cleanup", e);
+        }
+        return urls;
+    }
+
+    private void collectCloudinaryUrls(JsonNode node, Set<String> urls) {
+        if (node == null) {
+            return;
+        }
+        if (node.isTextual()) {
+            String value = node.asText();
+            if (cloudinaryMediaService.isCloudinaryUrl(value)) {
+                urls.add(value);
+            }
+            return;
+        }
+        if (node.isArray()) {
+            node.forEach(item -> collectCloudinaryUrls(item, urls));
+            return;
+        }
+        if (node.isObject()) {
+            node.fields().forEachRemaining(entry -> collectCloudinaryUrls(entry.getValue(), urls));
+        }
+    }
 
     // Get all homepage settings
     @GetMapping
@@ -76,6 +122,10 @@ public class HomePageSettingsController {
                 return ResponseEntity.badRequest().body(Map.of("error", "No settings provided"));
             }
             
+                String previousHeroSlideshow = settingsRepository.findBySettingKey("heroSlideshow")
+                    .map(HomePageSettings::getSettingValue)
+                    .orElse(null);
+
             settings.forEach((key, value) -> {
                 try {
                     logger.debug("Saving setting: {} with value length: {}", key, value != null ? value.length() : 0);
@@ -94,6 +144,13 @@ public class HomePageSettingsController {
                     throw new RuntimeException("Failed to save setting: " + key, e);
                 }
             });
+
+            if (settings.containsKey("heroSlideshow")) {
+                Set<String> previousUrls = extractCloudinaryUrls(previousHeroSlideshow);
+                Set<String> currentUrls = extractCloudinaryUrls(settings.get("heroSlideshow"));
+                previousUrls.removeAll(currentUrls);
+                cloudinaryMediaService.deleteAssetsByUrls(previousUrls);
+            }
             
             logger.info("Bulk settings update completed successfully for {} settings", settings.size());
             return getAllSettings();

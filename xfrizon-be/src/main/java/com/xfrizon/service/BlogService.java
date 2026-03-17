@@ -27,6 +27,7 @@ public class BlogService {
 
     private final BlogRepository blogRepository;
     private final ObjectMapper objectMapper;
+    private final CloudinaryMediaService cloudinaryMediaService;
 
     /**
      * Convert Object to JSON String (handles JsonNode, Object, and String types)
@@ -147,6 +148,77 @@ public class BlogService {
         }
     }
 
+    private void collectCloudinaryUrls(Object value, java.util.Set<String> urls) {
+        if (value == null || urls == null) {
+            return;
+        }
+
+        if (value instanceof String str) {
+            String trimmed = str.trim();
+            if (cloudinaryMediaService.isCloudinaryUrl(trimmed)) {
+                urls.add(trimmed);
+                return;
+            }
+
+            if ((trimmed.startsWith("{") && trimmed.endsWith("}"))
+                    || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+                try {
+                    JsonNode node = objectMapper.readTree(trimmed);
+                    collectCloudinaryUrls(node, urls);
+                } catch (Exception ignored) {
+                    // Not JSON, ignore.
+                }
+            }
+            return;
+        }
+
+        if (value instanceof JsonNode node) {
+            if (node.isTextual()) {
+                String text = node.asText();
+                if (cloudinaryMediaService.isCloudinaryUrl(text)) {
+                    urls.add(text);
+                }
+                return;
+            }
+            if (node.isArray()) {
+                for (JsonNode item : node) {
+                    collectCloudinaryUrls(item, urls);
+                }
+                return;
+            }
+            if (node.isObject()) {
+                Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+                while (fields.hasNext()) {
+                    collectCloudinaryUrls(fields.next().getValue(), urls);
+                }
+            }
+            return;
+        }
+
+        if (value instanceof Iterable<?> iterable) {
+            for (Object item : iterable) {
+                collectCloudinaryUrls(item, urls);
+            }
+            return;
+        }
+
+        if (value instanceof Map<?, ?> map) {
+            for (Object item : map.values()) {
+                collectCloudinaryUrls(item, urls);
+            }
+        }
+    }
+
+    private java.util.Set<String> collectBlogMediaUrls(Blog blog) {
+        java.util.Set<String> urls = new java.util.LinkedHashSet<>();
+        collectCloudinaryUrls(blog.getCoverImage(), urls);
+        collectCloudinaryUrls(blog.getBlocks(), urls);
+        collectCloudinaryUrls(blog.getImages(), urls);
+        collectCloudinaryUrls(blog.getVideos(), urls);
+        collectCloudinaryUrls(blog.getAudioTracks(), urls);
+        return urls;
+    }
+
     /**
      * Get all active blogs with pagination
      */
@@ -222,6 +294,8 @@ public class BlogService {
         Blog blog = blogRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Blog not found with ID: " + id));
 
+        java.util.Set<String> previousUrls = collectBlogMediaUrls(blog);
+
         validateStrictMediaFields(
             request.getCoverImage(),
             request.getBlocks(),
@@ -280,6 +354,9 @@ public class BlogService {
         }
 
         Blog updatedBlog = blogRepository.save(blog);
+        java.util.Set<String> currentUrls = collectBlogMediaUrls(updatedBlog);
+        previousUrls.removeAll(currentUrls);
+        cloudinaryMediaService.deleteAssetsByUrls(previousUrls);
         log.info("Blog updated successfully with ID: {}", updatedBlog.getId());
         return BlogResponse.from(updatedBlog);
     }
@@ -294,8 +371,11 @@ public class BlogService {
         Blog blog = blogRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Blog not found with ID: " + id));
 
+        java.util.Set<String> previousUrls = collectBlogMediaUrls(blog);
+
         blog.setDeletedAt(LocalDateTime.now());
         blogRepository.save(blog);
+        cloudinaryMediaService.deleteAssetsByUrls(previousUrls);
         log.info("Blog deleted successfully with ID: {}", id);
     }
 
@@ -337,6 +417,8 @@ public class BlogService {
 
         Blog blog = blogRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Blog not found with ID: " + id));
+
+        java.util.Set<String> previousUrls = collectBlogMediaUrls(blog);
 
         validateStrictMediaFields(
             request.getCoverImage(),
@@ -395,6 +477,9 @@ public class BlogService {
         blog.setStatus(Blog.BlogStatus.DRAFT);
         
         Blog draftBlog = blogRepository.save(blog);
+        java.util.Set<String> currentUrls = collectBlogMediaUrls(draftBlog);
+        previousUrls.removeAll(currentUrls);
+        cloudinaryMediaService.deleteAssetsByUrls(previousUrls);
         log.info("Blog saved as draft successfully with ID: {}", draftBlog.getId());
         return BlogResponse.from(draftBlog);
     }
