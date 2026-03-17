@@ -4,25 +4,32 @@ import { toast } from "react-toastify";
 export default function BlockImageManager({ block, updateBlock }) {
   const fileInputRef = React.useRef(null);
 
+  const getPreviewUrl = (image) => image?.preview || image?.src;
+
+  const revokePreview = (image) => {
+    const previewUrl = getPreviewUrl(image);
+    if (typeof previewUrl === "string" && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateBlock(block.id, {
-          images: [
-            ...(block.images || []),
-            {
-              id: Date.now() + Math.random(),
-              src: reader.result,
-              name: file.name,
-              file,
-            },
-          ],
-        });
-        toast.success(`Image "${file.name}" added`);
-      };
-      reader.readAsDataURL(file);
+      const previewUrl = URL.createObjectURL(file);
+      updateBlock(block.id, {
+        images: [
+          ...(block.images || []),
+          {
+            id: Date.now() + Math.random(),
+            src: previewUrl,
+            preview: previewUrl,
+            name: file.name,
+            file,
+          },
+        ],
+      });
+      toast.success(`Image "${file.name}" added`);
     });
   };
 
@@ -51,17 +58,18 @@ export default function BlockImageManager({ block, updateBlock }) {
               className="relative rounded-lg overflow-hidden group"
             >
               <img
-                src={img.src}
+                src={getPreviewUrl(img)}
                 alt={img.name}
                 className="w-full h-32 object-cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                 <button
-                  onClick={() =>
+                  onClick={() => {
+                    revokePreview(img);
                     updateBlock(block.id, {
                       images: block.images.filter((i) => i.id !== img.id),
-                    })
-                  }
+                    });
+                  }}
                   className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700\"
                 >
                   Remove

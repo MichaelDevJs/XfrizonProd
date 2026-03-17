@@ -93,6 +93,7 @@ const dataUrlToFile = async (dataUrl, filename) => {
 const sanitizeUploadedImage = (image, src) => ({
   ...image,
   src,
+  url: src,
   file: undefined,
   preview: undefined,
 });
@@ -100,6 +101,7 @@ const sanitizeUploadedImage = (image, src) => ({
 const sanitizeUploadedVideo = (video, src) => ({
   ...video,
   src,
+  url: src,
   file: undefined,
   preview: undefined,
 });
@@ -107,9 +109,26 @@ const sanitizeUploadedVideo = (video, src) => ({
 const sanitizeUploadedAudioTrack = (track, src) => ({
   ...track,
   src,
+  url: src,
   file: undefined,
   preview: undefined,
 });
+
+const containsDataUrl = (value) => {
+  if (typeof value === "string") {
+    return isDataUrl(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => containsDataUrl(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).some((entry) => containsDataUrl(entry));
+  }
+
+  return false;
+};
 
 export default function BlogManagement() {
   const navigate = useNavigate();
@@ -196,7 +215,11 @@ export default function BlogManagement() {
   const handleSaveBlog = async (formData) => {
     const uploadCoverImage = async (coverImage) => {
       if (!coverImage) return null;
-      if (typeof coverImage === "string" && !isDataUrl(coverImage)) {
+      if (
+        typeof coverImage === "string" &&
+        !isDataUrl(coverImage) &&
+        !isBlobUrl(coverImage)
+      ) {
         return coverImage;
       }
 
@@ -416,6 +439,11 @@ export default function BlogManagement() {
       titleStyle: formData.titleStyle || {},
     };
 
+    if (containsDataUrl(blogData)) {
+      toast.error("Some media is still using base64 data. Please retry upload.");
+      return;
+    }
+
     try {
       setIsSaving(true);
       if (editingBlog) {
@@ -497,6 +525,170 @@ export default function BlogManagement() {
   // Duplicate blog
   const handleDuplicate = async (blog) => {
     try {
+      const uploadCollectionWithDataUrlSupport = async (
+        items,
+        endpoints,
+        filenamePrefix,
+      ) => {
+        const sourceItems = Array.isArray(items) ? items : [];
+        return Promise.all(
+          sourceItems.map(async (item, index) => {
+            const source =
+              typeof item === "string" ? item : item?.src || item?.url || null;
+
+            if (
+              typeof source === "string" &&
+              !isDataUrl(source) &&
+              !isBlobUrl(source)
+            ) {
+              return item;
+            }
+
+            if (!source) {
+              return item;
+            }
+
+            const fileToUpload = await dataUrlToFile(
+              source,
+              `${filenamePrefix}-${index + 1}`,
+            );
+            const uploadedUrl = await uploadFileWithFallback(
+              endpoints,
+              fileToUpload,
+            );
+
+            if (typeof item === "string") {
+              return uploadedUrl;
+            }
+
+            return {
+              ...item,
+              src: uploadedUrl,
+              url: uploadedUrl,
+              file: undefined,
+              preview: undefined,
+            };
+          }),
+        );
+      };
+
+      const normalizeDuplicateBlocks = async (blocks) => {
+        return Promise.all(
+          (Array.isArray(blocks) ? blocks : []).map(async (block) => {
+            if (block.type === "image" && Array.isArray(block.images)) {
+              return {
+                ...block,
+                images: await uploadCollectionWithDataUrlSupport(
+                  block.images,
+                  ["/uploads/cover-photo", "/uploads/media"],
+                  "blog-duplicate-image",
+                ),
+              };
+            }
+
+            if (block.type === "video" && Array.isArray(block.videos)) {
+              return {
+                ...block,
+                videos: await uploadCollectionWithDataUrlSupport(
+                  block.videos,
+                  ["/uploads/upload", "/uploads/media"],
+                  "blog-duplicate-video",
+                ),
+              };
+            }
+
+            if (block.type === "audio" && Array.isArray(block.audioTracks)) {
+              return {
+                ...block,
+                audioTracks: await Promise.all(
+                  block.audioTracks.map(async (track, index) => {
+                    if (track?.type && track.type !== "local") {
+                      return track;
+                    }
+
+                    const source = track?.src || track?.url;
+                    if (
+                      typeof source !== "string" ||
+                      (!isDataUrl(source) && !isBlobUrl(source))
+                    ) {
+                      return track;
+                    }
+
+                    const fileToUpload = await dataUrlToFile(
+                      source,
+                      `blog-duplicate-audio-${index + 1}`,
+                    );
+                    const uploadedUrl = await uploadFileWithFallback(
+                      ["/uploads/upload"],
+                      fileToUpload,
+                    );
+
+                    return {
+                      ...track,
+                      src: uploadedUrl,
+                      url: uploadedUrl,
+                      file: undefined,
+                      preview: undefined,
+                    };
+                  }),
+                ),
+              };
+            }
+
+            return block;
+          }),
+        );
+      };
+
+      const normalizedCoverImage =
+        typeof blog.coverImage === "string" &&
+        (isDataUrl(blog.coverImage) || isBlobUrl(blog.coverImage))
+          ? await uploadFileWithFallback(
+              ["/uploads/cover-photo"],
+              await dataUrlToFile(blog.coverImage, "blog-duplicate-cover"),
+            )
+          : blog.coverImage;
+
+      const normalizedBlocks = await normalizeDuplicateBlocks(blog.blocks || []);
+
+      const fallbackImages = await uploadCollectionWithDataUrlSupport(
+        blog.images || [],
+        ["/uploads/cover-photo", "/uploads/media"],
+        "blog-duplicate-image-fallback",
+      );
+      const fallbackVideos = await uploadCollectionWithDataUrlSupport(
+        blog.videos || [],
+        ["/uploads/upload", "/uploads/media"],
+        "blog-duplicate-video-fallback",
+      );
+      const fallbackAudio = await uploadCollectionWithDataUrlSupport(
+        (blog.audioTracks || []).filter((track) => !track?.type || track.type === "local"),
+        ["/uploads/upload"],
+        "blog-duplicate-audio-fallback",
+      );
+
+      const blockImages = normalizedBlocks
+        .filter((b) => b.type === "image")
+        .flatMap((b) => b.images || []);
+      const blockVideos = normalizedBlocks
+        .filter((b) => b.type === "video")
+        .flatMap((b) => b.videos || []);
+      const blockAudio = normalizedBlocks
+        .filter((b) => b.type === "audio")
+        .flatMap((b) => b.audioTracks || []);
+
+      const normalizedImages = blockImages.length > 0 ? blockImages : fallbackImages;
+      const normalizedVideos = blockVideos.length > 0 ? blockVideos : fallbackVideos;
+      const normalizedAudio =
+        blockAudio.length > 0
+          ? blockAudio
+          : [
+              ...fallbackAudio,
+              ...(blog.audioTracks || []).filter(
+                (track) => track?.type && track.type !== "local",
+              ),
+            ];
+
       // Create a copy of the blog data
       const duplicatedBlog = {
         title: `${blog.title} (Copy)`,
@@ -504,18 +696,23 @@ export default function BlogManagement() {
         category: blog.category,
         location: blog.location || "",
         genre: blog.genre || "",
-        coverImage: blog.coverImage,
+        coverImage: normalizedCoverImage,
         excerpt: blog.excerpt,
         content: blog.content,
-        blocks: blog.blocks || [],
-        images: blog.images || [],
-        videos: blog.videos || [],
+        blocks: normalizedBlocks,
+        images: normalizedImages,
+        videos: normalizedVideos,
         youtubeLinks: blog.youtubeLinks || [],
-        audioTracks: blog.audioTracks || [],
+        audioTracks: normalizedAudio,
         tags: blog.tags || [],
         titleStyle: blog.titleStyle || {},
         status: "DRAFT",
       };
+
+      if (containsDataUrl(duplicatedBlog)) {
+        toast.error("Duplicate blocked: media still contains base64 data.");
+        return;
+      }
 
       const response = await blogApi.createBlog(duplicatedBlog);
       const newBlog = response.data || response;

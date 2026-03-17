@@ -105,6 +105,12 @@ export default function AdminBlogHeroBlocksPage() {
     };
   };
 
+  const hasUnsafeSlideUrls = (slides = []) =>
+    (Array.isArray(slides) ? slides : []).some((slide) => {
+      const url = String(slide?.url || "");
+      return url.startsWith("data:") || url.startsWith("blob:");
+    });
+
   const appendSlide = (slideConfig) => {
     setBlogHeroSlideshow((prev) => {
       const normalized = normalizeSlide(
@@ -269,6 +275,11 @@ export default function AdminBlogHeroBlocksPage() {
   };
 
   const handleSave = async () => {
+    if (hasUnsafeSlideUrls(blogHeroSlideshow)) {
+      toast.error("Some slides still use local/base64 URLs. Re-upload and try again.");
+      return;
+    }
+
     setSaving(true);
     try {
       const processedSlides = blogHeroSlideshow.map((slide, index) => {
@@ -440,6 +451,11 @@ export default function AdminBlogHeroBlocksPage() {
 
     // Persist new slideshow immediately so refresh does not drop unsaved media
     try {
+      if (hasUnsafeSlideUrls(updatedSlides)) {
+        toast.error("Slide added locally but URL is not upload-safe. Re-upload before saving.");
+        return;
+      }
+
       const processedSlides = updatedSlides.map((slide, index) => {
         const normalized = normalizeSlide(slide, index);
         return {
