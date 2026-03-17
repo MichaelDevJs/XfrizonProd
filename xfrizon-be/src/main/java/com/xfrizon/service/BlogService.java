@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -40,6 +43,107 @@ public class BlogService {
         } catch (Exception e) {
             log.warn("Failed to convert Object to String: {}", e.getMessage());
             return null;
+        }
+    }
+
+    private boolean isUnsafeMediaReference(String value) {
+        if (value == null) {
+            return false;
+        }
+
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return false;
+        }
+
+        return normalized.startsWith("data:")
+                || normalized.startsWith("blob:")
+                || normalized.equals("/uploads")
+                || normalized.startsWith("/uploads/")
+                || normalized.contains("/api/v1/uploads/")
+                || normalized.contains("/uploads/");
+    }
+
+    private boolean containsUnsafeMediaValue(Object value) {
+        if (value == null) {
+            return false;
+        }
+
+        if (value instanceof String str) {
+            if (isUnsafeMediaReference(str)) {
+                return true;
+            }
+
+            String trimmed = str.trim();
+            if ((trimmed.startsWith("{") && trimmed.endsWith("}"))
+                    || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+                try {
+                    JsonNode node = objectMapper.readTree(trimmed);
+                    return containsUnsafeMediaValue(node);
+                } catch (Exception ignored) {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        if (value instanceof JsonNode node) {
+            if (node.isTextual()) {
+                return isUnsafeMediaReference(node.asText());
+            }
+            if (node.isArray()) {
+                for (JsonNode item : node) {
+                    if (containsUnsafeMediaValue(item)) {
+                        return true;
+                    }
+                }
+            }
+            if (node.isObject()) {
+                Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+                while (fields.hasNext()) {
+                    if (containsUnsafeMediaValue(fields.next().getValue())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        if (value instanceof Iterable<?> iterable) {
+            for (Object item : iterable) {
+                if (containsUnsafeMediaValue(item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (value instanceof Map<?, ?> map) {
+            for (Object item : map.values()) {
+                if (containsUnsafeMediaValue(item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    private void validateStrictMediaFields(
+            String coverImage,
+            Object blocks,
+            Object images,
+            Object videos,
+            Object audioTracks) {
+        if (containsUnsafeMediaValue(coverImage)
+                || containsUnsafeMediaValue(blocks)
+                || containsUnsafeMediaValue(images)
+                || containsUnsafeMediaValue(videos)
+                || containsUnsafeMediaValue(audioTracks)) {
+            throw new IllegalArgumentException(
+                    "Inline/base64/blob/local upload media values are not allowed. Upload to Cloudinary first.");
         }
     }
 
@@ -74,6 +178,13 @@ public class BlogService {
         if (request.getContent() == null || request.getContent().trim().length() < 10) {
             throw new IllegalArgumentException("Content must be at least 10 characters long");
         }
+
+        validateStrictMediaFields(
+            request.getCoverImage(),
+            request.getBlocks(),
+            request.getImages(),
+            request.getVideos(),
+            request.getAudioTracks());
 
         Blog blog = Blog.builder()
                 .title(request.getTitle())
@@ -110,6 +221,13 @@ public class BlogService {
 
         Blog blog = blogRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Blog not found with ID: " + id));
+
+        validateStrictMediaFields(
+            request.getCoverImage(),
+            request.getBlocks(),
+            request.getImages(),
+            request.getVideos(),
+            request.getAudioTracks());
 
         // Update only provided fields
         if (request.getTitle() != null) {
@@ -219,6 +337,13 @@ public class BlogService {
 
         Blog blog = blogRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Blog not found with ID: " + id));
+
+        validateStrictMediaFields(
+            request.getCoverImage(),
+            request.getBlocks(),
+            request.getImages(),
+            request.getVideos(),
+            request.getAudioTracks());
 
         // Apply updates
         if (request.getTitle() != null) {

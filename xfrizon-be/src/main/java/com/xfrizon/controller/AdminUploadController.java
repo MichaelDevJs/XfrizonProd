@@ -32,6 +32,9 @@ public class AdminUploadController {
     @Value("${cloudinary.enabled:false}")
     private boolean cloudinaryEnabled;
 
+    @Value("${cloudinary.required:false}")
+    private boolean cloudinaryRequired;
+
     @Value("${cloudinary.cloud-name:}")
     private String cloudinaryCloudName;
 
@@ -51,7 +54,14 @@ public class AdminUploadController {
 
     @PostConstruct
     public void init() {
-        configureCloudinaryIfAvailable();
+        if (configureCloudinaryIfAvailable()) {
+            return;
+        }
+
+        if (cloudinaryRequired) {
+            throw new IllegalStateException(
+                    "Cloudinary is required for admin uploads but not configured.");
+        }
     }
 
     private boolean isCloudinaryActive() {
@@ -215,6 +225,11 @@ public class AdminUploadController {
                     file.getOriginalFilename(), isVideo ? "video" : "image", contentType, file.getSize());
 
             String mediaType = isVideo ? "video" : "image";
+                if (cloudinaryRequired && !isCloudinaryActive()) {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new ErrorResponse("Cloudinary is required but not configured"));
+                }
+
             UploadResponse uploadResponse = isCloudinaryActive()
                     ? uploadHeroToCloudinary(file, mediaType)
                     : uploadHeroToLocalDisk(file, mediaType);
