@@ -106,6 +106,19 @@ export default function BlogDetailPage() {
     safeBlog.excerpt || safeBlog.content || "No description available.";
   const safeCategory = safeBlog.category || "General";
   const safeAuthor = safeBlog.author || "Unknown";
+  const safeAuthorProfileImage =
+    safeBlog.authorProfileImage ||
+    safeBlog.authorAvatar ||
+    safeBlog.authorImage ||
+    (typeof safeBlog.titleStyle === "string"
+      ? (() => {
+          try {
+            return JSON.parse(safeBlog.titleStyle)?.authorProfileImage || "";
+          } catch {
+            return "";
+          }
+        })()
+      : safeBlog.titleStyle?.authorProfileImage || "");
   const safePublishedAt = safeBlog.publishedAt || safeBlog.createdAt || "";
   const safeTitleStyle =
     typeof safeBlog.titleStyle === "object" && safeBlog.titleStyle !== null
@@ -133,6 +146,10 @@ export default function BlogDetailPage() {
     }
     return `${getSiteBaseUrl()}${normalized}`;
   };
+
+  const authorProfileImageUrl = safeAuthorProfileImage
+    ? getAbsoluteMediaUrl(safeAuthorProfileImage)
+    : "";
 
   useEffect(() => {
     fetchBlogDetail();
@@ -189,7 +206,13 @@ export default function BlogDetailPage() {
   const fetchBlogDetail = async () => {
     try {
       setLoading(true);
-      const response = await blogApi.getBlogById(id);
+      const [detailResult, allBlogsResult] = await Promise.allSettled([
+        blogApi.getBlogById(id),
+        blogApi.getAllBlogs(),
+      ]);
+
+      if (detailResult.status === "rejected") throw detailResult.reason;
+      const response = detailResult.value;
 
       // Handle API response structure
       let blogData = response.data;
@@ -269,6 +292,47 @@ export default function BlogDetailPage() {
               : blogData.tags
             : [],
         };
+      }
+
+      // If this blog has no author image, look it up from other articles by the same author name
+      if (allBlogsResult.status === "fulfilled" && blogData) {
+        const allBlogsList = allBlogsResult.value?.data
+          ? allBlogsResult.value.data.content || allBlogsResult.value.data
+          : allBlogsResult.value;
+        if (Array.isArray(allBlogsList)) {
+          const authorImageMap = {};
+          allBlogsList.forEach((b) => {
+            const name = (b.author || "").toLowerCase().trim();
+            const img =
+              b.authorProfileImage ||
+              b.authorAvatar ||
+              b.authorImage ||
+              (typeof b.titleStyle === "string"
+                ? (() => {
+                    try {
+                      return JSON.parse(b.titleStyle)?.authorProfileImage || "";
+                    } catch {
+                      return "";
+                    }
+                  })()
+                : b.titleStyle?.authorProfileImage || "");
+            if (name && img && !authorImageMap[name]) {
+              authorImageMap[name] = img;
+            }
+          });
+          const existingImage =
+            blogData.authorProfileImage ||
+            blogData.authorAvatar ||
+            blogData.authorImage ||
+            blogData.titleStyle?.authorProfileImage ||
+            "";
+          if (!existingImage) {
+            const authorName = (blogData.author || "").toLowerCase().trim();
+            if (authorName && authorImageMap[authorName]) {
+              blogData = { ...blogData, authorProfileImage: authorImageMap[authorName] };
+            }
+          }
+        }
       }
 
       setBlog(blogData);
@@ -1329,8 +1393,14 @@ export default function BlogDetailPage() {
                     {formatDate(blog.publishedAt || blog.createdAt)}
                   </span>
                   <span className="flex items-center gap-2">
-                    <FaUser size={12} />
                     {blog.author || "Unknown"}
+                    {authorProfileImageUrl && (
+                      <img
+                        src={authorProfileImageUrl}
+                        alt={blog.author || "Unknown"}
+                        className="w-5 h-5 rounded-full object-cover border border-gray-400/40"
+                      />
+                    )}
                   </span>
                   {blog.location && <span>{blog.location}</span>}
                   <div className="relative" ref={shareMenuRef}>
@@ -1397,8 +1467,14 @@ export default function BlogDetailPage() {
               {blog.category || "General"}
             </span>
             <div className="flex items-center gap-2 text-gray-400 uppercase tracking-wider">
-              <FaUser size={14} />
               <span className="font-medium">{blog.author || "Unknown"}</span>
+              {authorProfileImageUrl && (
+                <img
+                  src={authorProfileImageUrl}
+                  alt={blog.author || "Unknown"}
+                  className="w-5 h-5 rounded-full object-cover border border-gray-500/40"
+                />
+              )}
             </div>
 
             {blog.status && (

@@ -214,23 +214,20 @@ const Header = () => {
     );
 
   return (
-    <header className="w-full fixed top-0 left-0 z-50 bg-transparent backdrop-blur-md">
+    <header className="w-full fixed top-0 left-0 z-50 bg-black border-b border-[#343232]">
       {/* Main Header */}
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 gap-3">
+        <div className="flex justify-between items-center px-4 sm:px-6 h-12 sm:h-14 gap-3">
           {/* Left: Logo */}
           <Link
             to="/"
             className="flex items-center gap-2 group cursor-pointer transition-all duration-300 hover:opacity-80 shrink-0"
           >
             <span
-              className="text-xl font-bold text-xf-accent tracking-widest"
+              className="text-xl font-bold text-red-500 tracking-widest"
               style={{ fontFamily: "'Rajdhani', sans-serif" }}
             >
               XF
-            </span>
-            <span className="text-xs text-gray-500 tracking-widest font-light">
-              EVENTS
             </span>
           </Link>
 
@@ -626,7 +623,7 @@ const Header = () => {
                 <Link
                   to="/auth/login"
                   state={{ from: location }}
-                  className="px-3 sm:px-4 py-2 text-gray-400 hover:text-xf-accent border border-zinc-800 rounded-lg hover:border-xf-accent hover:bg-zinc-900 transition-all duration-300 text-[11px] sm:text-xs font-light uppercase tracking-widest whitespace-nowrap"
+                  className="px-3 sm:px-4 py-2 text-gray-400 hover:text-xf-accent rounded-lg hover:bg-zinc-900 transition-all duration-300 text-[11px] sm:text-xs font-light uppercase tracking-widest whitespace-nowrap"
                 >
                   Login
                 </Link>

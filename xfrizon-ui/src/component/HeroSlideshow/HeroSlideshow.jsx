@@ -77,6 +77,12 @@ const HeroSlideshow = ({
 
   const sizeClasses = getTextSizeClasses();
   const positionClasses = getPositionClasses();
+  const adjustedPositionClasses =
+    showXfMag && String(textPosition).startsWith("top-")
+      ? positionClasses
+          .replace("pt-6", "pt-14")
+          .replace("sm:pt-8", "sm:pt-16")
+      : positionClasses;
 
   const apiBaseUrl =
     import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8081/api/v1";
@@ -191,7 +197,7 @@ const HeroSlideshow = ({
           <span className="text-red-500 font-extrabold text-base tracking-wide">
             XF
           </span>
-          <span className="text-white font-semibold text-sm tracking-wide ml-1">
+          <span className="text-black font-semibold text-sm tracking-wide ml-1">
             Mag
           </span>
         </div>
@@ -235,7 +241,7 @@ const HeroSlideshow = ({
         currentSlideCaption ||
         currentSlideCtaLabel) && (
         <div
-          className={`absolute inset-0 flex ${positionClasses}`}
+          className={`absolute inset-0 flex ${adjustedPositionClasses}`}
           style={{
             backgroundColor: `rgba(0, 0, 0, ${parseInt(overlayOpacity) / 100})`,
           }}
@@ -244,7 +250,7 @@ const HeroSlideshow = ({
             <div className="max-w-3xl">
               {currentSlideTitle ? (
                 <h2
-                  className={`${sizeClasses.title} font-semibold tracking-tight mb-2`}
+                  className={`${sizeClasses.title} line-clamp-2 font-semibold tracking-tight mb-2`}
                   style={{ color: textColor }}
                 >
                   {currentSlideTitle}
@@ -252,7 +258,7 @@ const HeroSlideshow = ({
               ) : (
                 title && (
                   <h1
-                    className={`${sizeClasses.title} font-semibold tracking-tight mb-2`}
+                    className={`${sizeClasses.title} line-clamp-2 font-semibold tracking-tight mb-2`}
                     style={{ color: textColor }}
                   >
                     {title}
@@ -262,7 +268,7 @@ const HeroSlideshow = ({
 
               {currentSlideCaption ? (
                 <p
-                  className={`${sizeClasses.caption} mb-3 sm:mb-4 opacity-90`}
+                  className={`${sizeClasses.caption} line-clamp-2 mb-3 sm:mb-4 opacity-90`}
                   style={{ color: textColor }}
                 >
                   {currentSlideCaption}
@@ -270,7 +276,7 @@ const HeroSlideshow = ({
               ) : (
                 subtitle && (
                   <p
-                    className={`${sizeClasses.caption} mb-3 sm:mb-4 opacity-90`}
+                    className={`${sizeClasses.caption} line-clamp-2 mb-3 sm:mb-4 opacity-90`}
                     style={{ color: textColor }}
                   >
                     {subtitle}
@@ -278,7 +284,7 @@ const HeroSlideshow = ({
                 )
               )}
 
-              {currentSlideCtaLabel && currentSlideCtaLink && (
+              {currentSlideCtaLabel && currentSlideCtaLink && !showXfMag && (
                 <button
                   type="button"
                   onClick={handleSlideCtaClick}

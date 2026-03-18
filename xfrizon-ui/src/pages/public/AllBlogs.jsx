@@ -119,16 +119,53 @@ export default function AllBlogs() {
         }
       }
 
-      const blogList = allBlogs
-        .map((blog) => ({
-          ...blog,
-          tags: parseTags(blog.tags),
-        }))
+      let blogList = allBlogs
+        .map((blog) => {
+          const parsedTitleStyle =
+            typeof blog.titleStyle === "string"
+              ? (() => {
+                  try {
+                    return JSON.parse(blog.titleStyle);
+                  } catch {
+                    return {};
+                  }
+                })()
+              : blog.titleStyle || {};
+          return {
+            ...blog,
+            tags: parseTags(blog.tags),
+            titleStyle: parsedTitleStyle,
+            authorProfileImage:
+              blog.authorProfileImage ||
+              blog.authorAvatar ||
+              blog.authorImage ||
+              parsedTitleStyle?.authorProfileImage ||
+              "",
+          };
+        })
         .sort(
           (a, b) =>
             new Date(b.publishedAt || b.createdAt || 0) -
             new Date(a.publishedAt || a.createdAt || 0),
         );
+
+      // Build author name → image map and backfill blogs missing an avatar
+      const authorImageMap = {};
+      blogList.forEach((b) => {
+        const name = (b.author || "").toLowerCase().trim();
+        if (name && b.authorProfileImage && !authorImageMap[name]) {
+          authorImageMap[name] = b.authorProfileImage;
+        }
+      });
+      blogList = blogList.map((b) => {
+        if (!b.authorProfileImage) {
+          const name = (b.author || "").toLowerCase().trim();
+          if (name && authorImageMap[name]) {
+            return { ...b, authorProfileImage: authorImageMap[name] };
+          }
+        }
+        return b;
+      });
 
       setBlogs(blogList);
       applyFilters(blogList, filters);

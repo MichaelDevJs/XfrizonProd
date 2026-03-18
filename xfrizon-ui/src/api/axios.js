@@ -28,7 +28,11 @@ const hasDataUrl = (value) => {
   }
 
   if (value && typeof value === "object") {
-    if (value instanceof File || value instanceof Blob || value instanceof FormData) {
+    if (
+      value instanceof File ||
+      value instanceof Blob ||
+      value instanceof FormData
+    ) {
       return false;
     }
     return Object.values(value).some((entry) => hasDataUrl(entry));
@@ -117,7 +121,9 @@ api.interceptors.response.use(
       isRetryableNetworkError(error) &&
       !config.__sameOriginFallbackTried
     ) {
-      const requestBaseUrl = String(config.baseURL || api.defaults.baseURL || "");
+      const requestBaseUrl = String(
+        config.baseURL || api.defaults.baseURL || "",
+      );
       if (requestBaseUrl.includes(LOCAL_API_BASE_URL)) {
         config.__sameOriginFallbackTried = true;
         config.baseURL = SAME_ORIGIN_API_BASE_URL;

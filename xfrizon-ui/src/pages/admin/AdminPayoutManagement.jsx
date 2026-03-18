@@ -160,10 +160,9 @@ export default function AdminPayoutManagement() {
     try {
       setProcessing("retry-all");
       const response = await retryAllFailedEventPayouts();
-      const retriedCount =
-        Number.isFinite(Number(response?.data?.retriedCount))
-          ? Number(response.data.retriedCount)
-          : null;
+      const retriedCount = Number.isFinite(Number(response?.data?.retriedCount))
+        ? Number(response.data.retriedCount)
+        : null;
       toast.success(
         retriedCount !== null
           ? `Retried ${retriedCount} failed payout(s)`
@@ -249,7 +248,8 @@ export default function AdminPayoutManagement() {
   };
 
   const toCsvSafe = (value) => {
-    const safeValue = value === null || value === undefined ? "" : String(value);
+    const safeValue =
+      value === null || value === undefined ? "" : String(value);
     const escaped = safeValue.replace(/"/g, '""');
     return `"${escaped}"`;
   };

@@ -109,9 +109,18 @@ export default function BlogList({
                 {blog.title}
               </h3>
 
-              <p className="text-xs text-zinc-400 mb-2">
-                By <span className="font-semibold">{blog.author}</span>
-              </p>
+              <div className="text-xs text-zinc-400 mb-2 flex items-center gap-2">
+                {blog.authorProfileImage && (
+                  <img
+                    src={blog.authorProfileImage}
+                    alt={blog.author || "Author"}
+                    className="w-5 h-5 rounded-full object-cover border border-zinc-700"
+                  />
+                )}
+                <p>
+                  By <span className="font-semibold">{blog.author}</span>
+                </p>
+              </div>
 
               {blog.excerpt && (
                 <p className="text-xs text-zinc-400 mb-3 line-clamp-2">

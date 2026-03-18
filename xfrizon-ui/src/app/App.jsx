@@ -12,7 +12,7 @@ function App({ children }) {
   return (
     <div className="flex flex-col min-h-screen bg-[#1e1e1e] text-white">
       {!isAdminRoute && <Header />}
-      <main className={!isAdminRoute ? "flex-1 pt-20" : "flex-1"}>
+      <main className={!isAdminRoute ? "flex-1 pt-12 sm:pt-14" : "flex-1"}>
         {children}
       </main>
       {!isAdminRoute && <Footer />}

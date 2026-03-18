@@ -219,44 +219,72 @@ export default function BlogManagement() {
 
       // Parse JSON strings into arrays for media fields
       if (Array.isArray(blogList)) {
-        blogList = blogList.map((blog) => ({
-          ...blog,
-          blocks: blog.blocks
-            ? typeof blog.blocks === "string"
-              ? JSON.parse(blog.blocks)
-              : blog.blocks
-            : [],
-          images: blog.images
-            ? typeof blog.images === "string"
-              ? JSON.parse(blog.images)
-              : blog.images
-            : [],
-          videos: blog.videos
-            ? typeof blog.videos === "string"
-              ? JSON.parse(blog.videos)
-              : blog.videos
-            : [],
-          youtubeLinks: blog.youtubeLinks
-            ? typeof blog.youtubeLinks === "string"
-              ? JSON.parse(blog.youtubeLinks)
-              : blog.youtubeLinks
-            : [],
-          audioTracks: blog.audioTracks
-            ? typeof blog.audioTracks === "string"
-              ? JSON.parse(blog.audioTracks)
-              : blog.audioTracks
-            : [],
-          titleStyle: blog.titleStyle
+        blogList = blogList.map((blog) => {
+          const parsedTitleStyle = blog.titleStyle
             ? typeof blog.titleStyle === "string"
               ? JSON.parse(blog.titleStyle)
               : blog.titleStyle
-            : {},
-          tags: blog.tags
-            ? typeof blog.tags === "string"
-              ? JSON.parse(blog.tags)
-              : blog.tags
-            : [],
-        }));
+            : {};
+
+          return {
+            ...blog,
+            blocks: blog.blocks
+              ? typeof blog.blocks === "string"
+                ? JSON.parse(blog.blocks)
+                : blog.blocks
+              : [],
+            images: blog.images
+              ? typeof blog.images === "string"
+                ? JSON.parse(blog.images)
+                : blog.images
+              : [],
+            videos: blog.videos
+              ? typeof blog.videos === "string"
+                ? JSON.parse(blog.videos)
+                : blog.videos
+              : [],
+            youtubeLinks: blog.youtubeLinks
+              ? typeof blog.youtubeLinks === "string"
+                ? JSON.parse(blog.youtubeLinks)
+                : blog.youtubeLinks
+              : [],
+            audioTracks: blog.audioTracks
+              ? typeof blog.audioTracks === "string"
+                ? JSON.parse(blog.audioTracks)
+                : blog.audioTracks
+              : [],
+            titleStyle: parsedTitleStyle,
+            authorProfileImage:
+              blog.authorProfileImage ||
+              blog.authorAvatar ||
+              blog.authorImage ||
+              parsedTitleStyle?.authorProfileImage ||
+              null,
+            tags: blog.tags
+              ? typeof blog.tags === "string"
+                ? JSON.parse(blog.tags)
+                : blog.tags
+              : [],
+          };
+        });
+
+        // Build author name → image map and backfill blogs missing an avatar
+        const authorImageMap = {};
+        blogList.forEach((b) => {
+          const name = (b.author || "").toLowerCase().trim();
+          if (name && b.authorProfileImage && !authorImageMap[name]) {
+            authorImageMap[name] = b.authorProfileImage;
+          }
+        });
+        blogList = blogList.map((b) => {
+          if (!b.authorProfileImage) {
+            const name = (b.author || "").toLowerCase().trim();
+            if (name && authorImageMap[name]) {
+              return { ...b, authorProfileImage: authorImageMap[name] };
+            }
+          }
+          return b;
+        });
       }
 
       setBlogs(Array.isArray(blogList) ? blogList : []);
@@ -289,6 +317,28 @@ export default function BlogManagement() {
         coverImage instanceof File
           ? coverImage
           : await mediaSourceToFile(coverImage, "blog-cover-image");
+
+      return uploadFileWithFallback(["/uploads/cover-photo"], fileToUpload);
+    };
+
+    const uploadAuthorProfileImage = async (authorProfileImage) => {
+      if (!authorProfileImage) return null;
+      if (
+        typeof authorProfileImage === "string" &&
+        !isDataUrl(authorProfileImage) &&
+        !isBlobUrl(authorProfileImage) &&
+        !isLocalUploadUrl(authorProfileImage)
+      ) {
+        return authorProfileImage;
+      }
+
+      const fileToUpload =
+        authorProfileImage instanceof File
+          ? authorProfileImage
+          : await mediaSourceToFile(
+              authorProfileImage,
+              "blog-author-profile-image",
+            );
 
       return uploadFileWithFallback(["/uploads/cover-photo"], fileToUpload);
     };
@@ -454,10 +504,14 @@ export default function BlogManagement() {
       .join("\n\n");
 
     let coverImageValue = null;
+    let authorProfileImageValue = null;
     let normalizedBlocks = formData.blocks;
 
     try {
       coverImageValue = await uploadCoverImage(formData.coverImage);
+      authorProfileImageValue = await uploadAuthorProfileImage(
+        formData.authorProfileImage,
+      );
 
       normalizedBlocks = await uploadBlockImages(formData.blocks);
       normalizedBlocks = await uploadBlockVideos(normalizedBlocks);
@@ -495,10 +549,16 @@ export default function BlogManagement() {
       return;
     }
 
+    const normalizedTitleStyle = {
+      ...(formData.titleStyle || {}),
+      authorProfileImage: authorProfileImageValue || "",
+    };
+
     // Prepare blog data
     const blogData = {
       title: formData.title,
       author: formData.author,
+      authorProfileImage: authorProfileImageValue,
       category: formData.category,
       location: formData.location || "",
       coverImage: coverImageValue,
@@ -510,7 +570,7 @@ export default function BlogManagement() {
       youtubeLinks: allYoutube,
       audioTracks: allAudio,
       tags: formData.tags || [],
-      titleStyle: formData.titleStyle || {},
+      titleStyle: normalizedTitleStyle,
     };
 
     if (containsUnsafeMediaValue(blogData)) {
@@ -772,6 +832,12 @@ export default function BlogManagement() {
       const duplicatedBlog = {
         title: `${blog.title} (Copy)`,
         author: blog.author,
+        authorProfileImage:
+          blog.authorProfileImage ||
+          blog.authorAvatar ||
+          blog.authorImage ||
+          blog.titleStyle?.authorProfileImage ||
+          null,
         category: blog.category,
         location: blog.location || "",
         coverImage: normalizedCoverImage,
@@ -783,7 +849,15 @@ export default function BlogManagement() {
         youtubeLinks: blog.youtubeLinks || [],
         audioTracks: normalizedAudio,
         tags: blog.tags || [],
-        titleStyle: blog.titleStyle || {},
+        titleStyle: {
+          ...(blog.titleStyle || {}),
+          authorProfileImage:
+            blog.authorProfileImage ||
+            blog.authorAvatar ||
+            blog.authorImage ||
+            blog.titleStyle?.authorProfileImage ||
+            "",
+        },
         status: "DRAFT",
       };
 

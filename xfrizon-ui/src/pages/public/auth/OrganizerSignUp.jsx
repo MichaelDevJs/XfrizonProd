@@ -172,9 +172,6 @@ export default function OrganizerSignUp() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-light text-gray-400 tracking-wider mb-2">
-            XFRIZON
-          </h1>
           <h2 className="text-2xl font-light text-gray-300">
             Organizer SignUp
           </h2>
@@ -199,7 +196,7 @@ export default function OrganizerSignUp() {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              placeholder="John"
+              placeholder="Afro"
               className={`w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white placeholder-gray-600 font-light text-sm transition-all duration-300 focus:outline-none ${
                 errors.firstName
                   ? "border-red-500 focus:border-red-500"
@@ -227,7 +224,7 @@ export default function OrganizerSignUp() {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              placeholder="Doe"
+              placeholder="Nation"
               className={`w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white placeholder-gray-600 font-light text-sm transition-all duration-300 focus:outline-none ${
                 errors.lastName
                   ? "border-red-500 focus:border-red-500"
@@ -255,7 +252,7 @@ export default function OrganizerSignUp() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="organizer@example.com"
+              placeholder="afro.nation@xfrizon.com"
               className={`w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white placeholder-gray-600 font-light text-sm transition-all duration-300 focus:outline-none ${
                 errors.email
                   ? "border-red-500 focus:border-red-500"
@@ -355,7 +352,7 @@ export default function OrganizerSignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-800 disabled:opacity-50 text-white py-2.5 rounded-lg transition-all duration-300 font-light text-sm mt-6"
+            className="w-full bg-transparent hover:bg-zinc-900/40 disabled:opacity-50 text-red-500 py-2.5 rounded-lg transition-all duration-300 font-light text-sm mt-6 border border-zinc-700"
           >
             {loading ? "Creating Account..." : "Create Organizer Account"}
           </button>

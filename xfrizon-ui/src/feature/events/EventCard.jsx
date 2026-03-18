@@ -3,6 +3,7 @@ import {
   FaCalendarAlt,
   FaClock,
   FaHeart,
+  FaRegHeart,
   FaShareAlt,
 } from "react-icons/fa";
 import React, { useState, useContext, useEffect } from "react";
@@ -223,12 +224,10 @@ export default function EventCard({ event, onSaveChange }) {
                 className="p-3 rounded-full bg-black/80 hover:bg-black/95 transition-all duration-200 transform hover:scale-110"
                 title={isSaved ? "Unsave event" : "Save event"}
               >
-                <FaHeart
+                <FaRegHeart
                   size={20}
                   className={`transition-colors duration-200 ${
-                    isSaved
-                      ? "text-red-500 fill-red-500"
-                      : "text-white fill-white"
+                    isSaved ? "text-red-500" : "text-white"
                   }`}
                 />
               </button>
@@ -359,7 +358,7 @@ export default function EventCard({ event, onSaveChange }) {
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {/* Interested Count */}
                   <span className="text-xs text-red-500 font-light whitespace-nowrap shrink-0">
-                    {currentEvent.attendees?.length || 0} Interested
+                    Interested
                   </span>
 
                   {/* User Avatars or Message */}
@@ -419,11 +418,26 @@ export default function EventCard({ event, onSaveChange }) {
               </>
             )}
 
-            <div className="flex items-center rounded bg-zinc-900/70 px-1 py-0.5">
+            <div className="flex items-center gap-1 rounded px-1 py-0.5">
+              {!isPastEvent() && (
+                <button
+                  type="button"
+                  onClick={handleSaveToggle}
+                  disabled={saving}
+                  className="md:hidden rounded p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors disabled:opacity-60"
+                  aria-label={isSaved ? "Unsave event" : "Save event"}
+                  title={isSaved ? "Unsave" : "Save"}
+                >
+                  <FaRegHeart
+                    size={12}
+                    className={isSaved ? "text-red-500" : ""}
+                  />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleShare}
-                className="rounded p-1 text-gray-300 hover:text-white hover:bg-zinc-700/70 transition-colors"
+                className="rounded p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                 aria-label="Share event everywhere"
                 title="Share"
               >

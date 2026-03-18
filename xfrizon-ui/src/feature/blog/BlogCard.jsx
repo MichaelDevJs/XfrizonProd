@@ -47,6 +47,20 @@ export default function BlogCard({ blog }) {
   const imageSource = resolveImage(
     blog?.coverImage?.src || blog?.coverImage || blog?.image,
   );
+  const rawAuthorProfileImage =
+    blog?.authorProfileImage ||
+    blog?.authorAvatar ||
+    blog?.authorImage ||
+    (typeof blog?.titleStyle === "string"
+      ? (() => {
+          try {
+            return JSON.parse(blog.titleStyle)?.authorProfileImage || "";
+          } catch {
+            return "";
+          }
+        })()
+      : blog?.titleStyle?.authorProfileImage || "");
+  const authorAvatarSource = resolveImage(rawAuthorProfileImage);
   const shareUrl = getReferralAwareShareUrl(`/blog/${blog?.id}`);
   const categoryTextColor = {
     General: "text-zinc-200",
@@ -133,9 +147,16 @@ export default function BlogCard({ blog }) {
             {excerpt}
           </p>
 
-          <p className="text-[10px] font-light uppercase tracking-wide text-zinc-300">
-            By {author}
-          </p>
+          <div className="flex items-center gap-2 text-[10px] font-light uppercase tracking-wide text-zinc-300">
+            <p>By {author}</p>
+            {rawAuthorProfileImage && (
+              <img
+                src={authorAvatarSource}
+                alt={author}
+                className="w-5 h-5 rounded-full object-cover border border-zinc-600"
+              />
+            )}
+          </div>
         </div>
       </div>
     </article>

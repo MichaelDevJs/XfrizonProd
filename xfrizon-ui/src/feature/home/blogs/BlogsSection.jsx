@@ -5,7 +5,11 @@ import BlogCard from "../../blog/BlogCard";
 import HeroSlideshow from "../../../component/HeroSlideshow/HeroSlideshow";
 import api from "../../../api/axios";
 
-export default function BlogsSection() {
+export default function BlogsSection({
+  sectionBackgroundColor = "#ffffff",
+  headlineTitleColor = "#18181b",
+  latestTitleColor = "#18181b",
+}) {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,6 +52,17 @@ export default function BlogsSection() {
     return `http://localhost:8081/api/v1${normalized}`;
   };
 
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const fetchBlogs = async () => {
     try {
       setLoading(true);
@@ -69,11 +84,47 @@ export default function BlogsSection() {
               ? blog.images[0]?.src || ""
               : "";
 
+          const parsedTitleStyle =
+            typeof blog.titleStyle === "string"
+              ? (() => {
+                  try {
+                    return JSON.parse(blog.titleStyle);
+                  } catch {
+                    return {};
+                  }
+                })()
+              : blog.titleStyle || {};
+
           return {
             ...blog,
+            titleStyle: parsedTitleStyle,
+            authorProfileImage:
+              blog.authorProfileImage ||
+              blog.authorAvatar ||
+              blog.authorImage ||
+              parsedTitleStyle?.authorProfileImage ||
+              "",
             excerpt: blog.excerpt || blog.content?.substring(0, 140) || "",
             coverImage: resolveImage(coverImageValue || firstImage),
           };
+        });
+
+        // Build author name → image map and backfill blogs missing an avatar
+        const authorImageMap = {};
+        blogList.forEach((b) => {
+          const name = (b.author || "").toLowerCase().trim();
+          if (name && b.authorProfileImage && !authorImageMap[name]) {
+            authorImageMap[name] = b.authorProfileImage;
+          }
+        });
+        blogList = blogList.map((b) => {
+          if (!b.authorProfileImage) {
+            const name = (b.author || "").toLowerCase().trim();
+            if (name && authorImageMap[name]) {
+              return { ...b, authorProfileImage: authorImageMap[name] };
+            }
+          }
+          return b;
         });
       }
 
@@ -100,6 +151,9 @@ export default function BlogsSection() {
 
   const headlineBlog = blogs[0] || null;
   const latestBlogs = useMemo(() => blogs.slice(1, 4), [blogs]);
+  const headlinePublishedDate = formatDate(
+    headlineBlog?.publishedAt || headlineBlog?.createdAt,
+  );
 
   if (loading) {
     return (
@@ -129,10 +183,16 @@ export default function BlogsSection() {
   }
 
   return (
-    <section className="mt-0 mb-0 bg-[#1e1e1e] px-6 py-12">
+    <section
+      className="mt-0 mb-0 px-6 py-12"
+      style={{ backgroundColor: sectionBackgroundColor || "#ffffff" }}
+    >
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         <article className="xl:col-span-8">
-          <h3 className="text-2xl md:text-3xl font-semibold tracking-[0.12em] uppercase text-zinc-100 mb-6 text-center">
+          <h3
+            className="text-2xl md:text-3xl font-semibold tracking-[0.12em] uppercase mb-6 text-center"
+            style={{ color: headlineTitleColor || "#18181b" }}
+          >
             Headline
           </h3>
 
@@ -149,7 +209,7 @@ export default function BlogsSection() {
                     <span className="text-red-500 font-extrabold text-base sm:text-lg tracking-wide pr-1">
                       XF
                     </span>
-                    <span className="text-white font-semibold text-sm sm:text-lg tracking-wide ml-2">
+                    <span className="text-black font-semibold text-sm sm:text-lg tracking-wide ml-2">
                       Mag
                     </span>
                   </div>
@@ -165,16 +225,31 @@ export default function BlogsSection() {
 
                   <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-                    <p className="text-[10px] sm:text-xs uppercase tracking-widest text-zinc-300 mb-2">
-                      {headlineBlog.category || "General"}
-                    </p>
-                    <h4 className="text-xl sm:text-3xl font-semibold text-white line-clamp-2 mb-2">
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                    <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest text-zinc-300">
+                      <span className="truncate">
+                        {headlineBlog.category || "General"}
+                      </span>
+                      {headlinePublishedDate && (
+                        <span className="shrink-0">{headlinePublishedDate}</span>
+                      )}
+                    </div>
+                    <h4 className="text-lg sm:text-2xl font-semibold text-white line-clamp-2 mb-2">
                       {headlineBlog.title}
                     </h4>
-                    <p className="text-xs sm:text-sm text-zinc-200 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-zinc-200 line-clamp-2 mb-2">
                       {headlineBlog.excerpt}
                     </p>
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-zinc-300">
+                      <p>By {headlineBlog.author || "Unknown"}</p>
+                      {headlineBlog.authorProfileImage && (
+                        <img
+                          src={resolveImage(headlineBlog.authorProfileImage)}
+                          alt={headlineBlog.author || "Unknown"}
+                          className="w-5 h-5 rounded-full object-cover border border-zinc-600"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -183,7 +258,10 @@ export default function BlogsSection() {
         </article>
 
         <aside className="xl:col-span-4 w-full">
-          <h3 className="text-2xl md:text-3xl font-semibold tracking-[0.12em] uppercase text-zinc-100 mb-6 text-center md:text-left">
+          <h3
+            className="text-2xl md:text-3xl font-semibold tracking-[0.12em] uppercase mb-6 text-center md:text-left"
+            style={{ color: latestTitleColor || "#18181b" }}
+          >
             Latest
           </h3>
 

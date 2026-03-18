@@ -7,6 +7,7 @@ export default function BlogEditorForm({
   handleInputChange,
   handleTitleStyleChange,
   handleCoverImageChange,
+  handleAuthorProfileImageChange,
 }) {
   return (
     <div className="space-y-4">
@@ -102,6 +103,42 @@ export default function BlogEditorForm({
                 onChange={handleInputChange}
                 placeholder="Your name"
                 className="w-full px-3 py-2 bg-[#1e1e1e] border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-600 text-xs text-white placeholder-gray-600"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                Author Profile Image
+              </label>
+              {formData.authorProfileImage && (
+                <div className="mb-2 flex items-center gap-2">
+                  <img
+                    src={
+                      typeof formData.authorProfileImage === "string"
+                        ? formData.authorProfileImage
+                        : URL.createObjectURL(formData.authorProfileImage)
+                    }
+                    alt="Author"
+                    className="w-10 h-10 rounded-full object-cover border border-zinc-700"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAuthorProfileImageChange(null)}
+                    className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    handleAuthorProfileImageChange(e.target.files[0]);
+                  }
+                }}
+                className="w-full px-3 py-2 bg-[#1e1e1e] border border-zinc-800 rounded-lg text-xs text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded file:bg-[#403838] file:text-white file:cursor-pointer hover:file:bg-[#4f4545]"
               />
             </div>
 

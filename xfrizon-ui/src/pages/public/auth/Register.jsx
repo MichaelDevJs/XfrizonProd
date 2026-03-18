@@ -1,18 +1,12 @@
-import React, { useState, useContext, useRef } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaCamera } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../../context/AuthContext";
-import api from "../../../api/axios";
 
 export default function Register() {
   const navigate = useNavigate();
   const { register: registerUser } = useContext(AuthContext);
-  const fileInputRef = useRef(null);
-
-  const [profilePhoto, setProfilePhoto] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [photoUrl, setPhotoUrl] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -58,59 +52,6 @@ export default function Register() {
     return newErrors;
   };
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
-        return;
-      }
-
-      setProfilePhoto(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadProfilePhoto = async () => {
-    if (!profilePhoto) return null;
-
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("file", profilePhoto);
-
-      console.log("Starting profile photo upload...");
-
-      const response = await api.post(
-        "/uploads/profile-photo",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          timeout: 30000, // 30 second timeout
-        },
-      );
-
-      console.log("Photo upload response:", response.data);
-      const photoUrl = response.data.url;
-      console.log("Profile photo uploaded successfully:", photoUrl);
-
-      return photoUrl;
-    } catch (error) {
-      console.error("Photo upload failed:", error);
-      if (error.response) {
-        console.error("Response status:", error.response.status);
-        console.error("Response data:", error.response.data);
-      }
-      return null;
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -137,32 +78,12 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // Upload photo if provided (with timeout)
-      let uploadedPhotoUrl = null;
-      if (profilePhoto) {
-        const uploadPromise = uploadProfilePhoto();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Photo upload timeout")), 10000),
-        );
-        try {
-          uploadedPhotoUrl = await Promise.race([
-            uploadPromise,
-            timeoutPromise,
-          ]);
-        } catch (uploadError) {
-          console.error("Photo upload error:", uploadError);
-          toast.error("Photo upload failed, continuing with registration");
-          // Continue without photo
-        }
-      }
-
       // Call backend API through AuthContext
       const response = await registerUser(
         formData.firstName,
         formData.lastName,
         formData.email,
         formData.password,
-        uploadedPhotoUrl,
       );
 
       if (response?.success) {
@@ -193,9 +114,6 @@ export default function Register() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-light text-gray-400 tracking-wider mb-2">
-            XFRIZON
-          </h1>
           <h2 className="text-2xl font-light text-gray-300">Create Account</h2>
           <p className="text-sm text-gray-500 font-light mt-2">
             Join us to discover amazing live events
@@ -218,7 +136,7 @@ export default function Register() {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              placeholder="John"
+              placeholder="Afro"
               className={`w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white placeholder-gray-600 font-light text-sm transition-all duration-300 focus:outline-none ${
                 errors.firstName
                   ? "border-red-500 focus:border-red-500"
@@ -246,7 +164,7 @@ export default function Register() {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              placeholder="Doe"
+              placeholder="Nation"
               className={`w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white placeholder-gray-600 font-light text-sm transition-all duration-300 focus:outline-none ${
                 errors.lastName
                   ? "border-red-500 focus:border-red-500"
@@ -274,7 +192,7 @@ export default function Register() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="afro.nation@xfrizon.com"
               className={`w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white placeholder-gray-600 font-light text-sm transition-all duration-300 focus:outline-none ${
                 errors.email
                   ? "border-red-500 focus:border-red-500"
@@ -370,55 +288,11 @@ export default function Register() {
             )}
           </div>
 
-          {/* Profile Photo Upload */}
-          <div>
-            <label className="block text-xs font-light text-gray-400 mb-3">
-              Profile Photo (Optional)
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-            />
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center cursor-pointer hover:border-red-500 hover:bg-red-500/5 transition-all duration-300"
-            >
-              {photoPreview ? (
-                <div className="flex flex-col items-center gap-3">
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="w-16 h-16 rounded-full object-cover border-2 border-red-500"
-                  />
-                  <p className="text-sm text-gray-300 font-light">
-                    {profilePhoto?.name}
-                  </p>
-                  <p className="text-xs text-gray-500 font-light">
-                    Click to change photo
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <FaCamera className="w-6 h-6 text-gray-500" />
-                  <p className="text-sm text-gray-300 font-light">
-                    Click to upload photo
-                  </p>
-                  <p className="text-xs text-gray-600 font-light">
-                    PNG, JPG up to 5MB
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-800 disabled:opacity-50 text-white py-2.5 rounded-lg transition-all duration-300 font-light text-sm mt-6"
+            className="w-full bg-transparent hover:bg-zinc-900/40 disabled:opacity-50 text-red-500 py-2.5 rounded-lg transition-all duration-300 font-light text-sm mt-6 border border-zinc-700"
           >
             {loading ? "Creating Account..." : "Sign Up"}
           </button>

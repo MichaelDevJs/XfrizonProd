@@ -6,6 +6,12 @@ export default function BlogEditorPreview({
   isPreview,
   setIsPreview,
 }) {
+  const authorImageSrc = formData.authorProfileImage
+    ? typeof formData.authorProfileImage === "string"
+      ? formData.authorProfileImage
+      : URL.createObjectURL(formData.authorProfileImage)
+    : null;
+
   const metaParts = [
     formData.author || "Author",
     formData.location || "Location",
@@ -86,9 +92,18 @@ export default function BlogEditorPreview({
                 </h2>
               </div>
             )}
-            <p className="text-xs text-gray-400">
-              By {formData.author || "Author"} • {formData.category}
-            </p>
+            <div className="text-xs text-gray-400 flex items-center gap-2">
+              {authorImageSrc && (
+                <img
+                  src={authorImageSrc}
+                  alt={formData.author || "Author"}
+                  className="w-5 h-5 rounded-full object-cover border border-zinc-700"
+                />
+              )}
+              <p>
+                By {formData.author || "Author"} • {formData.category}
+              </p>
+            </div>
             {formData.excerpt && (
               <p className="text-xs text-gray-500 italic">{formData.excerpt}</p>
             )}

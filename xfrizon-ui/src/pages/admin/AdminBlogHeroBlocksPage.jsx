@@ -278,7 +278,9 @@ export default function AdminBlogHeroBlocksPage() {
 
   const handleSave = async () => {
     if (hasUnsafeSlideUrls(blogHeroSlideshow)) {
-      toast.error("Some slides still use local/base64 URLs. Re-upload and try again.");
+      toast.error(
+        "Some slides still use local/base64 URLs. Re-upload and try again.",
+      );
       return;
     }
 
@@ -454,7 +456,9 @@ export default function AdminBlogHeroBlocksPage() {
     // Persist new slideshow immediately so refresh does not drop unsaved media
     try {
       if (hasUnsafeSlideUrls(updatedSlides)) {
-        toast.error("Slide added locally but URL is not upload-safe. Re-upload before saving.");
+        toast.error(
+          "Slide added locally but URL is not upload-safe. Re-upload before saving.",
+        );
         return;
       }
 

@@ -19,7 +19,7 @@ export default function BlogCard({ blog }) {
           <span className="text-red-500 font-extrabold text-sm tracking-wide">
             XF
           </span>
-          <span className="text-white font-semibold text-xs tracking-wide ml-1">
+          <span className="text-black font-semibold text-xs tracking-wide ml-1">
             Mag
           </span>
         </div>

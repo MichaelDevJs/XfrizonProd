@@ -306,7 +306,8 @@ const OrganizerFinance = () => {
         setEventPayoutLoading(true);
       }
       const response = await organizerApi.getEventPayoutPreview();
-      const rows = response?.success && Array.isArray(response?.data) ? response.data : [];
+      const rows =
+        response?.success && Array.isArray(response?.data) ? response.data : [];
       setEventPayoutPreview(rows);
 
       const storageKey = user?.id
@@ -316,7 +317,9 @@ const OrganizerFinance = () => {
       if (storageKey) {
         let previousSnapshot = {};
         try {
-          previousSnapshot = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          previousSnapshot = JSON.parse(
+            localStorage.getItem(storageKey) || "{}",
+          );
         } catch {
           previousSnapshot = {};
         }
@@ -326,7 +329,8 @@ const OrganizerFinance = () => {
 
         rows.forEach((item) => {
           const rowKey = String(
-            item?.payoutId ?? `${item?.eventId || "event"}-${item?.currency || "USD"}`,
+            item?.payoutId ??
+              `${item?.eventId || "event"}-${item?.currency || "USD"}`,
           );
 
           nextSnapshot[rowKey] = {

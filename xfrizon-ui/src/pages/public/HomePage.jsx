@@ -37,6 +37,20 @@ export default function HomePage() {
     "Discover Events Near You",
     "Celebrate Culture Together",
   ]);
+  const [bannerDirection, setBannerDirection] = useState("rtl");
+  const [bannerTextColor, setBannerTextColor] = useState("#ef4444");
+  const [bannerFontFamily, setBannerFontFamily] = useState("inherit");
+  const [bannerFontWeight, setBannerFontWeight] = useState("600");
+  const [bannerFontSizePx, setBannerFontSizePx] = useState(16);
+  const [bannerScrollDuration, setBannerScrollDuration] = useState(10);
+  const [bannerAnimationType, setBannerAnimationType] = useState("marquee");
+  const [bannerUnlimitedLoop, setBannerUnlimitedLoop] = useState(false);
+  const [bannerPauseOnHover, setBannerPauseOnHover] = useState(false);
+  const [blogsSectionBgColor, setBlogsSectionBgColor] = useState("#ffffff");
+  const [blogsHeadlineTitleColor, setBlogsHeadlineTitleColor] =
+    useState("#18181b");
+  const [blogsLatestTitleColor, setBlogsLatestTitleColor] =
+    useState("#18181b");
   const [blockOrder, setBlockOrder] = useState(defaultBlockOrder);
   const [featuredPartnerIds, setFeaturedPartnerIds] = useState([]);
   const [featuredPartners, setFeaturedPartners] = useState([]);
@@ -151,12 +165,75 @@ export default function HomePage() {
         }
       }
 
+      if (typeof settings.bannerDirection === "string") {
+        setBannerDirection(settings.bannerDirection === "ltr" ? "ltr" : "rtl");
+      }
+
+      if (typeof settings.bannerTextColor === "string") {
+        setBannerTextColor(settings.bannerTextColor || "#ef4444");
+      }
+
+      if (typeof settings.bannerFontFamily === "string") {
+        setBannerFontFamily(settings.bannerFontFamily || "inherit");
+      }
+
+      if (typeof settings.bannerFontWeight === "string") {
+        setBannerFontWeight(settings.bannerFontWeight || "600");
+      }
+
+      if (settings.bannerFontSizePx != null) {
+        const parsedSize = Number(settings.bannerFontSizePx);
+        if (Number.isFinite(parsedSize) && parsedSize > 8) {
+          setBannerFontSizePx(parsedSize);
+        }
+      }
+
+      if (settings.bannerScrollDuration != null) {
+        const parsedDuration = Number(settings.bannerScrollDuration);
+        if (Number.isFinite(parsedDuration) && parsedDuration > 1) {
+          setBannerScrollDuration(parsedDuration);
+        }
+      }
+
+      if (typeof settings.bannerAnimationType === "string") {
+        const allowed = ["marquee", "fade", "pulse", "slide"];
+        setBannerAnimationType(
+          allowed.includes(settings.bannerAnimationType)
+            ? settings.bannerAnimationType
+            : "marquee",
+        );
+      }
+
+      if (settings.bannerUnlimitedLoop != null) {
+        const raw = String(settings.bannerUnlimitedLoop).toLowerCase();
+        setBannerUnlimitedLoop(raw === "true" || raw === "1");
+      }
+
+      if (settings.bannerPauseOnHover != null) {
+        const raw = String(settings.bannerPauseOnHover).toLowerCase();
+        setBannerPauseOnHover(raw === "true" || raw === "1");
+      }
+
       if (typeof settings.heroTitle === "string") {
         setHeroTitle(settings.heroTitle);
       }
 
       if (typeof settings.heroSubtitle === "string") {
         setHeroSubtitle(settings.heroSubtitle);
+      }
+
+      if (typeof settings.blogsSectionBgColor === "string") {
+        setBlogsSectionBgColor(settings.blogsSectionBgColor || "#ffffff");
+      }
+
+      if (typeof settings.blogsHeadlineTitleColor === "string") {
+        setBlogsHeadlineTitleColor(
+          settings.blogsHeadlineTitleColor || "#18181b",
+        );
+      }
+
+      if (typeof settings.blogsLatestTitleColor === "string") {
+        setBlogsLatestTitleColor(settings.blogsLatestTitleColor || "#18181b");
       }
 
       if (settings.blockOrder) {
@@ -229,7 +306,21 @@ export default function HomePage() {
   const renderBlock = (blockId) => {
     switch (blockId) {
       case "centeredBanner":
-        return <CenteredBanner key="centeredBanner" texts={bannerTexts} />;
+        return (
+          <CenteredBanner
+            key="centeredBanner"
+            texts={bannerTexts}
+            direction={bannerDirection}
+            textColor={bannerTextColor}
+            fontFamily={bannerFontFamily}
+            fontWeight={bannerFontWeight}
+            fontSizePx={bannerFontSizePx}
+            scrollDuration={bannerScrollDuration}
+            animationType={bannerAnimationType}
+            unlimitedLoop={bannerUnlimitedLoop}
+            pauseOnHover={bannerPauseOnHover}
+          />
+        );
 
       case "heroSection":
         return (
@@ -246,9 +337,13 @@ export default function HomePage() {
           <div key="blogsSection">
             {/* Transition spacing */}
             <div className="h-8 sm:h-12" />
-            {/* Blog Section - Dark Background */}
-            <div className="bg-[#1e1e1e] text-gray-100 rounded-none px-0 py-0 mt-0 mx-0 shadow-none transition-all duration-500">
-              <BlogsSection />
+            {/* Blog Section - Full Width */}
+            <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen rounded-none px-0 py-0 mt-0 shadow-none transition-all duration-500">
+              <BlogsSection
+                sectionBackgroundColor={blogsSectionBgColor}
+                headlineTitleColor={blogsHeadlineTitleColor}
+                latestTitleColor={blogsLatestTitleColor}
+              />
             </div>
           </div>
         );

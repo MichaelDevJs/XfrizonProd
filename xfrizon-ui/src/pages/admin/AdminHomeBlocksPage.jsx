@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import HomePageBlockManager from "../../component/admin/HomePageBlockManager";
 import HeroSlideshow from "../../component/HeroSlideshow/HeroSlideshow";
+import CenteredBanner from "../../component/CenteredBanner/CenteredBanner";
 import api from "../../api/axios";
 import partnersApi from "../../api/partnersApi";
 import { toast } from "react-toastify";
@@ -30,8 +31,22 @@ export default function AdminHomeBlocksPage() {
     "Discover Events Near You",
     "Celebrate Culture Together",
   ]);
+  const [bannerDirection, setBannerDirection] = useState("rtl");
+  const [bannerTextColor, setBannerTextColor] = useState("#ef4444");
+  const [bannerFontFamily, setBannerFontFamily] = useState("inherit");
+  const [bannerFontWeight, setBannerFontWeight] = useState("600");
+  const [bannerFontSizePx, setBannerFontSizePx] = useState(16);
+  const [bannerScrollDuration, setBannerScrollDuration] = useState(10);
+  const [bannerAnimationType, setBannerAnimationType] = useState("marquee");
+  const [bannerUnlimitedLoop, setBannerUnlimitedLoop] = useState(false);
+  const [bannerPauseOnHover, setBannerPauseOnHover] = useState(false);
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [blogsSectionBgColor, setBlogsSectionBgColor] = useState("#ffffff");
+  const [blogsHeadlineTitleColor, setBlogsHeadlineTitleColor] =
+    useState("#18181b");
+  const [blogsLatestTitleColor, setBlogsLatestTitleColor] =
+    useState("#18181b");
   const [blockOrder, setBlockOrder] = useState([
     { id: "centeredBanner", label: "Centered Banner" },
     { id: "heroSection", label: "Hero Section" },
@@ -99,6 +114,15 @@ export default function AdminHomeBlocksPage() {
 
   // Preview toggle
   const [showPreview, setShowPreview] = useState(false);
+  const [activeConfigTab, setActiveConfigTab] = useState("hero");
+
+  const configTabs = [
+    { id: "hero", label: "Hero Slideshow" },
+    { id: "banner", label: "Centered Banner Texts" },
+    { id: "blogs", label: "Blogs Section Appearance" },
+    { id: "order", label: "Block Order" },
+    { id: "partners", label: "Partners Block Content" },
+  ];
 
   const isVideoUrl = (url = "") => {
     const value = String(url).toLowerCase();
@@ -615,12 +639,75 @@ export default function AdminHomeBlocksPage() {
         }
       }
 
+      if (typeof settings.bannerDirection === "string") {
+        setBannerDirection(settings.bannerDirection === "ltr" ? "ltr" : "rtl");
+      }
+
+      if (typeof settings.bannerTextColor === "string") {
+        setBannerTextColor(settings.bannerTextColor || "#ef4444");
+      }
+
+      if (typeof settings.bannerFontFamily === "string") {
+        setBannerFontFamily(settings.bannerFontFamily || "inherit");
+      }
+
+      if (typeof settings.bannerFontWeight === "string") {
+        setBannerFontWeight(settings.bannerFontWeight || "600");
+      }
+
+      if (settings.bannerFontSizePx != null) {
+        const parsedSize = Number(settings.bannerFontSizePx);
+        if (Number.isFinite(parsedSize) && parsedSize > 8) {
+          setBannerFontSizePx(parsedSize);
+        }
+      }
+
+      if (settings.bannerScrollDuration != null) {
+        const parsedDuration = Number(settings.bannerScrollDuration);
+        if (Number.isFinite(parsedDuration) && parsedDuration > 1) {
+          setBannerScrollDuration(parsedDuration);
+        }
+      }
+
+      if (typeof settings.bannerAnimationType === "string") {
+        const allowed = ["marquee", "fade", "pulse", "slide"];
+        setBannerAnimationType(
+          allowed.includes(settings.bannerAnimationType)
+            ? settings.bannerAnimationType
+            : "marquee",
+        );
+      }
+
+      if (settings.bannerUnlimitedLoop != null) {
+        const raw = String(settings.bannerUnlimitedLoop).toLowerCase();
+        setBannerUnlimitedLoop(raw === "true" || raw === "1");
+      }
+
+      if (settings.bannerPauseOnHover != null) {
+        const raw = String(settings.bannerPauseOnHover).toLowerCase();
+        setBannerPauseOnHover(raw === "true" || raw === "1");
+      }
+
       if (typeof settings.heroTitle === "string") {
         setHeroTitle(settings.heroTitle);
       }
 
       if (typeof settings.heroSubtitle === "string") {
         setHeroSubtitle(settings.heroSubtitle);
+      }
+
+      if (typeof settings.blogsSectionBgColor === "string") {
+        setBlogsSectionBgColor(settings.blogsSectionBgColor || "#ffffff");
+      }
+
+      if (typeof settings.blogsHeadlineTitleColor === "string") {
+        setBlogsHeadlineTitleColor(
+          settings.blogsHeadlineTitleColor || "#18181b",
+        );
+      }
+
+      if (typeof settings.blogsLatestTitleColor === "string") {
+        setBlogsLatestTitleColor(settings.blogsLatestTitleColor || "#18181b");
       }
 
       if (settings.blockOrder) {
@@ -661,6 +748,15 @@ export default function AdminHomeBlocksPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const safeBannerScrollDuration = Math.min(
+        30,
+        Math.max(2, Number(bannerScrollDuration) || 10),
+      );
+      const safeBannerFontSizePx = Math.min(
+        80,
+        Math.max(10, Number(bannerFontSizePx) || 16),
+      );
+
       // All slides should have real URLs now (either from upload or manual entry)
       const processedSlides = heroSlideshow.map((slide, index) => {
         const normalized = normalizeSlide(slide, index);
@@ -683,6 +779,18 @@ export default function AdminHomeBlocksPage() {
       const response = await api.post("/homepage-settings/bulk", {
         heroSlideshow: JSON.stringify(processedSlides),
         bannerTexts: JSON.stringify(bannerTexts),
+        bannerDirection,
+        bannerTextColor,
+        bannerFontFamily,
+        bannerFontWeight,
+        bannerFontSizePx: String(safeBannerFontSizePx),
+        bannerScrollDuration: String(safeBannerScrollDuration),
+        bannerAnimationType,
+        bannerUnlimitedLoop: bannerUnlimitedLoop ? "true" : "false",
+        bannerPauseOnHover: bannerPauseOnHover ? "true" : "false",
+        blogsSectionBgColor,
+        blogsHeadlineTitleColor,
+        blogsLatestTitleColor,
         blockOrder: JSON.stringify(blockOrder.map((block) => block.id)),
         partnersSectionPartnerIds: JSON.stringify(selectedPartnerIds),
       });
@@ -1065,8 +1173,29 @@ export default function AdminHomeBlocksPage() {
         </div>
       )}
 
+      <div className="p-0">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto hide-scrollbar">
+          {configTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveConfigTab(tab.id)}
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 text-xs sm:text-sm rounded-md border transition-colors ${
+                activeConfigTab === tab.id
+                  ? "bg-red-600/20 text-red-300 border-red-500"
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Hero Slideshow Manager */}
-      <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
+      {activeConfigTab === "hero" && (
+        <>
+          <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
         <h2 className="text-lg md:text-xl font-semibold text-white mb-4">
           Hero Slideshow (Billboard)
         </h2>
@@ -1478,7 +1607,8 @@ export default function AdminHomeBlocksPage() {
               No slides added yet. Add your first slide above.
             </div>
           ) : (
-            heroSlideshow.map((slide, index) => (
+            <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-1">
+              {heroSlideshow.map((slide, index) => (
               <div
                 key={slide.id}
                 draggable
@@ -1487,7 +1617,7 @@ export default function AdminHomeBlocksPage() {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
                 onDragEnd={handleDragEnd}
-                className={`flex flex-col md:flex-row md:items-start gap-3 p-3 md:p-4 rounded-lg border transition-all cursor-move ${
+                className={`min-w-85 md:min-w-130 max-w-130 shrink-0 snap-start flex flex-col md:flex-row md:items-start gap-3 p-3 md:p-4 rounded-lg border transition-all cursor-move ${
                   draggedSlideId === slide.id
                     ? "opacity-50 bg-zinc-700 border-red-500"
                     : dragOverIndex === index
@@ -1822,7 +1952,8 @@ export default function AdminHomeBlocksPage() {
                   </button>
                 </div>
               </div>
-            ))
+            ))}
+            </div>
           )}
         </div>
       </div>
@@ -1859,12 +1990,277 @@ export default function AdminHomeBlocksPage() {
           </div>
         </div>
       </div>
+        </>
+      )}
+
+      {/* Blogs Section Appearance */}
+      {activeConfigTab === "blogs" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+        <h2 className="text-xl font-semibold text-white mb-4">
+          Blogs Section Appearance
+        </h2>
+        <p className="text-sm text-gray-400 mb-4">
+          Configure homepage blogs block background and section title colors.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Background Color
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={blogsSectionBgColor}
+                onChange={(e) => setBlogsSectionBgColor(e.target.value)}
+                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+              />
+              <input
+                type="text"
+                value={blogsSectionBgColor}
+                onChange={(e) => setBlogsSectionBgColor(e.target.value)}
+                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                placeholder="#ffffff"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Headline Title Color
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={blogsHeadlineTitleColor}
+                onChange={(e) => setBlogsHeadlineTitleColor(e.target.value)}
+                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+              />
+              <input
+                type="text"
+                value={blogsHeadlineTitleColor}
+                onChange={(e) => setBlogsHeadlineTitleColor(e.target.value)}
+                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                placeholder="#18181b"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Latest Title Color
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={blogsLatestTitleColor}
+                onChange={(e) => setBlogsLatestTitleColor(e.target.value)}
+                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+              />
+              <input
+                type="text"
+                value={blogsLatestTitleColor}
+                onChange={(e) => setBlogsLatestTitleColor(e.target.value)}
+                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                placeholder="#18181b"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
 
       {/* Centered Banner Texts */}
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+      {activeConfigTab === "banner" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
         <h2 className="text-xl font-semibold text-white mb-4">
           Centered Banner Texts
         </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Movement Direction
+            </label>
+            <select
+              value={bannerDirection}
+              onChange={(e) => setBannerDirection(e.target.value)}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              disabled={bannerAnimationType !== "marquee"}
+            >
+              <option value="rtl">Right to Left</option>
+              <option value="ltr">Left to Right</option>
+            </select>
+            {bannerAnimationType !== "marquee" && (
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Direction applies to marquee mode.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Scroll Duration (seconds)
+            </label>
+            <input
+              type="number"
+              min="2"
+              max="30"
+              value={bannerScrollDuration}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (Number.isFinite(value)) {
+                  setBannerScrollDuration(value);
+                }
+              }}
+              onBlur={() => {
+                setBannerScrollDuration((prev) => {
+                  const value = Number(prev);
+                  if (!Number.isFinite(value)) return 10;
+                  return Math.min(30, Math.max(2, value));
+                });
+              }}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Animation Style
+            </label>
+            <select
+              value={bannerAnimationType}
+              onChange={(e) => setBannerAnimationType(e.target.value)}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+            >
+              <option value="marquee">Marquee (moving text)</option>
+              <option value="fade">Fade</option>
+              <option value="pulse">Pulse</option>
+              <option value="slide">Slide Up</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Text Color</label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={bannerTextColor}
+                onChange={(e) => setBannerTextColor(e.target.value)}
+                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+              />
+              <input
+                type="text"
+                value={bannerTextColor}
+                onChange={(e) => setBannerTextColor(e.target.value)}
+                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                placeholder="#ef4444"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Font Family</label>
+            <select
+              value={bannerFontFamily}
+              onChange={(e) => setBannerFontFamily(e.target.value)}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+            >
+              <option value="inherit">Default</option>
+              <option value="'Georgia', serif">Georgia</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+              <option value="'Verdana', sans-serif">Verdana</option>
+              <option value="'Courier New', monospace">Courier New</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Font Weight</label>
+            <select
+              value={bannerFontWeight}
+              onChange={(e) => setBannerFontWeight(e.target.value)}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+            >
+              <option value="400">Normal</option>
+              <option value="500">Medium</option>
+              <option value="600">Semi Bold</option>
+              <option value="700">Bold</option>
+              <option value="800">Extra Bold</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Font Size (px)
+            </label>
+            <input
+              type="number"
+              min="10"
+              max="80"
+              value={bannerFontSizePx}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (Number.isFinite(value)) {
+                  setBannerFontSizePx(value);
+                }
+              }}
+              onBlur={() => {
+                setBannerFontSizePx((prev) => {
+                  const value = Number(prev);
+                  if (!Number.isFinite(value)) return 16;
+                  return Math.min(80, Math.max(10, value));
+                });
+              }}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+            />
+          </div>
+
+          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setBannerUnlimitedLoop((prev) => !prev)}
+              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                bannerUnlimitedLoop
+                  ? "bg-red-600/20 text-red-300 border-red-500"
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+              }`}
+            >
+              Unlimited Loop: {bannerUnlimitedLoop ? "ON" : "OFF"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBannerPauseOnHover((prev) => !prev)}
+              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                bannerPauseOnHover
+                  ? "bg-red-600/20 text-red-300 border-red-500"
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+              }`}
+            >
+              Pause On Hover: {bannerPauseOnHover ? "ON" : "OFF"}
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-zinc-950/80 border border-zinc-800 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <h3 className="text-sm font-medium text-white">Live Preview</h3>
+            <span className="text-[11px] text-zinc-500">Unsaved changes preview</span>
+          </div>
+          <CenteredBanner
+            texts={bannerTexts}
+            direction={bannerDirection}
+            textColor={bannerTextColor}
+            fontFamily={bannerFontFamily}
+            fontWeight={bannerFontWeight}
+            fontSizePx={bannerFontSizePx}
+            scrollDuration={bannerScrollDuration}
+            animationType={bannerAnimationType}
+            unlimitedLoop={bannerUnlimitedLoop}
+            pauseOnHover={bannerPauseOnHover}
+          />
+        </div>
+
         <div className="space-y-3">
           <div className="flex gap-2">
             <input
@@ -1917,9 +2313,11 @@ export default function AdminHomeBlocksPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Block Order */}
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+      {activeConfigTab === "order" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
         <h2 className="text-xl font-semibold text-white mb-4">
           HomePage Block Order
         </h2>
@@ -1931,9 +2329,11 @@ export default function AdminHomeBlocksPage() {
           onChange={(newOrder) => setBlockOrder(newOrder)}
         />
       </div>
+      )}
 
       {/* Partners Section Control */}
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+      {activeConfigTab === "partners" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
         <div className="flex items-center justify-between gap-3 mb-3">
           <h2 className="text-xl font-semibold text-white">
             Partners Block Content
@@ -2074,6 +2474,7 @@ export default function AdminHomeBlocksPage() {
           );
         })()}
       </div>
+      )}
 
       {/* Save Button at Bottom */}
       <div className="flex justify-end">

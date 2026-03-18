@@ -22,6 +22,12 @@ export default function BlogEditor({
   const [formData, setFormData] = useState({
     title: blog?.title || "",
     author: blog?.author || "",
+    authorProfileImage:
+      blog?.authorProfileImage ||
+      blog?.authorAvatar ||
+      blog?.authorImage ||
+      blog?.titleStyle?.authorProfileImage ||
+      null,
     category: blog?.category || "General",
     location: blog?.location || "",
     excerpt: blog?.excerpt || "",
@@ -51,6 +57,13 @@ export default function BlogEditor({
     setFormData((prev) => ({
       ...prev,
       coverImage: image,
+    }));
+  };
+
+  const handleAuthorProfileImageChange = (image) => {
+    setFormData((prev) => ({
+      ...prev,
+      authorProfileImage: image,
     }));
   };
 
@@ -108,6 +121,7 @@ export default function BlogEditor({
             handleInputChange={handleInputChange}
             handleTitleStyleChange={handleTitleStyleChange}
             handleCoverImageChange={handleCoverImageChange}
+            handleAuthorProfileImageChange={handleAuthorProfileImageChange}
           />
           <BlogEditorBlocks
             formData={formData}
