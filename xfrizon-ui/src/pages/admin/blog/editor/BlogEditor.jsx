@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import {
   initializeBlocks,
@@ -12,6 +12,8 @@ import BlogEditorForm from "./BlogEditorForm";
 import BlogEditorBlocks from "./BlogEditorBlocks";
 import BlogEditorPreview from "./BlogEditorPreview";
 
+const AI_DRAFT_KEY = "xf_ai_draft_content";
+
 export default function BlogEditor({
   blog,
   onSave,
@@ -19,23 +21,46 @@ export default function BlogEditor({
   editingId,
   isSaving = false,
 }) {
-  const [formData, setFormData] = useState({
-    title: blog?.title || "",
-    author: blog?.author || "",
-    authorProfileImage:
-      blog?.authorProfileImage ||
-      blog?.authorAvatar ||
-      blog?.authorImage ||
-      blog?.titleStyle?.authorProfileImage ||
-      null,
-    category: blog?.category || "General",
-    location: blog?.location || "",
-    excerpt: blog?.excerpt || "",
-    coverImage: blog?.coverImage || null,
-    blocks: initializeBlocks(blog),
-    tags: blog?.tags || [],
-    titleStyle: blog?.titleStyle || {},
+  // Check if there's an AI-generated draft waiting to be loaded on a new post
+  const aiDraft = !editingId ? (sessionStorage.getItem(AI_DRAFT_KEY) || "") : "";
+
+  const [formData, setFormData] = useState(() => {
+    const baseBlocks = initializeBlocks(blog);
+    // If opening a new post with AI draft content, pre-fill the first text block
+    const blocks =
+      aiDraft && !editingId
+        ? baseBlocks.map((b, i) =>
+            i === 0 && b.type === "text" ? { ...b, content: aiDraft } : b
+          )
+        : baseBlocks;
+
+    return {
+      title: blog?.title || "",
+      author: blog?.author || "",
+      authorProfileImage:
+        blog?.authorProfileImage ||
+        blog?.authorAvatar ||
+        blog?.authorImage ||
+        blog?.titleStyle?.authorProfileImage ||
+        null,
+      category: blog?.category || "General",
+      location: blog?.location || "",
+      excerpt: blog?.excerpt || "",
+      coverImage: blog?.coverImage || null,
+      blocks,
+      tags: blog?.tags || [],
+      titleStyle: blog?.titleStyle || {},
+    };
   });
+
+  // Clear the AI draft from sessionStorage after it's been loaded
+  useEffect(() => {
+    if (aiDraft) {
+      sessionStorage.removeItem(AI_DRAFT_KEY);
+      toast.info("AI content loaded into editor");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [isPreview, setIsPreview] = useState(false);
   const [expandedBlockId, setExpandedBlockId] = useState(null);

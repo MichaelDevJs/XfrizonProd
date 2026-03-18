@@ -79,6 +79,11 @@ stripe.api.key=YOUR_STRIPE_SECRET_KEY
 stripe.publishable.key=YOUR_STRIPE_PUBLISHABLE_KEY
 stripe.webhook.secret=YOUR_STRIPE_WEBHOOK_SECRET
 
+# OpenAI Configuration
+# Get your API key from https://platform.openai.com/api-keys
+# In production set OPENAI_API_KEY env variable instead of putting it here
+openai.api.key=YOUR_OPENAI_API_KEY
+
 # Paystack Configuration (for West African countries)
 paystack.secret.key=YOUR_PAYSTACK_SECRET_KEY
 paystack.public.key=YOUR_PAYSTACK_PUBLIC_KEY

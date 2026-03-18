@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -6,6 +6,64 @@ import blogApi from "../../api/blogApi";
 import api from "../../api/axios";
 import BlogEditor from "./blog/BlogEditor";
 import BlogList from "./blog/BlogList";
+import BlogPlannerCalendar from "./blog/BlogPlannerCalendar";
+import AiBlogAssistant from "./blog/AiBlogAssistant";
+
+const BLOG_PLANNER_SETTINGS_KEY = "blogPlannerSchedule";
+const BLOG_PLANNER_LOCAL_KEY = "xfrizonBlogPlannerScheduleV1";
+const BLOG_ACTIVE_SECTION_STORAGE_KEY = "xfrizonAdminBlogActiveSectionV1";
+const BLOG_SECTIONS = new Set(["posts", "planner", "ai"]);
+const BLOG_PLANNER_CHUNK_COUNT_KEY = "blogPlannerScheduleChunkCount";
+const BLOG_PLANNER_CHUNK_KEY_PREFIX = "blogPlannerScheduleChunk_";
+const BLOG_PLANNER_CHUNK_SIZE = 12000;
+const BLOG_PLANNER_MAX_COMMENTS_PER_ENTRY = 20;
+const BLOG_PLANNER_MAX_COMMENT_LENGTH = 400;
+
+const normalizeBlogSection = (value) => {
+  const section = String(value || "").trim().toLowerCase();
+  return BLOG_SECTIONS.has(section) ? section : "";
+};
+
+const sanitizePlannerEntries = (entries) => {
+  if (!Array.isArray(entries)) return [];
+
+  return entries.map((entry, index) => {
+    const rawComments = Array.isArray(entry?.comments) ? entry.comments : [];
+    const comments = rawComments
+      .map((comment) => String(comment || "").trim())
+      .filter(Boolean)
+      .slice(0, BLOG_PLANNER_MAX_COMMENTS_PER_ENTRY)
+      .map((comment) => comment.slice(0, BLOG_PLANNER_MAX_COMMENT_LENGTH));
+
+    return {
+      id: String(entry?.id || `${Date.now()}-${index}`),
+      date: String(entry?.date || ""),
+      topic: String(entry?.topic || "").trim(),
+      time: String(entry?.time || "").trim(),
+      assignee: String(entry?.assignee || "").trim(),
+      status: String(entry?.status || "Planned").trim() || "Planned",
+      tagColor: String(entry?.tagColor || "").trim(),
+      comments,
+      createdAt: String(entry?.createdAt || new Date().toISOString()),
+    };
+  });
+};
+
+const parsePlannerRaw = (raw) => {
+  if (!raw) return [];
+  const parsed = JSON.parse(raw);
+  return Array.isArray(parsed) ? sanitizePlannerEntries(parsed) : [];
+};
+
+const chunkString = (value, chunkSize) => {
+  const safeValue = String(value || "");
+  const size = Math.max(1, Number(chunkSize) || BLOG_PLANNER_CHUNK_SIZE);
+  const chunks = [];
+  for (let i = 0; i < safeValue.length; i += size) {
+    chunks.push(safeValue.slice(i, i + size));
+  }
+  return chunks;
+};
 
 const isDataUrl = (value) =>
   typeof value === "string" && value.startsWith("data:");
@@ -194,9 +252,30 @@ const containsUnsafeMediaValue = (value) => {
 export default function BlogManagement() {
   const navigate = useNavigate();
   const location = useLocation();
+  const plannerSyncTimeoutRef = useRef(null);
   const [blogs, setBlogs] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
+  const [activeSection, setActiveSection] = useState(() => {
+    const fromUrl = normalizeBlogSection(
+      new URLSearchParams(String(location?.search || "")).get("tab"),
+    );
+    if (fromUrl) return fromUrl;
+
+    try {
+      const fromStorage = normalizeBlogSection(
+        localStorage.getItem(BLOG_ACTIVE_SECTION_STORAGE_KEY),
+      );
+      if (fromStorage) return fromStorage;
+    } catch {
+      // Ignore local storage access failures.
+    }
+
+    return "posts";
+  });
+  const [plannerEntries, setPlannerEntries] = useState([]);
+  const [isPlannerSaving, setIsPlannerSaving] = useState(false);
+  const [plannerChunkCount, setPlannerChunkCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -205,7 +284,134 @@ export default function BlogManagement() {
   // Fetch blogs on component mount
   useEffect(() => {
     fetchBlogs();
+    fetchPlannerEntries();
+
+    return () => {
+      if (plannerSyncTimeoutRef.current) {
+        clearTimeout(plannerSyncTimeoutRef.current);
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    if (location.pathname !== "/admin/blogs") return;
+
+    const fromUrl = normalizeBlogSection(
+      new URLSearchParams(String(location.search || "")).get("tab"),
+    );
+
+    if (fromUrl && fromUrl !== activeSection) {
+      setActiveSection(fromUrl);
+      return;
+    }
+
+    if (!fromUrl) {
+      navigate(`/admin/blogs?tab=${activeSection}`, { replace: true });
+    }
+  }, [activeSection, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(BLOG_ACTIVE_SECTION_STORAGE_KEY, activeSection);
+    } catch {
+      // Ignore local storage access failures.
+    }
+  }, [activeSection]);
+
+  const setSection = (nextSection) => {
+    const safeSection = normalizeBlogSection(nextSection) || "posts";
+    setActiveSection(safeSection);
+    navigate(`/admin/blogs?tab=${safeSection}`);
+  };
+
+  const fetchPlannerEntries = async () => {
+    try {
+      const response = await api.get("/homepage-settings");
+      const settings = response?.data || {};
+      const rawPlanner = settings[BLOG_PLANNER_SETTINGS_KEY];
+
+      if (rawPlanner) {
+        const parsed = parsePlannerRaw(rawPlanner);
+        setPlannerEntries(parsed);
+        setPlannerChunkCount(0);
+        localStorage.setItem(BLOG_PLANNER_LOCAL_KEY, JSON.stringify(parsed));
+        return;
+      }
+
+      const chunkCount = Number(settings[BLOG_PLANNER_CHUNK_COUNT_KEY] || 0);
+      if (Number.isFinite(chunkCount) && chunkCount > 0) {
+        const combined = Array.from({ length: chunkCount }, (_, index) => {
+          const key = `${BLOG_PLANNER_CHUNK_KEY_PREFIX}${index + 1}`;
+          return String(settings[key] || "");
+        }).join("");
+
+        const parsed = parsePlannerRaw(combined);
+        setPlannerEntries(parsed);
+        setPlannerChunkCount(chunkCount);
+        localStorage.setItem(BLOG_PLANNER_LOCAL_KEY, JSON.stringify(parsed));
+        return;
+      }
+    } catch (error) {
+      console.warn("Could not load planner from API, using local backup", error);
+    }
+
+    try {
+      const localRaw = localStorage.getItem(BLOG_PLANNER_LOCAL_KEY);
+      if (localRaw) {
+        const parsed = parsePlannerRaw(localRaw);
+        setPlannerEntries(parsed);
+      }
+    } catch (error) {
+      console.warn("Could not parse local planner backup", error);
+    }
+  };
+
+  const syncPlannerEntries = async (entriesToSync) => {
+    try {
+      setIsPlannerSaving(true);
+      const sanitizedEntries = sanitizePlannerEntries(entriesToSync);
+      const serialized = JSON.stringify(sanitizedEntries);
+      const chunks = chunkString(serialized, BLOG_PLANNER_CHUNK_SIZE);
+
+      const payload = {
+        [BLOG_PLANNER_SETTINGS_KEY]: chunks.length === 1 ? chunks[0] : "",
+        [BLOG_PLANNER_CHUNK_COUNT_KEY]: String(chunks.length),
+      };
+
+      chunks.forEach((chunk, index) => {
+        payload[`${BLOG_PLANNER_CHUNK_KEY_PREFIX}${index + 1}`] = chunk;
+      });
+
+      const staleChunkCount = Math.max(0, Number(plannerChunkCount) || 0);
+      if (staleChunkCount > chunks.length) {
+        for (let i = chunks.length + 1; i <= staleChunkCount; i += 1) {
+          payload[`${BLOG_PLANNER_CHUNK_KEY_PREFIX}${i}`] = "";
+        }
+      }
+
+      await api.post("/homepage-settings/bulk", payload);
+      setPlannerChunkCount(chunks.length);
+    } catch (error) {
+      console.error("Failed to save planner entries:", error);
+      toast.error("Planner auto-save failed. Local backup kept.");
+    } finally {
+      setIsPlannerSaving(false);
+    }
+  };
+
+  const handlePlannerEntriesChange = (nextEntries) => {
+    const safeEntries = sanitizePlannerEntries(nextEntries);
+    setPlannerEntries(safeEntries);
+    localStorage.setItem(BLOG_PLANNER_LOCAL_KEY, JSON.stringify(safeEntries));
+
+    if (plannerSyncTimeoutRef.current) {
+      clearTimeout(plannerSyncTimeoutRef.current);
+    }
+
+    plannerSyncTimeoutRef.current = setTimeout(() => {
+      syncPlannerEntries(safeEntries);
+    }, 700);
+  };
 
   // Fetch all blogs from API
   const fetchBlogs = async () => {
@@ -899,11 +1105,13 @@ export default function BlogManagement() {
   return (
     <div className="space-y-4">
       {/* Navigation Tabs */}
-      <div className="bg-zinc-950 rounded-lg p-2 flex gap-2">
+      <div className="bg-zinc-950 rounded-lg p-2 flex gap-2 overflow-x-auto whitespace-nowrap">
         <button
-          onClick={() => navigate("/admin/blogs")}
-          className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
-            location.pathname === "/admin/blogs"
+          onClick={() => {
+            setSection("posts");
+          }}
+          className={`shrink-0 px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+            location.pathname === "/admin/blogs" && activeSection === "posts"
               ? "bg-[#403838] text-white"
               : "text-zinc-400 hover:text-white hover:bg-zinc-900"
           }`}
@@ -911,8 +1119,20 @@ export default function BlogManagement() {
           Blog Posts
         </button>
         <button
+          onClick={() => {
+            setSection("planner");
+          }}
+          className={`shrink-0 px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+            location.pathname === "/admin/blogs" && activeSection === "planner"
+              ? "bg-[#403838] text-white"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+          }`}
+        >
+          Content Planner
+        </button>
+        <button
           onClick={() => navigate("/admin/blog-hero-blocks")}
-          className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+          className={`shrink-0 px-4 py-2 rounded-md text-xs font-medium transition-colors ${
             location.pathname === "/admin/blog-hero-blocks"
               ? "bg-[#403838] text-white"
               : "text-zinc-400 hover:text-white hover:bg-zinc-900"
@@ -920,27 +1140,66 @@ export default function BlogManagement() {
         >
           Hero Slideshow
         </button>
-      </div>
-
-      {/* Header with New Button */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-zinc-950 text-white p-3 sm:p-4 rounded-lg">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold">Blog Management</h1>
-          <p className="mt-1 text-xs text-zinc-400">
-            Create, edit, and manage your blog posts with multimedia support
-          </p>
-        </div>
         <button
-          onClick={() => setIsCreating(true)}
-          disabled={isLoading}
-          className="w-full sm:w-auto px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => {
+            setSection("ai");
+          }}
+          className={`shrink-0 px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            location.pathname === "/admin/blogs" && activeSection === "ai"
+              ? "bg-violet-600/30 text-violet-300 border border-violet-500/30"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+          }`}
         >
-          {isLoading ? "Loading..." : "+ New Blog Post"}
+          <span className="text-[10px]">✦</span> AI Writer
         </button>
       </div>
 
+      {/* Header with New Button */}
+      {activeSection !== "ai" && (
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-zinc-950 text-white p-3 sm:p-4 rounded-lg">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold">
+            {activeSection === "planner" ? "Blog Planner" : "Blog Management"}
+          </h1>
+          <p className="mt-1 text-xs text-zinc-400">
+            {activeSection === "planner"
+              ? "Plan topics by date/week, assign writers, and leave editorial comments"
+              : "Create, edit, and manage your blog posts with multimedia support"}
+          </p>
+        </div>
+        {activeSection === "posts" && (
+          <button
+            onClick={() => setIsCreating(true)}
+            disabled={isLoading}
+            className="w-full sm:w-auto px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Loading..." : "+ New Blog Post"}
+          </button>
+        )}
+      </div>
+      )}
+
+      {activeSection === "planner" && (
+        <BlogPlannerCalendar
+          entries={plannerEntries}
+          onChange={handlePlannerEntriesChange}
+          isSaving={isPlannerSaving}
+        />
+      )}
+
+      {activeSection === "ai" && (
+        <AiBlogAssistant
+          onInsertContent={(content) => {
+            setIsCreating(true);
+            setEditingBlog(null);
+            // Store the AI content for the editor to pick up
+            sessionStorage.setItem("xf_ai_draft_content", content);
+          }}
+        />
+      )}
+
       {/* Loading State */}
-      {isLoading && (
+      {activeSection === "posts" && isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-zinc-400 mx-auto mb-3"></div>
@@ -950,7 +1209,7 @@ export default function BlogManagement() {
       )}
 
       {/* Empty State */}
-      {!isLoading && blogs.length === 0 && (
+      {activeSection === "posts" && !isLoading && blogs.length === 0 && (
         <div className="text-center py-10 bg-zinc-950 rounded-lg border border-zinc-800">
           <h3 className="text-base font-semibold text-zinc-200 mb-2">
             No blogs yet
@@ -968,7 +1227,7 @@ export default function BlogManagement() {
       )}
 
       {/* Blog List */}
-      {!isLoading && blogs.length > 0 && (
+      {activeSection === "posts" && !isLoading && blogs.length > 0 && (
         <BlogList
           blogs={blogs}
           onEdit={handleEdit}
