@@ -125,6 +125,71 @@ export default function BlogDetailPage() {
       ? safeBlog.titleStyle
       : {};
 
+  const renderTextWithLinks = (text) => {
+    const content = String(text || "");
+    const nodes = [];
+    const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    let cursor = 0;
+    let match;
+
+    while ((match = markdownLinkRegex.exec(content)) !== null) {
+      const [raw, label, url] = match;
+      const start = match.index;
+
+      if (start > cursor) {
+        nodes.push(content.slice(cursor, start));
+      }
+
+      nodes.push(
+        <a
+          key={`md-link-${start}-${url}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-red-300 hover:text-red-200 underline underline-offset-2"
+        >
+          {label}
+        </a>,
+      );
+
+      cursor = start + raw.length;
+    }
+
+    const remainder = content.slice(cursor);
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    let remainderCursor = 0;
+    let urlMatch;
+
+    while ((urlMatch = urlRegex.exec(remainder)) !== null) {
+      const [url] = urlMatch;
+      const start = urlMatch.index;
+
+      if (start > remainderCursor) {
+        nodes.push(remainder.slice(remainderCursor, start));
+      }
+
+      nodes.push(
+        <a
+          key={`url-link-${start}-${url}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-red-300 hover:text-red-200 underline underline-offset-2"
+        >
+          {url}
+        </a>,
+      );
+
+      remainderCursor = start + url.length;
+    }
+
+    if (remainderCursor < remainder.length) {
+      nodes.push(remainder.slice(remainderCursor));
+    }
+
+    return nodes.length > 0 ? nodes : content;
+  };
+
   // Log blog data for debugging
   if (
     typeof window !== "undefined" &&
@@ -982,7 +1047,7 @@ export default function BlogDetailPage() {
                       : 1,
                 }}
               >
-                {block.content}
+                {renderTextWithLinks(block.content)}
               </p>
             </div>
           );
@@ -998,9 +1063,11 @@ export default function BlogDetailPage() {
                       className="w-full max-w-md mx-auto rounded-lg shadow-md object-cover"
                       style={{ maxHeight: "320px" }}
                     />
-                    {img.name && (
-                      <figcaption className="text-center text-gray-500 text-sm mt-2">
-                        {img.name}
+                    {(img.caption || img.credit) && (
+                      <figcaption className="text-center text-black text-[10px] mt-1">
+                        {img.caption || ""}
+                        {img.caption && img.credit ? " " : ""}
+                        {img.credit ? `(${img.credit})` : ""}
                       </figcaption>
                     )}
                   </figure>
@@ -1449,10 +1516,20 @@ export default function BlogDetailPage() {
                     {shareStatus}
                   </p>
                 )}
+
               </div>
             </div>
           </div>
         </section>
+      )}
+      {showHero && (safeTitleStyle.coverImageCaption || safeTitleStyle.coverImageCredit) && (
+        <div className="text-center py-2 bg-[#1e1e1e]">
+          <p className="text-[10px] text-black">
+            {safeTitleStyle.coverImageCaption || ""}
+            {safeTitleStyle.coverImageCaption && safeTitleStyle.coverImageCredit ? " " : ""}
+            {safeTitleStyle.coverImageCredit ? `(${safeTitleStyle.coverImageCredit})` : ""}
+          </p>
+        </div>
       )}
 
       {/* Content - Centered */}

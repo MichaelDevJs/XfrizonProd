@@ -79,6 +79,35 @@ export default function BlogEditorForm({
         <p className="text-[10px] text-gray-500 mt-2">
           Recommended size: 1920x1080px or larger
         </p>
+
+        {formData.coverImage && (
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input
+              type="text"
+              value={formData.titleStyle?.coverImageCaption || ""}
+              onChange={(e) =>
+                handleTitleStyleChange("title", {
+                  ...(formData.titleStyle || {}),
+                  coverImageCaption: e.target.value,
+                })
+              }
+              placeholder="Cover caption"
+              className="w-full px-3 py-2 bg-[#1e1e1e] border border-zinc-800 rounded-lg text-xs text-white placeholder-gray-600"
+            />
+            <input
+              type="text"
+              value={formData.titleStyle?.coverImageCredit || ""}
+              onChange={(e) =>
+                handleTitleStyleChange("title", {
+                  ...(formData.titleStyle || {}),
+                  coverImageCredit: e.target.value,
+                })
+              }
+              placeholder="Cover credit (e.g. Photo by...)"
+              className="w-full px-3 py-2 bg-[#1e1e1e] border border-zinc-800 rounded-lg text-xs text-white placeholder-gray-600"
+            />
+          </div>
+        )}
       </div>
 
       {/* Post Details (Compact Scroll Block) */}

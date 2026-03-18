@@ -25,6 +25,8 @@ export default function BlockImageManager({ block, updateBlock }) {
             src: previewUrl,
             preview: previewUrl,
             name: file.name,
+            caption: "",
+            credit: "",
             file,
           },
         ],
@@ -51,18 +53,44 @@ export default function BlockImageManager({ block, updateBlock }) {
       />
 
       {block.images?.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {block.images.map((img) => (
             <div
               key={img.id}
-              className="relative rounded-lg overflow-hidden group"
+              className="relative rounded-lg overflow-hidden border border-zinc-800 bg-[#232323]"
             >
               <img
                 src={getPreviewUrl(img)}
                 alt={img.name}
                 className="w-full h-32 object-cover"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+              <div className="p-2 space-y-2">
+                <input
+                  type="text"
+                  value={img.caption || ""}
+                  onChange={(e) =>
+                    updateBlock(block.id, {
+                      images: block.images.map((i) =>
+                        i.id === img.id ? { ...i, caption: e.target.value } : i,
+                      ),
+                    })
+                  }
+                  placeholder="Caption"
+                  className="w-full px-2 py-1 bg-[#1e1e1e] border border-zinc-700 rounded text-[11px] text-gray-200"
+                />
+                <input
+                  type="text"
+                  value={img.credit || ""}
+                  onChange={(e) =>
+                    updateBlock(block.id, {
+                      images: block.images.map((i) =>
+                        i.id === img.id ? { ...i, credit: e.target.value } : i,
+                      ),
+                    })
+                  }
+                  placeholder="Credit (e.g. Photo by...)"
+                  className="w-full px-2 py-1 bg-[#1e1e1e] border border-zinc-700 rounded text-[11px] text-gray-200"
+                />
                 <button
                   onClick={() => {
                     revokePreview(img);
@@ -70,7 +98,7 @@ export default function BlockImageManager({ block, updateBlock }) {
                       images: block.images.filter((i) => i.id !== img.id),
                     });
                   }}
-                  className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700\"
+                  className="w-full px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
                 >
                   Remove
                 </button>

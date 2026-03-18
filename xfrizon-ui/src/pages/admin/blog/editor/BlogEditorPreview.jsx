@@ -78,6 +78,19 @@ export default function BlogEditorPreview({
                   <div className="mt-2 text-[10px] uppercase tracking-wider text-gray-200">
                     {metaParts.join(" | ")}
                   </div>
+                  {(formData.titleStyle?.coverImageCaption ||
+                    formData.titleStyle?.coverImageCredit) && (
+                    <div className="mt-2 text-[10px] text-gray-300 normal-case tracking-normal">
+                      {formData.titleStyle?.coverImageCaption || ""}
+                      {formData.titleStyle?.coverImageCaption &&
+                      formData.titleStyle?.coverImageCredit
+                        ? " "
+                        : ""}
+                      {formData.titleStyle?.coverImageCredit
+                        ? `(${formData.titleStyle.coverImageCredit})`
+                        : ""}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

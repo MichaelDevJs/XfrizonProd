@@ -39,6 +39,13 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
         >
           • List
         </button>
+        <button
+          onClick={() => applyFormat(block.id, "link")}
+          className="px-3 py-2 bg-[#444] border border-[#555] rounded hover:bg-[#555] text-sm text-gray-200 transition"
+          title="Insert link"
+        >
+          Link
+        </button>
       </div>
 
       <textarea

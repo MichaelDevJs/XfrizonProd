@@ -126,6 +126,14 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
     case "bullet":
       formattedText = `\n• ${selectedText}\n`;
       break;
+    case "link": {
+      const url = window.prompt("Enter URL", "https://");
+      if (!url) return;
+      const defaultLabel = selectedText || "";
+      const linkLabel = defaultLabel || window.prompt("Enter link text (display name)", "") || "Link";
+      formattedText = `[${linkLabel}](${url.trim()})`;
+      break;
+    }
     default:
       break;
   }
@@ -138,6 +146,70 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
 };
 
 export const renderBlockPreview = (block) => {
+  const renderLineWithLinks = (line) => {
+    const nodes = [];
+    const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    let cursor = 0;
+    let match;
+
+    while ((match = markdownLinkRegex.exec(line)) !== null) {
+      const [raw, label, url] = match;
+      const start = match.index;
+
+      if (start > cursor) {
+        nodes.push(line.slice(cursor, start));
+      }
+
+      nodes.push(
+        <a
+          key={`md-link-${start}-${url}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 underline underline-offset-2"
+        >
+          {label}
+        </a>,
+      );
+
+      cursor = start + raw.length;
+    }
+
+    const remainder = line.slice(cursor);
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    let remainderCursor = 0;
+    let urlMatch;
+
+    while ((urlMatch = urlRegex.exec(remainder)) !== null) {
+      const [url] = urlMatch;
+      const start = urlMatch.index;
+
+      if (start > remainderCursor) {
+        nodes.push(remainder.slice(remainderCursor, start));
+      }
+
+      nodes.push(
+        <a
+          key={`url-link-${start}-${url}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 underline underline-offset-2"
+        >
+          {url}
+        </a>,
+      );
+
+      remainderCursor = start + url.length;
+    }
+
+    if (remainderCursor < remainder.length) {
+      nodes.push(remainder.slice(remainderCursor));
+    }
+
+    return nodes.length > 0 ? nodes : line;
+  };
+
   if (block.type === "text") {
     return block.content.split("\n").map((line, idx) => {
       if (line.startsWith("# "))
@@ -167,7 +239,7 @@ export const renderBlockPreview = (block) => {
       if (line.trim())
         return (
           <p key={idx} className="mb-2">
-            {line}
+            {renderLineWithLinks(line)}
           </p>
         );
       return <br key={idx} />;
@@ -176,12 +248,16 @@ export const renderBlockPreview = (block) => {
     return (
       <div className="grid grid-cols-2 gap-2">
         {block.images?.slice(0, 4).map((img) => (
-          <img
-            key={img.id}
-            src={img.src}
-            alt="preview"
-            className="w-full h-24 object-cover rounded"
-          />
+          <figure key={img.id}>
+            <img src={img.src} alt="preview" className="w-full h-24 object-cover rounded" />
+            {(img.caption || img.credit) && (
+              <figcaption className="mt-1 text-[10px] text-gray-500">
+                {img.caption || ""}
+                {img.caption && img.credit ? " " : ""}
+                {img.credit ? `(${img.credit})` : ""}
+              </figcaption>
+            )}
+          </figure>
         ))}
       </div>
     );
