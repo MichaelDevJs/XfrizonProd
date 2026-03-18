@@ -310,11 +310,16 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
                   src={getMediaUrl(partner.profilePhotoUrl || partner.logoUrl) || partner.profilePhotoUrl || partner.logoUrl}
                   alt={partner?.name || "Partner logo"}
                   className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/assets/african-panther-dark.svg";
+                  }}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#c0f24d]">
-                  {String(partner?.name || "P").charAt(0)}
-                </div>
+                <img
+                  src="/assets/african-panther-dark.svg"
+                  alt="Partner placeholder"
+                  className="h-full w-full object-cover"
+                />
               )}
             </div>
           ) : null}
@@ -372,7 +377,7 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
           ) : null}
 
           {showDescription && (partner?.aboutPrimaryBody || partner?.description) ? (
-            <div className="mt-3 max-w-2xl mx-auto max-h-[7.5rem] overflow-y-auto hide-scrollbar">
+            <div className="mt-3 max-w-2xl mx-auto max-h-30 overflow-y-auto hide-scrollbar">
               <p className="whitespace-pre-wrap text-[11px] font-light leading-6 tracking-[0.02em] text-gray-200/90">
                 {partner.aboutPrimaryBody || partner.description}
               </p>

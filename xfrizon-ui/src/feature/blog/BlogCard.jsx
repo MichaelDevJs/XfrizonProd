@@ -6,8 +6,7 @@ import {
   shareNativelyOrCopy,
 } from "../../utils/share";
 
-const PLACEHOLDER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='700'%3E%3Crect fill='%23272727' width='1200' height='700'/%3E%3Ctext x='50%25' y='50%25' font-size='28' fill='%23717171' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
+const PLACEHOLDER_IMAGE = "/assets/african-panther-dark.svg";
 
 const resolveImage = (path) => {
   if (!path) return PLACEHOLDER_IMAGE;

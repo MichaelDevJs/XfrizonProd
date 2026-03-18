@@ -278,9 +278,7 @@ export default function AdminBlogHeroBlocksPage() {
 
   const handleSave = async () => {
     if (hasUnsafeSlideUrls(blogHeroSlideshow)) {
-      toast.error(
-        "Some slides still use local/base64 URLs. Re-upload and try again.",
-      );
+      toast.error("Some slides still use local/base64 URLs. Re-upload and try again.");
       return;
     }
 
@@ -456,9 +454,7 @@ export default function AdminBlogHeroBlocksPage() {
     // Persist new slideshow immediately so refresh does not drop unsaved media
     try {
       if (hasUnsafeSlideUrls(updatedSlides)) {
-        toast.error(
-          "Slide added locally but URL is not upload-safe. Re-upload before saving.",
-        );
+        toast.error("Slide added locally but URL is not upload-safe. Re-upload before saving.");
         return;
       }
 
@@ -879,8 +875,7 @@ export default function AdminBlogHeroBlocksPage() {
                         alt={slide.title || "Slide"}
                         className="w-full h-full object-contain"
                         onError={(e) => {
-                          e.target.src =
-                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23333' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='18' fill='%23666' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
+                          e.target.src = "/assets/african-panther-dark.svg";
                         }}
                       />
                     )}

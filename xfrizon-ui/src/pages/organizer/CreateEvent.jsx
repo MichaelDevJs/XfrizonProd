@@ -422,7 +422,7 @@ export default function CreateEvent() {
                     alt="Event Flyer"
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23333" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3EInvalid Image%3C/text%3E%3C/svg%3E';
+                      e.target.src = "/assets/african-panther-dark.svg";
                     }}
                   />
                 </div>

@@ -17,11 +17,11 @@ const ArtistCard = ({ artist = {} }) => {
       : getImageUrl(image, "artists");
 
   return (
-    <div className="min-w-[260px] bg-zinc-900 border border-zinc-800 text-white p-6 rounded-xl snap-start text-center hover:border-red-500 transition-all duration-300 group">
+    <div className="min-w-65 bg-zinc-900 border border-zinc-800 text-white p-6 rounded-xl snap-start text-center hover:border-red-500 transition-all duration-300 group">
       <img
         src={src}
         alt={name}
-        onError={(e) => (e.currentTarget.src = "/assets/placeholder.jpg")}
+        onError={(e) => (e.currentTarget.src = "/assets/african-panther-dark.svg")}
         className="w-32 h-32 rounded-full mx-auto object-cover"
       />
 

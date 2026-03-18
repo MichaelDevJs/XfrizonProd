@@ -17,7 +17,7 @@ export default function UserProfile() {
 
   // Helper function to construct image URLs
   const getImageUrl = (path) => {
-    if (!path) return null;
+    if (!path) return "/assets/african-panther-dark.svg";
     if (path.startsWith("http")) return path;
     // Ensure path starts with /
     const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -70,7 +70,7 @@ export default function UserProfile() {
     profilePicture:
       id === "1"
         ? "https://i.pinimg.com/736x/65/f6/1a/65f61ae22f9e09181dcf1f71de73dd0f.jpg"
-        : "https://ui-avatars.com/api/?name=User+Profile&background=random&color=fff",
+        : "/assets/african-panther-dark.svg",
     createdAt: new Date("2023-06-15"),
     musicInterests: ["Afrobeats", "Hip-Hop", "Electronic", "Reggae"],
     partyInterests: [
@@ -110,7 +110,7 @@ export default function UserProfile() {
 
   const userProfilePicture = user.profilePicture
     ? getImageUrl(user.profilePicture)
-    : `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=403838&color=fff`;
+    : "/assets/african-panther-dark.svg";
 
   const isOwnProfile =
     currentUser && parseInt(currentUser.id) === parseInt(userId);

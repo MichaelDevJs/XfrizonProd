@@ -215,20 +215,15 @@ const MyEvents = () => {
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
-                      e.target.src =
-                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%231a1a1a' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='16' fill='%23666' text-anchor='middle' dominant-baseline='middle'%3E" +
-                        encodeURIComponent(event.title.substring(0, 30)) +
-                        "%3C/text%3E%3C/svg%3E";
+                      e.target.src = "/assets/african-panther-dark.svg";
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-red-900 to-zinc-900">
-                    <div className="text-center">
-                      <p className="text-gray-400 font-light text-xs">
-                        No flyer uploaded
-                      </p>
-                    </div>
-                  </div>
+                  <img
+                    src="/assets/african-panther-dark.svg"
+                    alt="Event placeholder"
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
 

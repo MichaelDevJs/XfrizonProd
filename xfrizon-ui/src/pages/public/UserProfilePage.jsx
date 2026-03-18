@@ -10,7 +10,7 @@ export default function UserProfilePage() {
 
   // Helper function to construct image URLs
   const getImageUrl = (path) => {
-    if (!path) return null;
+    if (!path) return "/assets/african-panther-dark.svg";
     if (path.startsWith("http")) return path;
     // Ensure path starts with /
     const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -67,7 +67,7 @@ export default function UserProfilePage() {
         userProfilePicture={
           user.profilePicture
             ? getImageUrl(user.profilePicture)
-            : `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=403838&color=fff`
+            : "/assets/african-panther-dark.svg"
         }
         isOwnProfile={true}
       />

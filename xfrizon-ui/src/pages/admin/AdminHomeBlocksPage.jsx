@@ -40,6 +40,7 @@ export default function AdminHomeBlocksPage() {
   const [bannerAnimationType, setBannerAnimationType] = useState("marquee");
   const [bannerUnlimitedLoop, setBannerUnlimitedLoop] = useState(false);
   const [bannerPauseOnHover, setBannerPauseOnHover] = useState(false);
+  const [bannerEnabled, setBannerEnabled] = useState(true);
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [blogsSectionBgColor, setBlogsSectionBgColor] = useState("#ffffff");
@@ -688,6 +689,11 @@ export default function AdminHomeBlocksPage() {
         setBannerPauseOnHover(raw === "true" || raw === "1");
       }
 
+      if (settings.bannerEnabled != null) {
+        const raw = String(settings.bannerEnabled).toLowerCase();
+        setBannerEnabled(raw === "true" || raw === "1");
+      }
+
       if (typeof settings.heroTitle === "string") {
         setHeroTitle(settings.heroTitle);
       }
@@ -788,6 +794,7 @@ export default function AdminHomeBlocksPage() {
         bannerAnimationType,
         bannerUnlimitedLoop: bannerUnlimitedLoop ? "true" : "false",
         bannerPauseOnHover: bannerPauseOnHover ? "true" : "false",
+        bannerEnabled: bannerEnabled ? "true" : "false",
         blogsSectionBgColor,
         blogsHeadlineTitleColor,
         blogsLatestTitleColor,
@@ -2076,6 +2083,19 @@ export default function AdminHomeBlocksPage() {
         <h2 className="text-xl font-semibold text-white mb-4">
           Centered Banner Texts
         </h2>
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setBannerEnabled((prev) => !prev)}
+            className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+              bannerEnabled
+                ? "bg-red-600/20 text-red-300 border-red-500"
+                : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+            }`}
+          >
+            Centered Banner: {bannerEnabled ? "ON" : "OFF"}
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-xs text-gray-400 mb-1">

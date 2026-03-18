@@ -16,8 +16,8 @@ import {
   shareNativelyOrCopy,
 } from "../../utils/share";
 
-const PLACEHOLDER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%233f3f46' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23a1a1a1' text-anchor='middle' dominant-baseline='middle'%3EEvent Image%3C/text%3E%3C/svg%3E";
+const PLACEHOLDER_IMAGE = "/assets/african-panther-dark.svg";
+const DEFAULT_PANTHER_AVATAR = "/assets/african-panther-dark.svg";
 
 const resolveFlyerUrl = (path) => {
   if (!path) return null;
@@ -245,48 +245,30 @@ export default function EventCard({ event, onSaveChange }) {
 
             {/* Organizer Logo/Badge */}
             {event.organizer ? (
-              event.organizer.logo ? (
-                <Link
-                  to={`/organizer/${event.organizer.id}`}
-                  onClick={(e) => e.stopPropagation()}
-                  title={`View ${event.organizer.name}'s events`}
-                  className="hover:opacity-80 transition-opacity shrink-0"
-                >
-                  <img
-                    src={resolveFlyerUrl(event.organizer.logo)}
-                    alt={event.organizer.name}
-                    className="w-8 h-8 rounded-full object-cover shadow-sm"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                      if (e.target.nextElementSibling) {
-                        e.target.nextElementSibling.style.display = "flex";
-                      }
-                    }}
-                  />
-                  <div
-                    className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold transition-colors"
-                    style={{ display: "none" }}
-                  >
-                    {event.organizer.name?.charAt(0)?.toUpperCase()}
-                  </div>
-                </Link>
-              ) : (
-                <Link
-                  to={`/organizer/${event.organizer.id}`}
-                  onClick={(e) => e.stopPropagation()}
-                  title={`View ${event.organizer.name}'s events`}
-                  className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold transition-colors hover:opacity-90 shrink-0 shadow-sm"
-                >
-                  {event.organizer.name?.charAt(0)?.toUpperCase()}
-                </Link>
-              )
-            ) : (
-              <div
-                className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs font-bold shrink-0"
-                title="Organizer info not available"
+              <Link
+                to={`/organizer/${event.organizer.id}`}
+                onClick={(e) => e.stopPropagation()}
+                title={`View ${event.organizer.name}'s events`}
+                className="hover:opacity-80 transition-opacity shrink-0"
               >
-                ?
-              </div>
+                <img
+                  src={
+                    resolveFlyerUrl(event.organizer.logo) || DEFAULT_PANTHER_AVATAR
+                  }
+                  alt={event.organizer.name}
+                  className="w-8 h-8 rounded-full object-cover shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_PANTHER_AVATAR;
+                  }}
+                />
+              </Link>
+            ) : (
+              <img
+                src={DEFAULT_PANTHER_AVATAR}
+                alt="Organizer placeholder"
+                className="w-8 h-8 rounded-full object-cover shadow-sm shrink-0"
+                title="Organizer info not available"
+              />
             )}
           </div>
 
@@ -378,28 +360,18 @@ export default function EventCard({ event, onSaveChange }) {
                             }
                             className="w-6 h-6 rounded-full object-cover bg-zinc-800 shrink-0"
                           >
-                            {user.profilePicture ? (
-                              <img
-                                src={resolveFlyerUrl(user.profilePicture)}
-                                alt={`${user.firstName} ${user.lastName}`}
-                                className="w-full h-full rounded-full object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = "none";
-                                  if (e.target.nextElementSibling) {
-                                    e.target.nextElementSibling.style.display =
-                                      "flex";
-                                  }
-                                }}
-                              />
-                            ) : null}
-                            <div
-                              className="w-full h-full rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold"
-                              style={{
-                                display: user.profilePicture ? "none" : "flex",
+                            <img
+                              src={
+                                user.profilePicture
+                                  ? resolveFlyerUrl(user.profilePicture)
+                                  : DEFAULT_PANTHER_AVATAR
+                              }
+                              alt={`${user.firstName} ${user.lastName}`}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = DEFAULT_PANTHER_AVATAR;
                               }}
-                            >
-                              {`${user.firstName?.[0]}${user.lastName?.[0]}`.toUpperCase()}
-                            </div>
+                            />
                           </div>
                         );
                       })}

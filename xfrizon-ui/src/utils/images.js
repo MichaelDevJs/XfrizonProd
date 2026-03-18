@@ -1,6 +1,8 @@
+export const DEFAULT_PANTHER_PLACEHOLDER = "/assets/african-panther-dark.svg";
+
 export function getImageUrl(image, folder = "") {
-  if (!image) return "/assets/placeholder.jpg";
-  if (typeof image !== "string") return "/assets/placeholder.jpg";
+  if (!image) return DEFAULT_PANTHER_PLACEHOLDER;
+  if (typeof image !== "string") return DEFAULT_PANTHER_PLACEHOLDER;
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
   // if image starts with a slash, treat as root-relative
   if (image.startsWith("/")) return image;

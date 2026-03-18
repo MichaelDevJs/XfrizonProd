@@ -220,10 +220,13 @@ export default function TicketHistory() {
                       src={
                         flyerUrl
                           ? getImageUrl(flyerUrl)
-                          : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Crect fill='%231a1a1a' width='128' height='128'/%3E%3C/svg%3E"
+                          : "/assets/african-panther-dark.svg"
                       }
                       alt={eventTitle}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/assets/african-panther-dark.svg";
+                      }}
                     />
                   </div>
 

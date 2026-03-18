@@ -142,13 +142,16 @@ function PartnerCard({ partner, onRedeem }) {
             src={partner.logoUrl}
             alt={partner.name}
             className="max-h-24 max-w-full object-contain"
+            onError={(e) => {
+              e.currentTarget.src = "/assets/african-panther-dark.svg";
+            }}
           />
         ) : (
-          <div className="w-20 h-20 rounded-full bg-[#c0f24d]/10 flex items-center justify-center">
-            <span className="text-3xl font-bold text-[#c0f24d]">
-              {partner.name.charAt(0)}
-            </span>
-          </div>
+          <img
+            src="/assets/african-panther-dark.svg"
+            alt="Partner placeholder"
+            className="max-h-24 max-w-full object-contain"
+          />
         )}
       </div>
 

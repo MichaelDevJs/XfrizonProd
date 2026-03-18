@@ -317,11 +317,16 @@ export default function UserProfileEdit() {
                     src={getImageUrl(photoPreview)}
                     alt="Profile preview"
                     className="w-32 h-32 rounded-full object-cover ring-4 ring-xf-accent shadow-xl"
+                    onError={(e) => {
+                      e.currentTarget.src = "/assets/african-panther-dark.svg";
+                    }}
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-full bg-linear-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-white text-4xl font-bold ring-4 ring-zinc-800 shadow-xl">
-                    {currentUser.firstName?.charAt(0)?.toUpperCase()}
-                  </div>
+                  <img
+                    src="/assets/african-panther-dark.svg"
+                    alt="Profile placeholder"
+                    className="w-32 h-32 rounded-full object-cover ring-4 ring-zinc-800 shadow-xl"
+                  />
                 )}
               </div>
 
@@ -469,7 +474,7 @@ export default function UserProfileEdit() {
             <div className="space-y-4">
               {/* Website */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
                   <FaGlobe className="text-xf-accent" />
                   Website
                 </label>
@@ -485,7 +490,7 @@ export default function UserProfileEdit() {
 
               {/* Instagram */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
                   <FaInstagram className="text-xf-accent" />
                   Instagram
                 </label>
@@ -501,7 +506,7 @@ export default function UserProfileEdit() {
 
               {/* Twitter */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
                   <FaTwitter className="text-xf-accent" />
                   Twitter / X
                 </label>

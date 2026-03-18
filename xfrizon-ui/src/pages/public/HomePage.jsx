@@ -46,6 +46,7 @@ export default function HomePage() {
   const [bannerAnimationType, setBannerAnimationType] = useState("marquee");
   const [bannerUnlimitedLoop, setBannerUnlimitedLoop] = useState(false);
   const [bannerPauseOnHover, setBannerPauseOnHover] = useState(false);
+  const [bannerEnabled, setBannerEnabled] = useState(true);
   const [blogsSectionBgColor, setBlogsSectionBgColor] = useState("#ffffff");
   const [blogsHeadlineTitleColor, setBlogsHeadlineTitleColor] =
     useState("#18181b");
@@ -214,6 +215,11 @@ export default function HomePage() {
         setBannerPauseOnHover(raw === "true" || raw === "1");
       }
 
+      if (settings.bannerEnabled != null) {
+        const raw = String(settings.bannerEnabled).toLowerCase();
+        setBannerEnabled(raw === "true" || raw === "1");
+      }
+
       if (typeof settings.heroTitle === "string") {
         setHeroTitle(settings.heroTitle);
       }
@@ -306,6 +312,7 @@ export default function HomePage() {
   const renderBlock = (blockId) => {
     switch (blockId) {
       case "centeredBanner":
+        if (!bannerEnabled) return null;
         return (
           <CenteredBanner
             key="centeredBanner"
