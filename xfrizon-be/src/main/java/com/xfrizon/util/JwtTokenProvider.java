@@ -21,6 +21,9 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    @Value("${jwt.oauth-signup-expiration:900000}")
+    private long oauthSignupExpiration;
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
@@ -31,9 +34,19 @@ public class JwtTokenProvider {
         return createToken(claims, email);
     }
 
+    public String generateOAuthSignupToken(String email, Map<String, Object> claims) {
+        Map<String, Object> tokenClaims = new HashMap<>(claims == null ? Map.of() : claims);
+        tokenClaims.put("purpose", "GOOGLE_SIGNUP");
+        return createToken(tokenClaims, email, oauthSignupExpiration);
+    }
+
     private String createToken(Map<String, Object> claims, String subject) {
+        return createToken(claims, subject, jwtExpiration);
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, long expirationMillis) {
         Instant now = Instant.now();
-        Instant expiryTime = now.plusSeconds(jwtExpiration / 1000);
+        Instant expiryTime = now.plusSeconds(Math.max(1, expirationMillis / 1000));
 
         return Jwts.builder()
                 .claims(claims)
@@ -71,6 +84,10 @@ public class JwtTokenProvider {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public Claims getClaims(String token) {
+        return getAllClaimsFromToken(token);
     }
 
     private Claims getAllClaimsFromToken(String token) {

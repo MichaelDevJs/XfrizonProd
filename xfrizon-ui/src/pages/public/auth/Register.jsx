@@ -1,8 +1,10 @@
 import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../../context/AuthContext";
+import authService from "../../../api/authService";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -19,6 +21,10 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const handleGoogleSignup = () => {
+    authService.startGoogleSignup({ accountType: "USER" });
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -304,6 +310,15 @@ export default function Register() {
           <span className="text-xs text-gray-600 font-light">or</span>
           <div className="flex-1 border-t border-zinc-800" />
         </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignup}
+          className="w-full flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white py-2.5 rounded-lg transition-all duration-300 font-light text-sm border border-zinc-700"
+        >
+          <FcGoogle className="w-4 h-4" />
+          Continue with Google
+        </button>
 
         {/* Login Link */}
         <div className="text-center">

@@ -2,9 +2,11 @@ package com.xfrizon.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.cors.CorsConfiguration;
@@ -16,15 +18,39 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
+    private final GoogleOAuthHandlers googleOAuthHandlers;
+
+    public SecurityConfig(
+        ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider,
+        GoogleOAuthHandlers googleOAuthHandlers
+    ) {
+        this.clientRegistrationRepositoryProvider = clientRegistrationRepositoryProvider;
+        this.googleOAuthHandlers = googleOAuthHandlers;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // OAuth2 login requires temporary session state during provider redirect/callback.
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(authz -> authz
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/register", "/auth/register-organizer", "/auth/login", "/auth/validate-token")
+                        .requestMatchers(
+                            "/auth/register",
+                            "/auth/register-organizer",
+                            "/auth/login",
+                            "/auth/validate-token",
+                            "/api/v1/auth/register",
+                            "/api/v1/auth/register-organizer",
+                            "/api/v1/auth/login",
+                            "/api/v1/auth/validate-token",
+                            "/api/v1/auth/oauth/google/complete-signup",
+                            "/oauth2/**",
+                            "/login/oauth2/**"
+                        )
                         .permitAll()
                         .requestMatchers("/api/v1/events/public/**")
                         .permitAll()
@@ -32,6 +58,13 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .httpBasic(basic -> basic.disable());
+
+        if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
+            http.oauth2Login(oauth -> oauth
+                .successHandler(googleOAuthHandlers)
+                .failureHandler(googleOAuthHandlers)
+            );
+        }
 
         return http.build();
     }

@@ -8,10 +8,12 @@ import {
   FaTicketAlt,
   FaMusic,
   FaHourglass,
+  FaCheckCircle,
 } from "react-icons/fa";
 import { FiCalendar, FiClock, FiMapPin, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import CountdownTimer from "./CountdownTimer";
 import { COUNTRIES_DATA } from "../../data/countriesData";
 import HeroSlideshow from "../HeroSlideshow/HeroSlideshow";
@@ -23,6 +25,16 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [blogHeadlineSlideshow, setBlogHeadlineSlideshow] = useState([]);
+  const [showRsvpModal, setShowRsvpModal] = useState(false);
+  const [rsvpSubmitting, setRsvpSubmitting] = useState(false);
+  const [rsvpSuccess, setRsvpSuccess] = useState(false);
+  const [rsvpForm, setRsvpForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    note: "",
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,6 +62,24 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
 
     fetchBlogHeadlineSlides();
   }, []);
+
+  useEffect(() => {
+    if (!showRsvpModal) return;
+
+    try {
+      const rawUser = localStorage.getItem("user");
+      if (!rawUser) return;
+      const user = JSON.parse(rawUser);
+      setRsvpForm((prev) => ({
+        ...prev,
+        firstName: prev.firstName || user?.firstName || "",
+        lastName: prev.lastName || user?.lastName || "",
+        email: prev.email || user?.email || "",
+      }));
+    } catch {
+      // Ignore local storage parse errors.
+    }
+  }, [showRsvpModal]);
 
   const SERVICE_FEE_RATE = 0.1; // 10%
   const roundCurrency = (amount) =>
@@ -140,6 +170,73 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
   const subtotalAmount = getSubtotal();
   const serviceFeeAmount = roundCurrency(subtotalAmount * SERVICE_FEE_RATE);
   const totalAmount = roundCurrency(subtotalAmount + serviceFeeAmount);
+  const rsvpRequiredFields = Array.isArray(event?.rsvpRequiredFields)
+    ? event.rsvpRequiredFields
+    : [];
+  const requiresPhone = rsvpRequiredFields.includes("phone");
+  const requiresNote = rsvpRequiredFields.includes("note");
+
+  const resetRsvpForm = () => {
+    setRsvpForm({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      note: "",
+    });
+    setRsvpSuccess(false);
+  };
+
+  const handleOpenRsvp = () => {
+    resetRsvpForm();
+    setShowRsvpModal(true);
+  };
+
+  const handleRsvpSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!event?.id) {
+      toast.error("Unable to submit RSVP for this event.");
+      return;
+    }
+    if (!rsvpForm.firstName.trim() || !rsvpForm.lastName.trim()) {
+      toast.error("First and last name are required.");
+      return;
+    }
+    if (!rsvpForm.email.trim()) {
+      toast.error("Email is required.");
+      return;
+    }
+    if (requiresPhone && !rsvpForm.phone.trim()) {
+      toast.error("Phone is required for this RSVP.");
+      return;
+    }
+    if (requiresNote && !rsvpForm.note.trim()) {
+      toast.error("Message is required for this RSVP.");
+      return;
+    }
+
+    try {
+      setRsvpSubmitting(true);
+      await api.post(`/events/${event.id}/rsvp`, {
+        firstName: rsvpForm.firstName.trim(),
+        lastName: rsvpForm.lastName.trim(),
+        email: rsvpForm.email.trim(),
+        phone: rsvpForm.phone.trim() || undefined,
+        note: rsvpForm.note.trim() || undefined,
+      });
+      setRsvpSuccess(true);
+      toast.success("RSVP submitted successfully!");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to submit RSVP. Please try again.";
+      toast.error(String(message));
+    } finally {
+      setRsvpSubmitting(false);
+    }
+  };
 
   const resolveFlyerUrl = (path) => {
     if (!path) return null;
@@ -316,184 +413,195 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                 </div>
               )}
 
-              {/* Tickets Section - Clean and Minimal */}
-              <div className="w-full max-w-lg mx-auto mt-12 space-y-2 bg-black/20 border-r border-b border-emerald-500/70 shadow-sm shadow-black/20 p-2.5 text-xs">
-                {(event.ticketTiers && event.ticketTiers.length > 0) ||
-                (event.tickets && event.tickets.length > 0) ? (
-                  <div className="space-y-2 mb-5">
-                    {(event.ticketTiers && event.ticketTiers.length > 0
-                      ? event.ticketTiers
-                      : event.tickets
-                    ).map((tier, idx) => {
-                      // Support both id and _id, name and ticketType
-                      const tierId = tier.id || tier._id || idx;
-                      const tierName =
-                        tier.name || tier.ticketType || tier.type || "Ticket";
-                      const selectedQty = selectedTickets[tierId] || 0;
-                      const availableQty =
-                        (tier.quantity || 0) - (tier.quantitySold || 0);
-                      const availability = isTicketAvailable(tier);
-                      const timeLeft =
-                        availability.available && tier.saleEnd
-                          ? getTimeUntilEnd(tier.saleEnd)
-                          : null;
-
-                      return (
-                        <div
-                          key={tierId}
-                          className={`p-3 transition-all duration-200 ${
-                            !availability.available
-                              ? "opacity-50 bg-gray-900/50"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex-1">
-                              <div className="text-xs font-medium text-white mb-0.5 tracking-wide">
-                                {tierName}
-                              </div>
-                              {availability.available ? (
-                                <p className="text-xs text-gray-500">
-                                  {availableQty} available
-                                </p>
-                              ) : availability.reason === "notStarted" ? (
-                                <p className="text-xs text-yellow-500">
-                                  Sales start{" "}
-                                  {new Date(
-                                    availability.startsAt,
-                                  ).toLocaleString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </p>
-                              ) : (
-                                <p className="text-xs text-red-500">
-                                  Sales ended
-                                </p>
-                              )}
-                            </div>
-                            <span className="text-sm font-medium text-gray-300 font-mono">
-                              {currencySymbol}
-                              {tier.price?.toLocaleString
-                                ? tier.price.toLocaleString()
-                                : tier.price}
-                            </span>
-                          </div>
-                          {timeLeft && (
-                            <div className="mb-2 bg-red-900/30 border border-red-800/50 rounded px-3 py-2 flex items-center gap-2">
-                              <FaHourglass className="text-red-500 text-xs" />
-                              <span className="text-xs text-red-400 font-medium">
-                                Ends in {timeLeft.hours}h {timeLeft.minutes}m{" "}
-                                {timeLeft.seconds}s
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 pt-2">
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(
-                                  tierId,
-                                  Math.max(0, selectedQty - 1),
-                                )
-                              }
-                              disabled={
-                                selectedQty === 0 || !availability.available
-                              }
-                              className="bg-gray-900 w-6 h-6 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-xs"
-                            >
-                              −
-                            </button>
-                            <span className="w-5 text-center font-medium text-white font-mono text-xs">
-                              {selectedQty}
-                            </span>
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(
-                                  tierId,
-                                  Math.min(availableQty, selectedQty + 1),
-                                )
-                              }
-                              disabled={
-                                selectedQty >= availableQty ||
-                                !availability.available
-                              }
-                              className="bg-gray-900 w-6 h-6 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-xs"
-                            >
-                              +
-                            </button>
-                            {selectedQty > 0 && (
-                              <span className="ml-auto text-xs font-medium text-gray-300 font-mono">
-                                {currencySymbol}
-                                {getTotalPrice({
-                                  ...tier,
-                                  id: tierId,
-                                }).toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-center text-gray-400">
-                    <p>No tickets available</p>
-                  </div>
-                )}
-
-                {/* Buy Button */}
-                <div className="flex items-center justify-between pt-3">
-                  <div className="text-xs">
-                    <span className="text-gray-400">Total: </span>
-                    <span className="text-sm font-medium text-gray-200">
-                      <span className="font-mono">
-                        {getTotalSelectedTickets()}
-                      </span>{" "}
-                      {getTotalSelectedTickets() === 1 ? "Ticket" : "Tickets"}
-                    </span>
-                    {getTotalSelectedTickets() > 0 && (
-                      <div className="mt-2 space-y-1 text-xs text-gray-400">
-                        <div className="flex items-center justify-between gap-6">
-                          <span>Subtotal</span>
-                          <span className="text-gray-300 font-mono">
-                            {currencySymbol}
-                            {subtotalAmount.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-6">
-                          <span>Service fee (10%)</span>
-                          <span className="text-gray-300 font-mono">
-                            {currencySymbol}
-                            {serviceFeeAmount.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-6">
-                          <span className="text-gray-300">Total</span>
-                          <span className="text-gray-200 font-mono">
-                            {currencySymbol}
-                            {totalAmount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              {event?.rsvpEnabled ? (
+                <div className="w-full max-w-lg mx-auto mt-8 text-center">
                   <button
-                    onClick={() => {
-                      if (typeof onBuyTickets === "function") {
-                        onBuyTickets(selectedTickets);
-                      }
-                    }}
-                    disabled={getTotalSelectedTickets() === 0}
-                    className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-5 rounded transition-all duration-200 text-xs"
+                    onClick={handleOpenRsvp}
+                    className="inline-flex items-center justify-center px-2.5 py-1 bg-red-600/10 border border-red-500/40 rounded-md text-red-300 hover:text-red-200 font-semibold text-xs tracking-wide uppercase leading-none transition-colors duration-200"
                   >
-                    {getTotalSelectedTickets() > 0
-                      ? `Buy ${getTotalSelectedTickets()} Ticket${getTotalSelectedTickets() !== 1 ? "s" : ""}`
-                      : "Select Tickets"}
+                    RSVP
                   </button>
                 </div>
-              </div>
+              ) : (
+                /* Tickets Section - Clean and Minimal */
+                <div className="w-full max-w-lg mx-auto mt-12 space-y-2 bg-black/20 border-r border-b border-emerald-500/70 shadow-sm shadow-black/20 p-2.5 text-xs">
+                  {(event.ticketTiers && event.ticketTiers.length > 0) ||
+                  (event.tickets && event.tickets.length > 0) ? (
+                    <div className="space-y-2 mb-5">
+                      {(event.ticketTiers && event.ticketTiers.length > 0
+                        ? event.ticketTiers
+                        : event.tickets
+                      ).map((tier, idx) => {
+                        // Support both id and _id, name and ticketType
+                        const tierId = tier.id || tier._id || idx;
+                        const tierName =
+                          tier.name || tier.ticketType || tier.type || "Ticket";
+                        const selectedQty = selectedTickets[tierId] || 0;
+                        const availableQty =
+                          (tier.quantity || 0) - (tier.quantitySold || 0);
+                        const availability = isTicketAvailable(tier);
+                        const timeLeft =
+                          availability.available && tier.saleEnd
+                            ? getTimeUntilEnd(tier.saleEnd)
+                            : null;
+
+                        return (
+                          <div
+                            key={tierId}
+                            className={`p-3 transition-all duration-200 ${
+                              !availability.available
+                                ? "opacity-50 bg-gray-900/50"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex-1">
+                                <div className="text-xs font-medium text-white mb-0.5 tracking-wide">
+                                  {tierName}
+                                </div>
+                                {availability.available ? (
+                                  <p className="text-xs text-gray-500">
+                                    {availableQty} available
+                                  </p>
+                                ) : availability.reason === "notStarted" ? (
+                                  <p className="text-xs text-yellow-500">
+                                    Sales start{" "}
+                                    {new Date(
+                                      availability.startsAt,
+                                    ).toLocaleString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-red-500">
+                                    Sales ended
+                                  </p>
+                                )}
+                              </div>
+                              <span className="text-sm font-medium text-gray-300 font-mono">
+                                {currencySymbol}
+                                {tier.price?.toLocaleString
+                                  ? tier.price.toLocaleString()
+                                  : tier.price}
+                              </span>
+                            </div>
+                            {timeLeft && (
+                              <div className="mb-2 bg-red-900/30 border border-red-800/50 rounded px-3 py-2 flex items-center gap-2">
+                                <FaHourglass className="text-red-500 text-xs" />
+                                <span className="text-xs text-red-400 font-medium">
+                                  Ends in {timeLeft.hours}h {timeLeft.minutes}m{" "}
+                                  {timeLeft.seconds}s
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 pt-2">
+                              <button
+                                onClick={() =>
+                                  handleQuantityChange(
+                                    tierId,
+                                    Math.max(0, selectedQty - 1),
+                                  )
+                                }
+                                disabled={
+                                  selectedQty === 0 || !availability.available
+                                }
+                                className="bg-gray-900 w-6 h-6 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-xs"
+                              >
+                                −
+                              </button>
+                              <span className="w-5 text-center font-medium text-white font-mono text-xs">
+                                {selectedQty}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  handleQuantityChange(
+                                    tierId,
+                                    Math.min(availableQty, selectedQty + 1),
+                                  )
+                                }
+                                disabled={
+                                  selectedQty >= availableQty ||
+                                  !availability.available
+                                }
+                                className="bg-gray-900 w-6 h-6 rounded text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-xs"
+                              >
+                                +
+                              </button>
+                              {selectedQty > 0 && (
+                                <span className="ml-auto text-xs font-medium text-gray-300 font-mono">
+                                  {currencySymbol}
+                                  {getTotalPrice({
+                                    ...tier,
+                                    id: tierId,
+                                  }).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-center text-gray-400">
+                      <p>No tickets available</p>
+                    </div>
+                  )}
+
+                  {/* Buy Button */}
+                  <div className="flex items-center justify-between pt-3">
+                    <div className="text-xs">
+                      <span className="text-gray-400">Total: </span>
+                      <span className="text-sm font-medium text-gray-200">
+                        <span className="font-mono">
+                          {getTotalSelectedTickets()}
+                        </span>{" "}
+                        {getTotalSelectedTickets() === 1 ? "Ticket" : "Tickets"}
+                      </span>
+                      {getTotalSelectedTickets() > 0 && (
+                        <div className="mt-2 space-y-1 text-xs text-gray-400">
+                          <div className="flex items-center justify-between gap-6">
+                            <span>Subtotal</span>
+                            <span className="text-gray-300 font-mono">
+                              {currencySymbol}
+                              {subtotalAmount.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-6">
+                            <span>Service fee (10%)</span>
+                            <span className="text-gray-300 font-mono">
+                              {currencySymbol}
+                              {serviceFeeAmount.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-6">
+                            <span className="text-gray-300">Total</span>
+                            <span className="text-gray-200 font-mono">
+                              {currencySymbol}
+                              {totalAmount.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (typeof onBuyTickets === "function") {
+                          onBuyTickets(selectedTickets);
+                        }
+                      }}
+                      disabled={getTotalSelectedTickets() === 0}
+                      className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-5 rounded transition-all duration-200 text-xs"
+                    >
+                      {getTotalSelectedTickets() > 0
+                        ? `Buy ${getTotalSelectedTickets()} Ticket${getTotalSelectedTickets() !== 1 ? "s" : ""}`
+                        : "Select Tickets"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="w-full max-w-lg mx-auto mt-12">
                 <h3 className="text-sm font-medium tracking-wide uppercase text-gray-200 mb-3 text-center">
@@ -508,6 +616,7 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
           )}
         </div>
 
+        {!event?.rsvpEnabled && (
         <div className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-zinc-800 bg-black/95 backdrop-blur-sm p-3">
           <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
             <div className="text-xs text-gray-300">
@@ -517,21 +626,118 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
               </span>
               <span className="ml-1">tickets</span>
             </div>
-            <button
-              onClick={() => {
-                if (typeof onBuyTickets === "function") {
-                  onBuyTickets(selectedTickets);
-                }
-              }}
-              disabled={getTotalSelectedTickets() === 0}
-              className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded text-xs"
-            >
-              {getTotalSelectedTickets() > 0
-                ? `Buy ${getTotalSelectedTickets()} Ticket${getTotalSelectedTickets() !== 1 ? "s" : ""}`
-                : "Select Tickets"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (typeof onBuyTickets === "function") {
+                    onBuyTickets(selectedTickets);
+                  }
+                }}
+                disabled={getTotalSelectedTickets() === 0}
+                className="bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded text-xs"
+              >
+                {getTotalSelectedTickets() > 0
+                  ? `Buy ${getTotalSelectedTickets()} Ticket${getTotalSelectedTickets() !== 1 ? "s" : ""}`
+                  : "Select Tickets"}
+              </button>
+            </div>
           </div>
         </div>
+        )}
+
+        {showRsvpModal && (
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg text-white font-medium">RSVP</h3>
+                  <p className="text-xs text-gray-400 mt-1">{event?.title}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRsvpModal(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {rsvpSuccess ? (
+                <div className="text-center py-8 space-y-2">
+                  <FaCheckCircle className="mx-auto text-green-500 text-3xl" />
+                  <p className="text-white">RSVP confirmed</p>
+                  <p className="text-xs text-gray-400">
+                    You are now on the attendee list for this event.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowRsvpModal(false)}
+                    className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleRsvpSubmit} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      value={rsvpForm.firstName}
+                      onChange={(e) => setRsvpForm({ ...rsvpForm, firstName: e.target.value })}
+                      placeholder="First name"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm"
+                      required
+                    />
+                    <input
+                      value={rsvpForm.lastName}
+                      onChange={(e) => setRsvpForm({ ...rsvpForm, lastName: e.target.value })}
+                      placeholder="Last name"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm"
+                      required
+                    />
+                  </div>
+                  <input
+                    type="email"
+                    value={rsvpForm.email}
+                    onChange={(e) => setRsvpForm({ ...rsvpForm, email: e.target.value })}
+                    placeholder="Email"
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm"
+                    required
+                  />
+                  <input
+                    value={rsvpForm.phone}
+                    onChange={(e) => setRsvpForm({ ...rsvpForm, phone: e.target.value })}
+                    placeholder="Phone number"
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm"
+                    required={requiresPhone}
+                  />
+                  <textarea
+                    value={rsvpForm.note}
+                    onChange={(e) => setRsvpForm({ ...rsvpForm, note: e.target.value })}
+                    placeholder="Optional note"
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-sm min-h-24"
+                    required={requiresNote}
+                  />
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowRsvpModal(false)}
+                      className="px-3 py-2 text-sm text-gray-300 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={rsvpSubmitting}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-zinc-700 text-white rounded text-sm"
+                    >
+                      {rsvpSubmitting ? "Submitting..." : "Submit RSVP"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

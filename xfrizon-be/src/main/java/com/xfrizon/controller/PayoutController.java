@@ -162,6 +162,25 @@ public class PayoutController {
         }
     }
 
+    @PostMapping("/events/{payoutId}/manual-complete")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<EventPayout>> completeManualEventPayout(
+            @PathVariable Long payoutId,
+            HttpServletRequest httpRequest) {
+        try {
+            extractUserIdFromToken(httpRequest);
+            EventPayout payout = eventPayoutService.completeManualPayout(payoutId);
+            return ResponseEntity.ok(ApiResponse.success(payout, "Manual payout marked as completed"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Error completing manual event payout", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to complete manual event payout", 500));
+        }
+    }
+
     @PostMapping("/events/{payoutId}/retry")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<EventPayout>> retryFailedEventPayout(

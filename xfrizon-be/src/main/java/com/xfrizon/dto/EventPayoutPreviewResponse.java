@@ -34,4 +34,10 @@ public class EventPayoutPreviewResponse {
     private String failureReason;
     private LocalDateTime paidAt;
     private Boolean readyForAutoPayout;
+    private Boolean prefersManualPayout;
+    private String bankName;
+    private String accountHolderName;
+    private String accountNumber;
+    private String iban;
+    private String bankCountry;
 }

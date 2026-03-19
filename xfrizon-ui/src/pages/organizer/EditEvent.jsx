@@ -58,6 +58,9 @@ export default function EditEvent() {
     city: "",
     currency: COUNTRY_CURRENCY["Nigeria"] || "NGN",
     tickets: [],
+    rsvpEnabled: false,
+    rsvpCapacity: "",
+    rsvpRequiredFields: [],
   });
 
   const [ticketInput, setTicketInput] = useState({
@@ -132,6 +135,16 @@ export default function EditEvent() {
         city: event.city || "",
         currency: event.currency || "NGN",
         tickets: event.ticketTiers || [],
+        rsvpEnabled: Boolean(event.rsvpEnabled),
+        rsvpCapacity:
+          event.rsvpCapacity !== null && event.rsvpCapacity !== undefined
+            ? String(event.rsvpCapacity)
+            : "",
+        rsvpRequiredFields: Array.isArray(event.rsvpRequiredFields)
+          ? event.rsvpRequiredFields.filter(
+              (field) => field === "phone" || field === "note",
+            )
+          : [],
       });
 
       if (event.flyerUrl || event.flyer_url) {
@@ -316,8 +329,8 @@ export default function EditEvent() {
       return;
     }
 
-    if (form.tickets.length === 0) {
-      toast.error("Please add at least one ticket tier");
+    if (form.tickets.length === 0 && !form.rsvpEnabled) {
+      toast.error("Add at least one ticket tier or enable RSVP");
       return;
     }
 
@@ -358,6 +371,9 @@ export default function EditEvent() {
         ageLimit: form.ageLimit ? parseInt(form.ageLimit) : 0,
         capacity: form.capacity ? parseInt(form.capacity) : 0,
         genres: form.genres || [],
+        rsvpEnabled: form.rsvpEnabled || false,
+        rsvpCapacity: form.rsvpCapacity ? parseInt(form.rsvpCapacity) : null,
+        rsvpRequiredFields: form.rsvpRequiredFields || [],
         tickets: form.tickets.map((ticket) => ({
           ticketType: ticket.ticketType || "General",
           currency: ticket.currency || form.currency,
@@ -858,10 +874,98 @@ export default function EditEvent() {
             </div>
           </div>
 
+          {/* RSVP Settings */}
+          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-light text-gray-200">RSVP</h3>
+                <p className="text-xs text-gray-500 font-light mt-0.5">
+                  Allow RSVP-only mode now and add paid tickets later
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setForm({ ...form, rsvpEnabled: !form.rsvpEnabled })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  form.rsvpEnabled ? "bg-red-500" : "bg-zinc-700"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    form.rsvpEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {form.rsvpEnabled && (
+              <div className="space-y-4 pt-2 border-t border-zinc-800">
+                <div>
+                  <label className="block mb-2 font-light text-gray-400 text-sm">
+                    Max RSVPs (leave empty for unlimited)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.rsvpCapacity}
+                    onChange={(e) =>
+                      setForm({ ...form, rsvpCapacity: e.target.value })
+                    }
+                    placeholder="e.g. 200"
+                    className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 font-light text-gray-400 text-sm">
+                    Required fields from attendees
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    First name, last name and email are always collected.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    {["phone", "note"].map((field) => {
+                      const labels = {
+                        phone: "Phone number",
+                        note: "Message / note",
+                      };
+                      const checked = form.rsvpRequiredFields.includes(field);
+                      return (
+                        <label
+                          key={field}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              const next = checked
+                                ? form.rsvpRequiredFields.filter(
+                                    (f) => f !== field,
+                                  )
+                                : [...form.rsvpRequiredFields, field];
+                              setForm({ ...form, rsvpRequiredFields: next });
+                            }}
+                            className="accent-red-500 w-4 h-4"
+                          />
+                          <span className="text-sm text-gray-300 font-light">
+                            {labels[field]}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Ticket Tiers */}
           <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
             <label className="block mb-4 font-light text-gray-200">
-              Ticket Tiers*
+              Ticket Tiers {form.rsvpEnabled ? "(optional)" : "*"}
             </label>
             <div className="space-y-3 mb-4">
               <input

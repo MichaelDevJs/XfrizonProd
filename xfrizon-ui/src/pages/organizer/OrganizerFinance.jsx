@@ -306,8 +306,7 @@ const OrganizerFinance = () => {
         setEventPayoutLoading(true);
       }
       const response = await organizerApi.getEventPayoutPreview();
-      const rows =
-        response?.success && Array.isArray(response?.data) ? response.data : [];
+      const rows = response?.success && Array.isArray(response?.data) ? response.data : [];
       setEventPayoutPreview(rows);
 
       const storageKey = user?.id
@@ -317,9 +316,7 @@ const OrganizerFinance = () => {
       if (storageKey) {
         let previousSnapshot = {};
         try {
-          previousSnapshot = JSON.parse(
-            localStorage.getItem(storageKey) || "{}",
-          );
+          previousSnapshot = JSON.parse(localStorage.getItem(storageKey) || "{}");
         } catch {
           previousSnapshot = {};
         }
@@ -329,8 +326,7 @@ const OrganizerFinance = () => {
 
         rows.forEach((item) => {
           const rowKey = String(
-            item?.payoutId ??
-              `${item?.eventId || "event"}-${item?.currency || "USD"}`,
+            item?.payoutId ?? `${item?.eventId || "event"}-${item?.currency || "USD"}`,
           );
 
           nextSnapshot[rowKey] = {
@@ -350,7 +346,11 @@ const OrganizerFinance = () => {
           };
 
           if (item?.status === "PAID") {
-            statusAlerts.push({ ...baseAlert, type: "success" });
+            statusAlerts.push({
+              ...baseAlert,
+              type: "success",
+              message: "Payout completed and paid by admin.",
+            });
           } else if (item?.status === "FAILED") {
             statusAlerts.push({ ...baseAlert, type: "error" });
           } else {
@@ -413,7 +413,7 @@ const OrganizerFinance = () => {
       "Window",
       "Cadence",
       "Tickets Sold",
-      "Gross Revenue",
+      "Customer Payments",
       "Service Fee",
       "Net Amount",
     ];
@@ -601,7 +601,7 @@ const OrganizerFinance = () => {
             <div className="flex min-w-max gap-3 sm:gap-4">
               <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
                 <p className="text-xs font-light text-gray-400 mb-2">
-                  Gross Revenue
+                  Customer Payments
                 </p>
                 <p className="text-xl sm:text-2xl font-light text-emerald-400 wrap-break-word">
                   {formatCurrency(
@@ -620,7 +620,7 @@ const OrganizerFinance = () => {
               </div>
               <div className="w-56 shrink-0 rounded-lg border border-zinc-700 bg-zinc-800 p-4 sm:p-5">
                 <p className="text-xs font-light text-gray-400 mb-2">
-                  Service Fee (10%)
+                  XF Service Fee (10%)
                 </p>
                 <p className="text-xl sm:text-2xl font-light text-amber-400 wrap-break-word">
                   {formatCurrency(
@@ -801,15 +801,15 @@ const OrganizerFinance = () => {
                         </th>
                         <th className="text-right py-2 px-3 text-gray-400">
                           <div className="flex items-center justify-end gap-1">
-                            Gross Revenue
+                            Customer Payments
                             <div className="group relative">
                               <FaInfoCircle className="w-3 h-3 text-gray-500 cursor-help" />
                               <div
                                 className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
                                 style={{ zIndex: 9999 }}
                               >
-                                Total amount paid by customers (ticket price +
-                                service fee)
+                                Total amount collected from customers,
+                                including ticket subtotal and XF service fee
                               </div>
                             </div>
                           </div>
@@ -823,8 +823,8 @@ const OrganizerFinance = () => {
                                 className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-52 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
                                 style={{ zIndex: 9999 }}
                               >
-                                Platform's 10% commission deducted from ticket
-                                price
+                                XF's customer-paid platform fee retained by the
+                                platform
                               </div>
                             </div>
                           </div>
@@ -838,8 +838,8 @@ const OrganizerFinance = () => {
                                 className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
                                 style={{ zIndex: 9999 }}
                               >
-                                Amount you'll receive in your account (Gross -
-                                Service Fee)
+                                Amount due to you from ticket sales before any
+                                separate payment processor costs absorbed by XF
                               </div>
                             </div>
                           </div>

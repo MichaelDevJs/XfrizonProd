@@ -2,6 +2,8 @@ package com.xfrizon.controller;
 
 import com.xfrizon.dto.CreateEventRequest;
 import com.xfrizon.dto.EventResponse;
+import com.xfrizon.dto.EventRsvpRequest;
+import com.xfrizon.dto.EventRsvpResponse;
 import com.xfrizon.service.EventDashboardStats;
 import com.xfrizon.service.EventService;
 import com.xfrizon.util.FileUploadUtil;
@@ -315,6 +317,53 @@ public class EventController {
     }
 
     /**
+     * Submit RSVP for an event (public – auth optional; userId passed if token present)
+     */
+    @PostMapping("/{eventId}/rsvp")
+    public ResponseEntity<?> submitRsvp(
+        @PathVariable Long eventId,
+        @Valid @RequestBody EventRsvpRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        try {
+            Long userId = extractUserIdOptional(httpRequest);
+            EventRsvpResponse response = eventService.submitRsvp(eventId, userId, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("RSVP rejected for event {}: {}", eventId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error submitting RSVP for event {}", eventId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse(false, "Failed to submit RSVP"));
+        }
+    }
+
+    /**
+     * Get RSVPs for an event (organizer only)
+     */
+    @GetMapping("/{eventId}/rsvp")
+    public ResponseEntity<?> getEventRsvps(
+        @PathVariable Long eventId,
+        HttpServletRequest httpRequest
+    ) {
+        try {
+            Long organizerId = extractUserIdFromToken(httpRequest);
+            List<EventRsvpResponse> rsvps = eventService.getEventRsvps(eventId, organizerId);
+            return ResponseEntity.ok(rsvps);
+        } catch (IllegalArgumentException e) {
+            log.warn("RSVP list access denied for event {}: {}", eventId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error fetching RSVPs for event {}", eventId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse(false, "Failed to fetch RSVPs"));
+        }
+    }
+
+    /**
      * Get user's saved events
      */
     @GetMapping("/user/saved")
@@ -352,6 +401,18 @@ public class EventController {
             throw new IllegalArgumentException("Invalid or expired authentication token");
         }
         return jwtTokenProvider.getUserIdFromToken(token);
+    }
+
+    /** Same as above but returns null instead of throwing when no token is present. */
+    private Long extractUserIdOptional(HttpServletRequest request) {
+        try {
+            String token = getTokenFromRequest(request);
+            if (token == null) return null;
+            if (!jwtTokenProvider.validateToken(token)) return null;
+            return jwtTokenProvider.getUserIdFromToken(token);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {

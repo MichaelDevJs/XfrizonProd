@@ -10,6 +10,7 @@ import HomePage from "./pages/public/HomePage";
 import Login from "./pages/public/auth/Login";
 import Register from "./pages/public/auth/Register";
 import OrganizerSignUp from "./pages/public/auth/OrganizerSignUp";
+import GoogleSignupComplete from "./pages/public/auth/GoogleSignupComplete";
 import EventDetailsPage from "./pages/public/EventDetailsPage";
 import PaymentSuccessPage from "./pages/public/PaymentSuccessPage";
 import UserProfilePage from "./pages/public/UserProfilePage";
@@ -89,6 +90,10 @@ function RootApp() {
             <Route
               path="/auth/organizer-signup"
               element={<OrganizerSignUp />}
+            />
+            <Route
+              path="/auth/google/complete"
+              element={<GoogleSignupComplete />}
             />
 
             {/* Event Details & Ticketing (Public) */}

@@ -68,6 +68,24 @@ const BankDetailsForm = () => {
       return;
     }
 
+    if (formData.prefersManualPayout) {
+      if (!formData.iban && !formData.accountNumber) {
+        setMessage({
+          type: "error",
+          text: "For manual payouts, provide at least IBAN or account number",
+        });
+        return;
+      }
+
+      if (!formData.bankCountry) {
+        setMessage({
+          type: "error",
+          text: "Bank country is required for manual payouts",
+        });
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       setMessage(null);

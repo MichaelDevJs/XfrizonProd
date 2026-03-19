@@ -2,13 +2,17 @@ package com.xfrizon.service;
 
 import com.xfrizon.dto.CreateEventRequest;
 import com.xfrizon.dto.EventResponse;
+import com.xfrizon.dto.EventRsvpRequest;
+import com.xfrizon.dto.EventRsvpResponse;
 import com.xfrizon.dto.TicketTierRequest;
 import com.xfrizon.dto.TicketTierResponse;
 import com.xfrizon.entity.Event;
+import com.xfrizon.entity.EventRsvp;
 import com.xfrizon.entity.TicketTier;
 import com.xfrizon.entity.User;
 import com.xfrizon.entity.UserEvent;
 import com.xfrizon.repository.EventRepository;
+import com.xfrizon.repository.EventRsvpRepository;
 import com.xfrizon.repository.TicketTierRepository;
 import com.xfrizon.repository.UserRepository;
 import com.xfrizon.repository.UserEventRepository;
@@ -23,7 +27,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,11 +40,16 @@ import java.util.stream.Collectors;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final EventRsvpRepository eventRsvpRepository;
     private final TicketTierRepository ticketTierRepository;
     private final UserRepository userRepository;
     private final UserEventRepository userEventRepository;
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
+    private static final Set<String> SUPPORTED_RSVP_FIELDS = Set.of(
+        "firstName", "lastName", "email", "phone", "note"
+    );
+    private static final List<String> DEFAULT_RSVP_FIELDS = Arrays.asList("firstName", "lastName", "email");
 
     /**
      * Create a new event with ticket tiers
@@ -69,6 +81,10 @@ public class EventService {
             .ageLimit(request.getAgeLimit() != null ? request.getAgeLimit() : 0)
             .capacity(request.getCapacity() != null ? request.getCapacity() : 0)
             .genres(request.getGenres() != null ? request.getGenres() : new ArrayList<>())
+            .rsvpEnabled(Boolean.TRUE.equals(request.getRsvpEnabled()))
+            .rsvpCapacity(request.getRsvpCapacity() != null && request.getRsvpCapacity() > 0 ? request.getRsvpCapacity() : null)
+            .rsvpRequiredFields(normalizeRsvpFields(request.getRsvpRequiredFields()))
+            .ticketTiers(new ArrayList<>())
             .status(Event.EventStatus.DRAFT)
             .totalCapacity(BigDecimal.ZERO)
             .totalRevenue(BigDecimal.ZERO)
@@ -171,6 +187,9 @@ public class EventService {
             .ageLimit(sourceEvent.getAgeLimit() != null ? sourceEvent.getAgeLimit() : 0)
             .capacity(sourceEvent.getCapacity() != null ? sourceEvent.getCapacity() : 0)
             .genres(sourceEvent.getGenres() != null ? new ArrayList<>(sourceEvent.getGenres()) : new ArrayList<>())
+            .rsvpEnabled(Boolean.TRUE.equals(sourceEvent.getRsvpEnabled()))
+            .rsvpCapacity(sourceEvent.getRsvpCapacity())
+            .rsvpRequiredFields(sourceEvent.getRsvpRequiredFields() != null ? new ArrayList<>(sourceEvent.getRsvpRequiredFields()) : new ArrayList<>())
             .flyerUrl(sourceEvent.getFlyerUrl())
             .status(Event.EventStatus.DRAFT)
             .totalCapacity(BigDecimal.ZERO)
@@ -326,6 +345,9 @@ public class EventService {
         event.setAgeLimit(request.getAgeLimit() != null ? request.getAgeLimit() : 0);
         event.setCapacity(request.getCapacity() != null ? request.getCapacity() : 0);
         event.setGenres(request.getGenres() != null ? request.getGenres() : new ArrayList<>());
+        event.setRsvpEnabled(Boolean.TRUE.equals(request.getRsvpEnabled()));
+        event.setRsvpCapacity(request.getRsvpCapacity() != null && request.getRsvpCapacity() > 0 ? request.getRsvpCapacity() : null);
+        event.setRsvpRequiredFields(normalizeRsvpFields(request.getRsvpRequiredFields()));
         
         // Update flyer URL if provided
         if (request.getFlyerUrl() != null && !request.getFlyerUrl().isEmpty()) {
@@ -336,7 +358,9 @@ public class EventService {
         // Update ticket tiers
         if (request.getTickets() != null && !request.getTickets().isEmpty()) {
             // Get existing ticket tiers
-            List<TicketTier> existingTiers = new ArrayList<>(event.getTicketTiers());
+            List<TicketTier> existingTiers = event.getTicketTiers() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(event.getTicketTiers());
             
             // Delete existing ticket tiers (only if not yet sold)
             if (!existingTiers.isEmpty()) {
@@ -350,7 +374,11 @@ public class EventService {
                     }
                 }
                 // Clear the collection reference that Hibernate is tracking
-                event.getTicketTiers().clear();
+                if (event.getTicketTiers() != null) {
+                    event.getTicketTiers().clear();
+                } else {
+                    event.setTicketTiers(new ArrayList<>());
+                }
             }
 
             // Create new ticket tiers
@@ -383,6 +411,9 @@ public class EventService {
 
             ticketTierRepository.saveAll(newTiers);
             // Add new tiers to the event's collection (maintaining Hibernate reference)
+            if (event.getTicketTiers() == null) {
+                event.setTicketTiers(new ArrayList<>());
+            }
             event.getTicketTiers().addAll(newTiers);
             event.setTotalCapacity(totalCapacity);
             log.debug("Created {} new ticket tiers for event {}", newTiers.size(), event.getId());
@@ -462,6 +493,72 @@ public class EventService {
         return mapEventToResponse(event);
     }
 
+    public EventRsvpResponse submitRsvp(Long eventId, Long userId, EventRsvpRequest request) {
+        log.info("Submitting RSVP for event {} and user {}", eventId, userId);
+
+        Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+        if (!Boolean.TRUE.equals(event.getRsvpEnabled())) {
+            throw new IllegalStateException("RSVP is not enabled for this event");
+        }
+
+        if (event.getStatus() != Event.EventStatus.PUBLISHED && event.getStatus() != Event.EventStatus.LIVE) {
+            throw new IllegalStateException("RSVP is available only for published events");
+        }
+
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId)
+                .orElse(null);
+        }
+
+        List<String> requiredFields = normalizeRsvpFields(event.getRsvpRequiredFields());
+        validateRsvpPayload(requiredFields, request);
+
+        String normalizedEmail = safeTrim(request.getEmail()).toLowerCase(Locale.ROOT);
+
+        EventRsvp existingForUser = (user != null)
+            ? eventRsvpRepository.findByEventIdAndUserId(eventId, user.getId()).orElse(null)
+            : null;
+
+        EventRsvp existingForEmail = eventRsvpRepository
+            .findByEventIdAndEmailIgnoreCase(eventId, normalizedEmail)
+            .orElse(null);
+
+        EventRsvp existingRsvp = existingForUser != null ? existingForUser : existingForEmail;
+
+        int confirmedCount = eventRsvpRepository.countByEventIdAndStatus(eventId, EventRsvp.RsvpStatus.CONFIRMED);
+        if (event.getRsvpCapacity() != null && event.getRsvpCapacity() > 0) {
+            boolean isNewRsvp = existingRsvp == null;
+            if (isNewRsvp && confirmedCount >= event.getRsvpCapacity()) {
+                throw new IllegalStateException("RSVP capacity has been reached");
+            }
+        }
+
+        EventRsvp rsvp = existingRsvp != null
+            ? existingRsvp
+            : EventRsvp.builder().event(event).build();
+
+        rsvp.setUser(user);
+        rsvp.setFirstName(safeTrim(request.getFirstName()));
+        rsvp.setLastName(safeTrim(request.getLastName()));
+        rsvp.setEmail(normalizedEmail);
+        rsvp.setPhone(safeTrim(request.getPhone()));
+        rsvp.setNote(safeTrim(request.getNote()));
+        rsvp.setStatus(EventRsvp.RsvpStatus.CONFIRMED);
+
+        EventRsvp saved = eventRsvpRepository.save(rsvp);
+        return mapRsvpToResponse(saved);
+    }
+
+    public List<EventRsvpResponse> getEventRsvps(Long eventId, Long organizerId) {
+        Event event = getEventByIdAndOrganizer(eventId, organizerId);
+        return eventRsvpRepository.findByEventIdOrderByCreatedAtDesc(event.getId()).stream()
+            .map(this::mapRsvpToResponse)
+            .collect(Collectors.toList());
+    }
+
     // Helper methods
 
     private Event getEventByIdAndOrganizer(Long eventId, Long organizerId) {
@@ -473,7 +570,11 @@ public class EventService {
     }
 
     private EventResponse mapEventToResponse(Event event) {
-        List<TicketTierResponse> ticketTiers = event.getTicketTiers().stream()
+        List<TicketTier> sourceTiers = event.getTicketTiers() == null
+            ? new ArrayList<>()
+            : event.getTicketTiers();
+
+        List<TicketTierResponse> ticketTiers = sourceTiers.stream()
             .map(this::mapTicketTierToResponse)
             .collect(Collectors.toList());
 
@@ -520,12 +621,82 @@ public class EventService {
             .totalTicketsSold(event.getTotalTicketsSold())
             .flyerUrl(event.getFlyerUrl())
             .genres(event.getGenres())
+            .rsvpEnabled(Boolean.TRUE.equals(event.getRsvpEnabled()))
+            .rsvpCapacity(event.getRsvpCapacity())
+            .rsvpRequiredFields(normalizeRsvpFields(event.getRsvpRequiredFields()))
+            .rsvpCount(eventRsvpRepository.countByEventIdAndStatus(event.getId(), EventRsvp.RsvpStatus.CONFIRMED))
             .ticketTiers(ticketTiers)
             .createdAt(event.getCreatedAt())
             .publishedAt(event.getPublishedAt())
             .organizer(organizerInfo)
             .attendees(attendees)
             .build();
+    }
+
+    private EventRsvpResponse mapRsvpToResponse(EventRsvp rsvp) {
+        return EventRsvpResponse.builder()
+            .id(rsvp.getId())
+            .eventId(rsvp.getEvent() != null ? rsvp.getEvent().getId() : null)
+            .userId(rsvp.getUser() != null ? rsvp.getUser().getId() : null)
+            .firstName(rsvp.getFirstName())
+            .lastName(rsvp.getLastName())
+            .email(rsvp.getEmail())
+            .phone(rsvp.getPhone())
+            .note(rsvp.getNote())
+            .status(rsvp.getStatus() != null ? rsvp.getStatus().name() : null)
+            .createdAt(rsvp.getCreatedAt())
+            .updatedAt(rsvp.getUpdatedAt())
+            .build();
+    }
+
+    private List<String> normalizeRsvpFields(List<String> requestedFields) {
+        List<String> fields = requestedFields == null ? new ArrayList<>() : requestedFields.stream()
+            .map(this::safeTrim)
+            .filter(value -> !value.isEmpty())
+            .collect(Collectors.toList());
+
+        if (fields.isEmpty()) {
+            fields = new ArrayList<>(DEFAULT_RSVP_FIELDS);
+        }
+
+        List<String> filtered = fields.stream()
+            .filter(SUPPORTED_RSVP_FIELDS::contains)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (!filtered.contains("firstName")) {
+            filtered.add(0, "firstName");
+        }
+        if (!filtered.contains("lastName")) {
+            filtered.add(filtered.contains("firstName") ? 1 : 0, "lastName");
+        }
+        if (!filtered.contains("email")) {
+            filtered.add("email");
+        }
+
+        return filtered;
+    }
+
+    private void validateRsvpPayload(List<String> requiredFields, EventRsvpRequest request) {
+        if (requiredFields.contains("firstName") && safeTrim(request.getFirstName()).isEmpty()) {
+            throw new IllegalArgumentException("First name is required for RSVP");
+        }
+        if (requiredFields.contains("lastName") && safeTrim(request.getLastName()).isEmpty()) {
+            throw new IllegalArgumentException("Last name is required for RSVP");
+        }
+        if (requiredFields.contains("email") && safeTrim(request.getEmail()).isEmpty()) {
+            throw new IllegalArgumentException("Email is required for RSVP");
+        }
+        if (requiredFields.contains("phone") && safeTrim(request.getPhone()).isEmpty()) {
+            throw new IllegalArgumentException("Phone is required for RSVP");
+        }
+        if (requiredFields.contains("note") && safeTrim(request.getNote()).isEmpty()) {
+            throw new IllegalArgumentException("Note is required for RSVP");
+        }
+    }
+
+    private String safeTrim(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private TicketTierResponse mapTicketTierToResponse(TicketTier tier) {

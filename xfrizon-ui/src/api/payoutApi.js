@@ -177,6 +177,13 @@ export const payEventPayoutNow = async (payoutId) => {
   return response.data;
 };
 
+export const completeManualEventPayout = async (payoutId) => {
+  const response = await api.post(
+    `/admin/payouts/events/${payoutId}/manual-complete`,
+  );
+  return response.data;
+};
+
 export const retryFailedEventPayout = async (payoutId) => {
   const response = await api.post(`/admin/payouts/events/${payoutId}/retry`);
   return response.data;

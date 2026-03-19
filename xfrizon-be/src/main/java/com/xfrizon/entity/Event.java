@@ -74,6 +74,16 @@ public class Event {
     @Column(name = "genre")
     private List<String> genres = new ArrayList<>();
 
+    @Column(nullable = false)
+    private Boolean rsvpEnabled = false;
+
+    private Integer rsvpCapacity;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "event_rsvp_required_fields", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "field_name")
+    private List<String> rsvpRequiredFields = new ArrayList<>();
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TicketTier> ticketTiers = new ArrayList<>();
 

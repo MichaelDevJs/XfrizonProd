@@ -7,6 +7,7 @@ import com.xfrizon.entity.User;
 import com.xfrizon.repository.UserRepository;
 import com.xfrizon.service.OrganizerVerificationService;
 import com.xfrizon.service.FraudDetectionService;
+import com.xfrizon.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class StripeWebhookController {
     private final UserRepository userRepository;
     private final OrganizerVerificationService verificationService;
     private final FraudDetectionService fraudDetectionService;
+    private final PaymentService paymentService;
 
     @Value("${stripe.webhook.secret}")
     private String webhookSecret;
@@ -50,6 +52,12 @@ public class StripeWebhookController {
 
             // Route event to appropriate handler
             switch (event.getType()) {
+                case "payment_intent.succeeded":
+                    handlePaymentIntentSucceeded(event);
+                    break;
+                case "payment_intent.payment_failed":
+                    handlePaymentIntentFailed(event);
+                    break;
                 case "account.updated":
                     handleAccountUpdated(event);
                     break;
@@ -74,6 +82,37 @@ public class StripeWebhookController {
         } catch (Exception e) {
             log.error("Error processing Stripe webhook", e);
             return ResponseEntity.status(500).body("Error processing webhook");
+        }
+    }
+
+    private void handlePaymentIntentSucceeded(Event event) {
+        try {
+            com.stripe.model.PaymentIntent paymentIntent =
+                    (com.stripe.model.PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
+            if (paymentIntent == null || paymentIntent.getId() == null || paymentIntent.getId().isBlank()) {
+                log.warn("payment_intent.succeeded webhook had no payment intent payload");
+                return;
+            }
+
+            paymentService.finalizePaymentFromWebhook(paymentIntent.getId());
+            log.info("Webhook finalized payment intent {}", paymentIntent.getId());
+        } catch (Exception e) {
+            log.error("Error handling payment_intent.succeeded webhook", e);
+        }
+    }
+
+    private void handlePaymentIntentFailed(Event event) {
+        try {
+            com.stripe.model.PaymentIntent paymentIntent =
+                    (com.stripe.model.PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
+            if (paymentIntent == null || paymentIntent.getId() == null || paymentIntent.getId().isBlank()) {
+                return;
+            }
+
+            paymentService.finalizePaymentFromWebhook(paymentIntent.getId());
+            log.info("Webhook updated failed payment intent {}", paymentIntent.getId());
+        } catch (Exception e) {
+            log.error("Error handling payment_intent.payment_failed webhook", e);
         }
     }
 

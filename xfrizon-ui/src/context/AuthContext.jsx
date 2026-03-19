@@ -160,6 +160,44 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const applyAuthSession = (sessionData) => {
+    if (!sessionData) return;
+
+    const token = sessionData.token || sessionData.accessToken;
+    const userId = sessionData.userId || sessionData.id;
+    const role = sessionData.role || "USER";
+    const roles = sessionData.roles;
+    const isPartner = hasPartnerRole(role, roles);
+
+    const userData = {
+      id: userId,
+      name:
+        role === "ORGANIZER"
+          ? sessionData.name || sessionData.firstName || ""
+          : isPartner
+            ? sessionData.name || sessionData.firstName || ""
+            : `${sessionData.firstName || ""} ${sessionData.lastName || ""}`.trim(),
+      email: sessionData.email,
+      firstName: sessionData.firstName,
+      lastName: sessionData.lastName,
+      role,
+      roles,
+      logo: sessionData.logo || sessionData.profilePicture,
+      profilePicture: sessionData.profilePicture || sessionData.logo,
+      phoneNumber: sessionData.phoneNumber,
+      location: sessionData.location,
+      address: sessionData.address,
+      bio: sessionData.bio,
+      coverPhoto: sessionData.coverPhoto,
+    };
+
+    if (token) {
+      localStorage.setItem("userToken", token);
+    }
+    localStorage.setItem("user", JSON.stringify(userData));
+    setOrganizer(userData);
+  };
+
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", {
@@ -168,35 +206,7 @@ const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        const isPartner = hasPartnerRole(response.data.role, response.data.roles);
-        const nameForDisplay =
-          response.data.role === "ORGANIZER"
-            ? response.data.name || response.data.firstName
-            : isPartner
-              ? response.data.name || response.data.firstName
-              : `${response.data.firstName} ${response.data.lastName}`;
-
-        const userData = {
-          id: response.data.userId,
-          name: nameForDisplay,
-          email: response.data.email,
-          firstName: response.data.firstName,
-          lastName: response.data.lastName,
-          role: response.data.role,
-          roles: response.data.roles,
-          logo: response.data.logo || response.data.profilePicture,
-          profilePicture: response.data.profilePicture || response.data.logo,
-          phoneNumber: response.data.phoneNumber,
-          location: response.data.location,
-          address: response.data.address,
-          bio: response.data.bio,
-          coverPhoto: response.data.coverPhoto,
-        };
-
-        localStorage.setItem("userToken", response.data.token);
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        setOrganizer(userData);
+        applyAuthSession(response.data);
 
         return response.data;
       }
@@ -227,30 +237,7 @@ const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        localStorage.setItem("userToken", response.data.token);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: response.data.userId,
-            email: response.data.email,
-            firstName: response.data.firstName,
-            lastName: response.data.lastName,
-            role: response.data.role,
-            roles: response.data.roles,
-            profilePicture: response.data.profilePicture,
-          }),
-        );
-
-        setOrganizer({
-          id: response.data.userId,
-          name: `${response.data.firstName} ${response.data.lastName}`,
-          email: response.data.email,
-          firstName: response.data.firstName,
-          lastName: response.data.lastName,
-          role: response.data.role,
-          roles: response.data.roles,
-          profilePicture: response.data.profilePicture,
-        });
+        applyAuthSession(response.data);
 
         if (referralCode) {
           localStorage.removeItem("xfrizon_referral");
@@ -320,7 +307,15 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ organizer, login, register, logout, loading, updateUser }}
+      value={{
+        organizer,
+        login,
+        register,
+        logout,
+        loading,
+        updateUser,
+        applyAuthSession,
+      }}
     >
       {children}
     </AuthContext.Provider>

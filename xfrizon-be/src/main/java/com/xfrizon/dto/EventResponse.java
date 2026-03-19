@@ -30,6 +30,10 @@ public class EventResponse {
     private Integer totalTicketsSold;
     private String flyerUrl;
     private List<String> genres;
+    private Boolean rsvpEnabled;
+    private Integer rsvpCapacity;
+    private List<String> rsvpRequiredFields;
+    private Integer rsvpCount;
     private List<TicketTierResponse> ticketTiers;
     private LocalDateTime createdAt;
     private LocalDateTime publishedAt;

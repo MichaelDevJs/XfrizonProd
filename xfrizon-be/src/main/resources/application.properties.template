@@ -45,6 +45,16 @@ logging.level.org.springframework.web=DEBUG
 # JWT Configuration
 jwt.secret=YOUR_JWT_SECRET_AT_LEAST_32_CHARACTERS_LONG
 jwt.expiration=86400000
+jwt.oauth-signup-expiration=900000
+
+# Google OAuth2 Configuration
+# Create credentials in Google Cloud Console and add authorized redirect URI:
+# http://localhost:8081/login/oauth2/code/google
+spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+spring.security.oauth2.client.registration.google.scope=openid,profile,email
+xfrizon.oauth.google.frontend-complete-url=http://localhost:5173/auth/google/complete
+xfrizon.oauth.google.frontend-login-url=http://localhost:5173/auth/login
 
 # Multipart File Upload
 spring.servlet.multipart.max-file-size=10MB

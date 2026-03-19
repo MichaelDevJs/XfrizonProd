@@ -26,7 +26,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -56,6 +60,13 @@ public class TicketService {
         try {
             log.info("Recording ticket purchase for user: {}, event: {}, quantity: {}",
                     userId, request.getEventId(), request.getQuantity());
+
+            List<UserTicket> existingTickets = userTicketRepository
+                .findByUserIdAndPaymentIntentId(userId, request.getPaymentIntentId());
+            if (!existingTickets.isEmpty()) {
+            log.info("Tickets already exist for payment intent {}, returning existing ticket", request.getPaymentIntentId());
+            return convertToResponse(existingTickets.get(0));
+            }
 
             // Validate payment succeeded
             PaymentRecord paymentRecord = paymentRecordRepository.findByStripeIntentId(request.getPaymentIntentId())
@@ -163,6 +174,160 @@ public class TicketService {
             log.error("Error recording ticket purchase", e);
             throw new RuntimeException("Error recording ticket purchase: " + e.getMessage(), e);
         }
+    }
+
+    public List<UserTicketResponse> issueTicketsForConfirmedPayment(
+            PaymentRecord paymentRecord,
+            Map<String, String> paymentMetadata
+    ) {
+        if (paymentRecord == null) {
+            throw new IllegalArgumentException("Payment record is required");
+        }
+
+        if (paymentRecord.getStatus() != PaymentRecord.PaymentStatus.SUCCEEDED) {
+            throw new IllegalArgumentException("Cannot issue tickets for non-success payment");
+        }
+
+        String paymentIntentId = paymentRecord.getStripeIntentId();
+        List<UserTicket> existing = userTicketRepository.findByPaymentIntentId(paymentIntentId);
+        if (!existing.isEmpty()) {
+            return existing.stream()
+                    .map(this::convertToResponse)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
+        User user = paymentRecord.getUser();
+        Event event = paymentRecord.getEvent();
+
+        if (user == null || event == null) {
+            throw new IllegalStateException("Payment record missing user or event");
+        }
+
+        Map<Long, Integer> tierQuantities = extractTierQuantities(paymentMetadata);
+        if (tierQuantities.isEmpty()) {
+            throw new IllegalStateException("Payment metadata missing ticket tier quantities");
+        }
+
+        List<UserTicket> savedTickets = new ArrayList<>();
+        String referralCode = paymentMetadata != null ? paymentMetadata.get("referral_code") : null;
+
+        for (Map.Entry<Long, Integer> entry : tierQuantities.entrySet()) {
+            Long tierId = entry.getKey();
+            Integer quantityToIssue = entry.getValue();
+
+            if (quantityToIssue == null || quantityToIssue <= 0) {
+                continue;
+            }
+
+            TicketTier ticketTier = ticketTierRepository.findById(tierId)
+                    .orElseThrow(() -> new IllegalArgumentException("Ticket tier not found: " + tierId));
+
+            if (!ticketTier.getEvent().getId().equals(event.getId())) {
+                throw new IllegalArgumentException("Ticket tier does not belong to event for payment " + paymentIntentId);
+            }
+
+            Integer currentSold = ticketTier.getQuantitySold() != null ? ticketTier.getQuantitySold() : 0;
+            Integer totalQuantity = ticketTier.getQuantity() != null ? ticketTier.getQuantity() : 0;
+            Integer remaining = totalQuantity - currentSold;
+            if (remaining < quantityToIssue) {
+                throw new IllegalStateException("Not enough tickets available for tier " + ticketTier.getTicketType());
+            }
+
+            ticketTier.setQuantitySold(currentSold + quantityToIssue);
+            ticketTierRepository.save(ticketTier);
+
+            BigDecimal unitPrice = ticketTier.getPrice() != null ? ticketTier.getPrice() : BigDecimal.ZERO;
+            BigDecimal unitServiceFee = unitPrice.multiply(serviceFeeRate).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal unitTotal = unitPrice.add(unitServiceFee).setScale(2, RoundingMode.HALF_UP);
+
+            for (int i = 0; i < quantityToIssue; i++) {
+                String validationCode = UUID.randomUUID().toString().substring(0, 12).toUpperCase();
+                String qrCodeData = generateQRCodeData(user.getId(), event.getId(), ticketTier.getId(), validationCode);
+
+                UserTicket userTicket = UserTicket.builder()
+                        .user(user)
+                        .event(event)
+                        .ticketTier(ticketTier)
+                        .quantity(1)
+                        .purchasePrice(unitPrice)
+                        .subtotalPrice(unitPrice)
+                        .serviceFee(unitServiceFee)
+                        .totalPrice(unitTotal)
+                        .validationCode(validationCode)
+                        .qrCodeData(qrCodeData)
+                        .paymentIntentId(paymentIntentId)
+                        .status(UserTicket.TicketStatus.ACTIVE)
+                        .build();
+
+                UserTicket saved = userTicketRepository.save(userTicket);
+                savedTickets.add(saved);
+            }
+        }
+
+        if (savedTickets.isEmpty()) {
+            throw new IllegalStateException("No tickets were issued for payment " + paymentIntentId);
+        }
+
+        try {
+            referralConversionService.trackTicketPurchaseConversion(
+                    referralCode,
+                    user,
+                    event,
+                    paymentIntentId
+            );
+        } catch (Exception ex) {
+            log.warn("Referral conversion tracking failed for payment {}: {}", paymentIntentId, ex.getMessage());
+        }
+
+        try {
+            BigDecimal subtotal = paymentRecord.getSubtotalAmount() != null
+                    ? paymentRecord.getSubtotalAmount()
+                    : paymentRecord.getAmount();
+            pointsService.awardPointsForTicketPurchase(user.getId(), subtotal, savedTickets.get(0).getId());
+        } catch (Exception ex) {
+            log.warn("Points awarding failed for payment {}: {}", paymentIntentId, ex.getMessage());
+        }
+
+        try {
+            emailService.sendTicketConfirmationEmail(convertToResponse(savedTickets.get(0)), user);
+        } catch (Exception ex) {
+            log.warn("Failed to send confirmation email for payment {}: {}", paymentIntentId, ex.getMessage());
+        }
+
+        return savedTickets.stream()
+                .sorted(Comparator.comparing(UserTicket::getPurchaseDate).reversed())
+                .map(this::convertToResponse)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private Map<Long, Integer> extractTierQuantities(Map<String, String> metadata) {
+        Map<Long, Integer> result = new HashMap<>();
+        if (metadata == null || metadata.isEmpty()) {
+            return result;
+        }
+
+        metadata.forEach((key, value) -> {
+            if (key == null || !key.startsWith("tier_")) {
+                return;
+            }
+            if (value == null || value.isBlank()) {
+                return;
+            }
+
+            try {
+                Long tierId = Long.parseLong(key.substring(5));
+                Integer qty = Integer.parseInt(value);
+                if (qty > 0) {
+                    result.put(tierId, qty);
+                }
+            } catch (NumberFormatException ignored) {
+                log.warn("Ignoring invalid tier metadata entry: {}={}", key, value);
+            }
+        });
+
+        return result;
     }
 
     /**

@@ -6,7 +6,6 @@ import com.stripe.model.Transfer;
 import com.xfrizon.dto.EventPayoutPreviewResponse;
 import com.xfrizon.entity.Event;
 import com.xfrizon.entity.EventPayout;
-import com.xfrizon.entity.PaymentRecord;
 import com.xfrizon.entity.User;
 import com.xfrizon.repository.EventPayoutRepository;
 import com.xfrizon.repository.EventRepository;
@@ -21,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -58,7 +58,12 @@ public class EventPayoutService {
 
         if (status == null || status.isBlank()) {
             payouts = eventPayoutRepository.findAll().stream()
-                .sorted((a, b) -> b.getReleaseAt().compareTo(a.getReleaseAt()))
+                .sorted(
+                    Comparator.comparing(
+                        EventPayout::getReleaseAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                    )
+                )
                 .collect(Collectors.toList());
         } else {
             EventPayout.PayoutStatus resolvedStatus = EventPayout.PayoutStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
@@ -112,6 +117,26 @@ public class EventPayoutService {
         return eventPayoutRepository.save(payout);
     }
 
+    public EventPayout completeManualPayout(Long payoutId) {
+        EventPayout payout = getPayoutOrThrow(payoutId);
+        if (payout.getStatus() == EventPayout.PayoutStatus.PAID) {
+            return payout;
+        }
+
+        User organizer = payout.getOrganizer();
+        if (organizer == null || !Boolean.TRUE.equals(organizer.getPrefersManualPayout())) {
+            throw new IllegalArgumentException("Organizer is not configured for manual payouts");
+        }
+
+        payout.setAdminHold(false);
+        payout.setHoldReason(null);
+        payout.setFailureReason(null);
+        payout.setStripeTransferId("MANUAL-" + payout.getId() + "-" + System.currentTimeMillis());
+        payout.setStatus(EventPayout.PayoutStatus.PAID);
+        payout.setPaidAt(LocalDateTime.now());
+        return eventPayoutRepository.save(payout);
+    }
+
     public EventPayout retryFailedPayout(Long payoutId) {
         EventPayout payout = getPayoutOrThrow(payoutId);
         if (payout.getStatus() != EventPayout.PayoutStatus.FAILED) {
@@ -141,57 +166,82 @@ public class EventPayoutService {
     }
 
     public void syncEventPayouts() {
-        LocalDateTime now = LocalDateTime.now();
         List<Object[]> rows = paymentRecordRepository.summarizeSucceededPaymentsByEventAndCurrency();
 
         for (Object[] row : rows) {
-            Long eventId = (Long) row[0];
-            Long organizerId = (Long) row[1];
-            String currency = ((String) row[2]).toUpperCase(Locale.ROOT);
-            BigDecimal grossRevenue = nvl((BigDecimal) row[3]);
-            BigDecimal serviceFeeTotal = nvl((BigDecimal) row[4]);
-            BigDecimal netPayout = nvl((BigDecimal) row[5]);
-            Long successfulPaymentsCount = (Long) row[6];
-            LocalDateTime lastPaymentAt = (LocalDateTime) row[7];
+            try {
+                Long eventId = (Long) row[0];
+                Long organizerId = (Long) row[1];
+                String currency = ((String) row[2]).toUpperCase(Locale.ROOT);
+                BigDecimal grossRevenue = nvl((BigDecimal) row[3]);
+                BigDecimal serviceFeeTotal = nvl((BigDecimal) row[4]);
+                BigDecimal netPayout = nvl((BigDecimal) row[5]);
+                Long successfulPaymentsCount = (Long) row[6];
+                LocalDateTime lastPaymentAt = (LocalDateTime) row[7];
 
-            Optional<Event> eventOpt = eventRepository.findById(eventId);
-            if (eventOpt.isEmpty()) {
-                continue;
+                Optional<Event> eventOpt = eventRepository.findById(eventId);
+                if (eventOpt.isEmpty()) {
+                    log.warn("Skipping payout sync for missing event {}", eventId);
+                    continue;
+                }
+
+                Event event = eventOpt.get();
+                User organizer = event.getOrganizer();
+                if (organizer == null || !Objects.equals(organizer.getId(), organizerId)) {
+                    log.warn("Skipping payout sync for event {} due to organizer mismatch", eventId);
+                    continue;
+                }
+
+                LocalDateTime eventEndAt = resolveEventEndAt(event, lastPaymentAt);
+                LocalDateTime releaseAt = eventEndAt.plusDays(1);
+
+                EventPayout payout = eventPayoutRepository.findByEventIdAndCurrency(eventId, currency)
+                    .orElseGet(() -> EventPayout.builder()
+                        .event(event)
+                        .organizer(organizer)
+                        .currency(currency)
+                        .adminHold(false)
+                        .build());
+
+                payout.setGrossRevenue(grossRevenue);
+                payout.setServiceFeeTotal(serviceFeeTotal);
+                payout.setNetPayout(netPayout);
+                payout.setSuccessfulPaymentsCount(successfulPaymentsCount != null ? successfulPaymentsCount : 0L);
+                payout.setLastPaymentAt(lastPaymentAt);
+                payout.setEventEndAt(eventEndAt);
+                payout.setReleaseAt(releaseAt);
+
+                if (Boolean.TRUE.equals(payout.getAdminHold())) {
+                    payout.setStatus(EventPayout.PayoutStatus.HELD);
+                } else if (payout.getStatus() != EventPayout.PayoutStatus.PAID) {
+                    payout.setStatus(resolveCurrentStatus(payout));
+                }
+
+                eventPayoutRepository.save(payout);
+            } catch (Exception ex) {
+                log.error("Skipping payout sync row due to error: {}", ex.getMessage(), ex);
             }
-
-            Event event = eventOpt.get();
-            User organizer = event.getOrganizer();
-            if (organizer == null || !Objects.equals(organizer.getId(), organizerId)) {
-                continue;
-            }
-
-            LocalDateTime eventEndAt = event.getEventEndDate() != null ? event.getEventEndDate() : event.getEventDateTime();
-            LocalDateTime releaseAt = eventEndAt.plusDays(1);
-
-            EventPayout payout = eventPayoutRepository.findByEventIdAndCurrency(eventId, currency)
-                .orElseGet(() -> EventPayout.builder()
-                    .event(event)
-                    .organizer(organizer)
-                    .currency(currency)
-                    .adminHold(false)
-                    .build());
-
-            payout.setGrossRevenue(grossRevenue);
-            payout.setServiceFeeTotal(serviceFeeTotal);
-            payout.setNetPayout(netPayout);
-            payout.setSuccessfulPaymentsCount(successfulPaymentsCount != null ? successfulPaymentsCount : 0L);
-            payout.setLastPaymentAt(lastPaymentAt);
-            payout.setEventEndAt(eventEndAt);
-            payout.setReleaseAt(releaseAt);
-
-            if (Boolean.TRUE.equals(payout.getAdminHold())) {
-                payout.setStatus(EventPayout.PayoutStatus.HELD);
-            } else if (payout.getStatus() != EventPayout.PayoutStatus.PAID) {
-                payout.setStatus(resolveCurrentStatus(payout));
-            }
-
-            eventPayoutRepository.save(payout);
         }
+    }
+
+    private LocalDateTime resolveEventEndAt(Event event, LocalDateTime lastPaymentAt) {
+        if (event.getEventEndDate() != null) {
+            return event.getEventEndDate();
+        }
+        if (event.getEventDateTime() != null) {
+            return event.getEventDateTime();
+        }
+        if (lastPaymentAt != null) {
+            log.warn("Event {} missing event date fields; using last payment time for payout schedule", event.getId());
+            return lastPaymentAt;
+        }
+        if (event.getCreatedAt() != null) {
+            log.warn("Event {} missing event date fields and payment time; using createdAt for payout schedule", event.getId());
+            return event.getCreatedAt();
+        }
+
+        log.warn("Event {} missing all schedule timestamps; using current time for payout schedule", event.getId());
+        return LocalDateTime.now();
     }
 
     private void releaseEligiblePayouts() {
@@ -275,6 +325,7 @@ public class EventPayoutService {
             && organizer.getStripeAccountId() != null
             && !organizer.getStripeAccountId().isBlank()
             && !Boolean.TRUE.equals(organizer.getPrefersManualPayout());
+        boolean prefersManualPayout = organizer != null && Boolean.TRUE.equals(organizer.getPrefersManualPayout());
 
         return EventPayoutPreviewResponse.builder()
             .payoutId(payout.getId())
@@ -298,6 +349,12 @@ public class EventPayoutService {
             .failureReason(payout.getFailureReason())
             .paidAt(payout.getPaidAt())
             .readyForAutoPayout(hasStripeAccount && payout.getStatus() == EventPayout.PayoutStatus.READY)
+                .prefersManualPayout(prefersManualPayout)
+                .bankName(organizer != null ? organizer.getBankName() : null)
+                .accountHolderName(organizer != null ? organizer.getAccountHolderName() : null)
+                .accountNumber(organizer != null ? organizer.getAccountNumber() : null)
+                .iban(organizer != null ? organizer.getIban() : null)
+                .bankCountry(organizer != null ? organizer.getBankCountry() : null)
             .build();
     }
 

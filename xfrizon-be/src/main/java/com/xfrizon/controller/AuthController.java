@@ -3,6 +3,7 @@ package com.xfrizon.controller;
 import com.xfrizon.dto.LoginRequest;
 import com.xfrizon.dto.RegisterRequest;
 import com.xfrizon.dto.AuthResponse;
+import com.xfrizon.dto.GoogleSignupCompleteRequest;
 import com.xfrizon.dto.UserResponse;
 import com.xfrizon.service.AuthService;
 import com.xfrizon.util.JwtTokenProvider;
@@ -69,6 +70,17 @@ public class AuthController {
             return ResponseEntity.ok(response);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @PostMapping("/oauth/google/complete-signup")
+    public ResponseEntity<AuthResponse> completeGoogleSignup(
+            @Valid @RequestBody GoogleSignupCompleteRequest request
+    ) {
+        AuthResponse response = authService.completeGoogleSignup(request);
+        if (Boolean.TRUE.equals(response.getSuccess())) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @GetMapping("/user")

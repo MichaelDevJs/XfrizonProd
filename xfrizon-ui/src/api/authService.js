@@ -1,5 +1,49 @@
 import api from "./axios";
 
+const getBackendOrigin = () => {
+  const explicitOauthOrigin =
+    import.meta.env.VITE_OAUTH_BACKEND_ORIGIN ||
+    import.meta.env.VITE_BACKEND_ORIGIN;
+
+  if (explicitOauthOrigin) {
+    try {
+      return new URL(explicitOauthOrigin).origin;
+    } catch {
+      // Ignore invalid override and continue with automatic detection.
+    }
+  }
+
+  const configuredBaseUrl =
+    api.defaults.baseURL || import.meta.env.VITE_API_BASE_URL || "/api/v1";
+
+  const isAbsoluteBaseUrl = /^https?:\/\//i.test(String(configuredBaseUrl));
+  const isLocalDevHost = ["localhost", "127.0.0.1"].includes(
+    window.location.hostname,
+  );
+
+  if (!isAbsoluteBaseUrl && import.meta.env.DEV && isLocalDevHost) {
+    // In dev, a relative API base can accidentally point OAuth to the Vite origin.
+    return "http://localhost:8081";
+  }
+
+  try {
+    const parsedUrl = new URL(configuredBaseUrl, window.location.origin);
+    return parsedUrl.origin;
+  } catch {
+    return window.location.origin;
+  }
+};
+
+const resolveBackendUrl = (pathOrUrl) => {
+  if (!pathOrUrl) return getBackendOrigin();
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+
+  const normalizedPath = pathOrUrl.startsWith("/")
+    ? pathOrUrl
+    : `/${pathOrUrl}`;
+  return `${getBackendOrigin()}${normalizedPath}`;
+};
+
 const authService = {
   register: async (firstName, lastName, email, password) => {
     try {
@@ -72,6 +116,33 @@ const authService = {
   validateToken: async () => {
     try {
       const response = await api.get("/auth/validate-token");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: error.message };
+    }
+  },
+
+  startGoogleSignup: ({ accountType = "USER", redirectPath } = {}) => {
+    const oauthStartPath =
+      import.meta.env.VITE_GOOGLE_OAUTH_START_PATH ||
+      "/oauth2/authorization/google";
+    const callbackPath = redirectPath || "/auth/google/complete";
+    const callbackUrl = new URL(callbackPath, window.location.origin);
+    callbackUrl.searchParams.set("accountType", String(accountType).toUpperCase());
+
+    const startUrl = new URL(resolveBackendUrl(oauthStartPath));
+    startUrl.searchParams.set("redirect_uri", callbackUrl.toString());
+    startUrl.searchParams.set("accountType", String(accountType).toUpperCase());
+
+    window.location.assign(startUrl.toString());
+  },
+
+  completeGoogleSignup: async (payload) => {
+    try {
+      const endpoint =
+        import.meta.env.VITE_GOOGLE_OAUTH_COMPLETE_PATH ||
+        "/auth/oauth/google/complete-signup";
+      const response = await api.post(endpoint, payload);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: error.message };

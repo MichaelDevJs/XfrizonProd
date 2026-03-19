@@ -33,6 +33,9 @@ public class CreatePaymentIntentRequest {
     
         @JsonProperty("useStripeConnect")
         private Boolean useStripeConnect;
+
+        @JsonProperty("referralCode")
+        private String referralCode;
     
     @NotEmpty(message = "At least one ticket tier must be selected")
     @Valid

@@ -28,6 +28,19 @@ public class BankDetailsService {
             throw new IllegalArgumentException("User is not an organizer");
         }
 
+        if (Boolean.TRUE.equals(request.getPrefersManualPayout())) {
+            boolean hasIban = request.getIban() != null && !request.getIban().isBlank();
+            boolean hasAccountNumber = request.getAccountNumber() != null && !request.getAccountNumber().isBlank();
+
+            if (!hasIban && !hasAccountNumber) {
+                throw new IllegalArgumentException("For manual payouts, provide at least IBAN or account number");
+            }
+
+            if (request.getBankCountry() == null || request.getBankCountry().isBlank()) {
+                throw new IllegalArgumentException("Bank country is required for manual payouts");
+            }
+        }
+
         // Update bank details
         organizer.setBankName(request.getBankName());
         organizer.setAccountHolderName(request.getAccountHolderName());

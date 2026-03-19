@@ -47,6 +47,11 @@ public class CreateEventRequest {
 
     private String flyerUrl;  // Optional - URL to event flyer image
 
-    @NotEmpty(message = "At least one ticket tier is required")
+    private Boolean rsvpEnabled;
+
+    private Integer rsvpCapacity;
+
+    private List<String> rsvpRequiredFields;
+
     private List<TicketTierRequest> tickets;
 }

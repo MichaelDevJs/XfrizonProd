@@ -7,7 +7,6 @@ import com.stripe.exception.RateLimitException;
 import com.stripe.exception.InvalidRequestException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Account;
-import com.stripe.net.RequestOptions;
 import com.stripe.param.AccountUpdateParams;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.xfrizon.dto.CreatePaymentIntentRequest;
@@ -40,6 +39,7 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final TicketTierRepository ticketTierRepository;
+    private final TicketService ticketService;
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
@@ -71,11 +71,13 @@ public class PaymentService {
             PaymentRecordRepository paymentRecordRepository,
             UserRepository userRepository,
             EventRepository eventRepository,
-            TicketTierRepository ticketTierRepository) {
+            TicketTierRepository ticketTierRepository,
+            TicketService ticketService) {
         this.paymentRecordRepository = paymentRecordRepository;
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.ticketTierRepository = ticketTierRepository;
+        this.ticketService = ticketService;
     }
 
     @jakarta.annotation.PostConstruct
@@ -159,13 +161,12 @@ public class PaymentService {
             subtotalMajor = subtotalMajor.setScale(2, RoundingMode.HALF_UP);
             BigDecimal serviceFeeMajor = subtotalMajor.multiply(serviceFeeRate).setScale(2, RoundingMode.HALF_UP);
             BigDecimal totalMajor = subtotalMajor.add(serviceFeeMajor).setScale(2, RoundingMode.HALF_UP);
-            // Organizer receives ticket price minus platform service fee
-            BigDecimal organizerMajor = subtotalMajor.subtract(serviceFeeMajor).setScale(2, RoundingMode.HALF_UP);
+            // Organizer receives the ticket subtotal. XF retains the customer-paid service fee.
+            BigDecimal organizerMajor = subtotalMajor.setScale(2, RoundingMode.HALF_UP);
 
             // Validate currency and check minimum amount
             String currency = request.getCurrency() != null ? request.getCurrency().toLowerCase() : "ngn";
             Long amountInSmallestUnit = totalMajor.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValue();
-            Long applicationFeeInSmallestUnit = serviceFeeMajor.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValue();
             Long minimumAmount = CURRENCY_MINIMUMS.getOrDefault(currency, 50L);
             
             if (amountInSmallestUnit < minimumAmount) {
@@ -183,7 +184,7 @@ public class PaymentService {
 
             // Create Stripe PaymentIntent
             PaymentIntentCreateParams.Builder paramsBuilder = PaymentIntentCreateParams.builder()
-                    .setAmount(amountInSmallestUnit) // Already in cents from frontend
+                    .setAmount(amountInSmallestUnit)
                     .setCurrency(currency)
                     .setDescription("Ticket purchase for: " + event.getTitle() + " - " + ticketDescription)
                     .putMetadata("user_id", userId.toString())
@@ -194,22 +195,29 @@ public class PaymentService {
                     .putMetadata("total_major", totalMajor.toPlainString())
                     .putMetadata("organizer_id", organizer.getId().toString());
 
-            // If organizer has Stripe Connect account, use destination charge pattern
+            if (request.getReferralCode() != null && !request.getReferralCode().isBlank()) {
+                paramsBuilder.putMetadata("referral_code", request.getReferralCode().trim());
+            }
+
+            for (CreatePaymentIntentRequest.TicketTierItem tierItem : request.getTicketTiers()) {
+                if (tierItem == null || tierItem.getTicketTierId() == null || tierItem.getQuantity() == null) {
+                    continue;
+                }
+                if (tierItem.getQuantity() <= 0) {
+                    continue;
+                }
+                paramsBuilder.putMetadata(
+                        "tier_" + tierItem.getTicketTierId(),
+                        String.valueOf(tierItem.getQuantity())
+                );
+            }
+
+            // Use a platform charge for all purchases. Organizer settlement is handled later via payout jobs.
             if (organizerStripeAccountId != null && !organizerStripeAccountId.isBlank()) {
-                log.info("Setting up destination charge for organizer account: {}", organizerStripeAccountId);
-                
+                log.info("Creating platform charge for organizer {} with delayed Stripe payout", organizer.getId());
                 paramsBuilder
-                    // Transfer funds to connected account after platform receives payment
-                    .setTransferData(
-                        PaymentIntentCreateParams.TransferData.builder()
-                            .setDestination(organizerStripeAccountId)
-                            .build()
-                    )
-                    // Attribute the payment to the connected account for their dashboard
-                    .setOnBehalfOf(organizerStripeAccountId)
-                    // Platform's application fee (valid with transfer_data)
-                    .setApplicationFeeAmount(applicationFeeInSmallestUnit)
-                    .putMetadata("payout_type", "stripe_connect");
+                    .putMetadata("payout_type", "stripe_transfer_later")
+                    .putMetadata("destination_account_id", organizerStripeAccountId);
             } else {
                 // Manual payout: platform keeps everything, organizer amount pending manual transfer
                 log.info("Setting up manual payout for organizer: {}", organizer.getId());
@@ -255,6 +263,8 @@ public class PaymentService {
                     .createdAt(paymentIntent.getCreated())
                     .build();
 
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw e;
         } catch (StripeException e) {
             log.error("Stripe API error: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to create payment intent: " + e.getMessage(), e);
@@ -280,12 +290,20 @@ public class PaymentService {
      * Confirm payment status by checking with Stripe
      */
     public PaymentRecord confirmPaymentStatus(String stripeIntentId) {
+        return confirmPaymentStatusInternal(stripeIntentId, false);
+    }
+
+    public PaymentRecord finalizePaymentFromWebhook(String stripeIntentId) {
+        return confirmPaymentStatusInternal(stripeIntentId, true);
+    }
+
+    private PaymentRecord confirmPaymentStatusInternal(String stripeIntentId, boolean fromWebhook) {
         if (stripeIntentId == null || stripeIntentId.trim().isEmpty()) {
             throw new IllegalArgumentException("Stripe Intent ID cannot be null or empty");
         }
 
         try {
-            log.info("Confirming payment status for intent: {}", stripeIntentId);
+            log.info("Confirming payment status for intent: {} (fromWebhook={})", stripeIntentId, fromWebhook);
 
             // Retrieve payment intent from Stripe
             PaymentIntent paymentIntent = PaymentIntent.retrieve(stripeIntentId);
@@ -311,7 +329,11 @@ public class PaymentService {
                 paymentRecord.setStatus(PaymentRecord.PaymentStatus.PENDING);
             }
 
-            paymentRecordRepository.save(paymentRecord);
+            paymentRecord = paymentRecordRepository.save(paymentRecord);
+
+            if (paymentRecord.getStatus() == PaymentRecord.PaymentStatus.SUCCEEDED) {
+                ticketService.issueTicketsForConfirmedPayment(paymentRecord, paymentIntent.getMetadata());
+            }
 
             log.info("Payment status updated: {} -> {}", stripeIntentId, paymentRecord.getStatus());
             return paymentRecord;
