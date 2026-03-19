@@ -33,6 +33,7 @@ public class EventPayoutPreviewResponse {
     private String stripeTransferId;
     private String failureReason;
     private LocalDateTime paidAt;
+    private LocalDateTime updatedAt;
     private Boolean readyForAutoPayout;
     private Boolean prefersManualPayout;
     private String bankName;

@@ -348,6 +348,7 @@ public class EventPayoutService {
             .stripeTransferId(payout.getStripeTransferId())
             .failureReason(payout.getFailureReason())
             .paidAt(payout.getPaidAt())
+            .updatedAt(payout.getUpdatedAt())
             .readyForAutoPayout(hasStripeAccount && payout.getStatus() == EventPayout.PayoutStatus.READY)
                 .prefersManualPayout(prefersManualPayout)
                 .bankName(organizer != null ? organizer.getBankName() : null)

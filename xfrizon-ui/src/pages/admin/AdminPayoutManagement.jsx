@@ -366,7 +366,7 @@ export default function AdminPayoutManagement() {
       item.releaseAt,
       item.status,
       item.stripeTransferId,
-      item.lastError,
+      item.failureReason,
       item.updatedAt,
     ]);
 
@@ -807,7 +807,7 @@ export default function AdminPayoutManagement() {
                   {financeAuditRows.map((item) => {
                     const issue =
                       item?.status === "FAILED"
-                        ? item?.lastError || "Stripe transfer failed"
+                        ? item?.failureReason || "Stripe transfer failed"
                         : item?.status === "PAID" && !item?.stripeTransferId
                           ? "Paid status without transfer reference"
                           : "Auto payout overdue after release time";
