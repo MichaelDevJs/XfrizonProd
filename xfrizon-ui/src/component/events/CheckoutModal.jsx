@@ -244,6 +244,9 @@ export default function CheckoutModal({
           currency: event.currency,
           organizerId: event?.organizerId || event?.organizer?.id,
           useStripeConnect: true,
+          referralCode:
+            (localStorage.getItem("xfrizon_referral") || "").trim() ||
+            undefined,
           ticketTiers: ticketTiersInfo,
         },
         {

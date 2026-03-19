@@ -5,6 +5,7 @@ import {
   holdEventPayout,
   releaseEventPayout,
   payEventPayoutNow,
+  completeManualEventPayout,
   retryFailedEventPayout,
   retryAllFailedEventPayouts,
   markPayoutAsSent,
@@ -32,6 +33,7 @@ export default function AdminPayoutManagement() {
   const [eventPayoutPreview, setEventPayoutPreview] = useState([]);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewStatus, setPreviewStatus] = useState("");
+  const [manualQueueScope, setManualQueueScope] = useState("dueNow");
 
   useEffect(() => {
     loadPendingPayouts();
@@ -142,6 +144,22 @@ export default function AdminPayoutManagement() {
     }
   };
 
+  const handleCompleteManualPayout = async (payoutId) => {
+    try {
+      setProcessing(`manual-complete-${payoutId}`);
+      await completeManualEventPayout(payoutId);
+      toast.success("Manual payout marked as completed");
+      loadEventPayoutPreview();
+    } catch (error) {
+      console.error("Error completing manual payout:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to complete manual payout",
+      );
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const handleRetryFailedPayout = async (payoutId) => {
     try {
       setProcessing(`retry-${payoutId}`);
@@ -160,9 +178,10 @@ export default function AdminPayoutManagement() {
     try {
       setProcessing("retry-all");
       const response = await retryAllFailedEventPayouts();
-      const retriedCount = Number.isFinite(Number(response?.data?.retriedCount))
-        ? Number(response.data.retriedCount)
-        : null;
+      const retriedCount =
+        Number.isFinite(Number(response?.data?.retriedCount))
+          ? Number(response.data.retriedCount)
+          : null;
       toast.success(
         retriedCount !== null
           ? `Retried ${retriedCount} failed payout(s)`
@@ -247,9 +266,68 @@ export default function AdminPayoutManagement() {
     });
   };
 
+  const isReleaseTimeReached = (item) => {
+    if (!item?.releaseAt) return false;
+    const releaseAt = new Date(item.releaseAt);
+    if (Number.isNaN(releaseAt.getTime())) return false;
+    return releaseAt <= new Date();
+  };
+
+  const manualEventPayoutQueue = eventPayoutPreview
+    .filter((item) => item?.prefersManualPayout && item?.status !== "PAID")
+    .filter((item) => {
+      if (manualQueueScope === "all") return true;
+      return isReleaseTimeReached(item);
+    })
+    .sort((a, b) => {
+      const first = new Date(a?.releaseAt || 0).getTime();
+      const second = new Date(b?.releaseAt || 0).getTime();
+      return first - second;
+    });
+
+  const manualDueNowCount = eventPayoutPreview.filter(
+    (item) =>
+      item?.prefersManualPayout &&
+      item?.status !== "PAID" &&
+      isReleaseTimeReached(item),
+  ).length;
+
+  const payoutStatusCounts = eventPayoutPreview.reduce((acc, item) => {
+    const status = (item?.status || "UNKNOWN").toUpperCase();
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const paidWithoutTransferCount = eventPayoutPreview.filter(
+    (item) => item?.status === "PAID" && !item?.stripeTransferId,
+  ).length;
+
+  const overdueAutoPayoutCount = eventPayoutPreview.filter(
+    (item) =>
+      !item?.prefersManualPayout &&
+      item?.status !== "PAID" &&
+      isReleaseTimeReached(item),
+  ).length;
+
+  const financeAuditRows = eventPayoutPreview
+    .filter((item) => {
+      const isFailed = item?.status === "FAILED";
+      const isPaidWithoutTransfer =
+        item?.status === "PAID" && !item?.stripeTransferId;
+      const isOverdueAuto =
+        !item?.prefersManualPayout &&
+        item?.status !== "PAID" &&
+        isReleaseTimeReached(item);
+      return isFailed || isPaidWithoutTransfer || isOverdueAuto;
+    })
+    .sort((a, b) => {
+      const aDate = new Date(a?.updatedAt || a?.releaseAt || 0).getTime();
+      const bDate = new Date(b?.updatedAt || b?.releaseAt || 0).getTime();
+      return bDate - aDate;
+    });
+
   const toCsvSafe = (value) => {
-    const safeValue =
-      value === null || value === undefined ? "" : String(value);
+    const safeValue = value === null || value === undefined ? "" : String(value);
     const escaped = safeValue.replace(/"/g, '""');
     return `"${escaped}"`;
   };
@@ -309,7 +387,7 @@ export default function AdminPayoutManagement() {
 
   if (loading) {
     return (
-      <div className="bg-black min-h-screen p-6">
+      <div className="min-h-screen p-6 bg-[radial-gradient(circle_at_20%_0%,rgba(220,38,38,0.16),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(185,28,28,0.14),transparent_45%),linear-gradient(180deg,#070708_0%,#0d0d11_100%)]">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-20">
             <FaSpinner className="animate-spin text-red-500 text-4xl" />
@@ -320,21 +398,21 @@ export default function AdminPayoutManagement() {
   }
 
   return (
-    <div className="bg-black min-h-screen p-6">
+    <div className="min-h-screen p-6 bg-[radial-gradient(circle_at_20%_0%,rgba(220,38,38,0.16),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(185,28,28,0.14),transparent_45%),linear-gradient(180deg,#070708_0%,#0d0d11_100%)]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-3xl font-black tracking-tight text-white mb-2">
               Payout Management
             </h1>
-            <p className="text-gray-400">
-              Manage manual payouts for organizers
+            <p className="text-red-200/80">
+              XF finance cockpit for manual and scheduled organizer payouts
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white rounded-xl transition-all font-semibold shadow-[0_12px_24px_rgba(220,38,38,0.35)] flex items-center gap-2"
           >
             <FaMoneyBillWave />
             Create Manual Payout
@@ -343,14 +421,14 @@ export default function AdminPayoutManagement() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-2">Pending Payouts</div>
+          <div className="bg-zinc-900/80 rounded-2xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-red-900/20">
+            <div className="text-red-100/80 text-sm mb-2">Pending Payouts</div>
             <div className="text-3xl font-bold text-white">
               {payouts.length}
             </div>
           </div>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-2">
+          <div className="bg-zinc-900/80 rounded-2xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-red-900/20">
+            <div className="text-red-100/80 text-sm mb-2">
               Total Pending Amount
             </div>
             <div className="text-3xl font-bold text-white">
@@ -360,8 +438,8 @@ export default function AdminPayoutManagement() {
               )}
             </div>
           </div>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-2">Oldest Pending</div>
+          <div className="bg-zinc-900/80 rounded-2xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-1 ring-red-900/20">
+            <div className="text-red-100/80 text-sm mb-2">Oldest Pending</div>
             <div className="text-lg font-semibold text-white">
               {payouts.length > 0
                 ? formatDate(payouts[payouts.length - 1].createdAt)
@@ -371,13 +449,107 @@ export default function AdminPayoutManagement() {
         </div>
 
         {/* Payouts List */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+        <div className="bg-zinc-900/85 rounded-2xl overflow-hidden mb-8 shadow-[0_20px_45px_rgba(0,0,0,0.4)] ring-1 ring-white/5">
+          <div className="px-6 py-4 bg-zinc-900/70 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-white text-lg font-semibold">Manual Payout Queue</h2>
+              <p className="text-red-100/70 text-sm">
+                Organizers on manual payout with amounts due after event end.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-400">Due now: {manualDueNowCount}</span>
+              <select
+                value={manualQueueScope}
+                onChange={(e) => setManualQueueScope(e.target.value)}
+                className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-white text-xs"
+              >
+                <option value="dueNow">Due now</option>
+                <option value="all">All manual</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {manualEventPayoutQueue.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                No manual payout items pending
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-zinc-800/50">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Event</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Organizer</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Amount Due</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Bank Details</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Status</th>
+                    <th className="text-right px-6 py-3 text-gray-300 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/70">
+                  {manualEventPayoutQueue.map((item) => {
+                    const isCompleting =
+                      processing === `manual-complete-${item.payoutId}`;
+                    const isDueNow = isReleaseTimeReached(item);
+                    const canComplete =
+                      isDueNow && (item.status === "READY" || item.status === "HELD");
+
+                    return (
+                      <tr
+                        key={`manual-${item.payoutId}`}
+                        className="hover:bg-zinc-800/50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-gray-200">
+                          <div className="font-medium">{item.eventTitle}</div>
+                          <div className="text-xs text-gray-500">
+                            Ends: {formatDate(item.eventEndAt)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-300 text-sm">
+                          <div>{item.organizerName}</div>
+                          <div className="text-xs text-gray-500">{item.organizerEmail}</div>
+                        </td>
+                        <td className="px-6 py-4 text-green-400 font-semibold">
+                          {formatCurrency(item.netPayout, item.currency)}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-300">
+                          <div>{item.bankName || "-"}</div>
+                          <div>{item.accountHolderName || "-"}</div>
+                          <div className="font-mono text-gray-400">
+                            {item.iban || item.accountNumber || "-"}
+                          </div>
+                          <div className="text-gray-500">{item.bankCountry || "-"}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs px-2 py-1 rounded bg-zinc-800 text-gray-200 border border-zinc-700">
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => handleCompleteManualPayout(item.payoutId)}
+                            disabled={!canComplete || isCompleting}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded disabled:opacity-50"
+                            title={!isDueNow ? "Available after release time" : "Mark manual payout as completed"}
+                          >
+                            {isCompleting ? "Completing..." : "Mark Completed"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="px-6 py-4 bg-zinc-900/65 flex items-center justify-between">
             <div>
               <h2 className="text-white text-lg font-semibold">
                 Event Payout Preview
               </h2>
-              <p className="text-gray-400 text-sm">
+              <p className="text-red-100/70 text-sm">
                 Automatic release is scheduled for next day after event ends.
               </p>
             </div>
@@ -388,7 +560,7 @@ export default function AdminPayoutManagement() {
             </div>
           </div>
 
-          <div className="px-6 py-4 border-b border-zinc-800 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="px-6 py-4 bg-zinc-900/45 grid grid-cols-1 md:grid-cols-5 gap-3">
             <select
               value={previewStatus}
               onChange={(e) => setPreviewStatus(e.target.value)}
@@ -446,7 +618,7 @@ export default function AdminPayoutManagement() {
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-zinc-800">
+                <thead className="bg-zinc-800/50">
                   <tr>
                     <th className="text-left px-6 py-3 text-gray-300 font-medium">
                       Event
@@ -471,7 +643,7 @@ export default function AdminPayoutManagement() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800">
+                <tbody className="divide-y divide-zinc-800/70">
                   {eventPayoutPreview.map((item) => {
                     const isProcessingPay =
                       processing === `pay-${item.payoutId}`;
@@ -570,8 +742,110 @@ export default function AdminPayoutManagement() {
           </div>
         </div>
 
+        <div className="bg-zinc-900/85 rounded-2xl overflow-hidden mb-8 shadow-[0_20px_45px_rgba(0,0,0,0.4)] ring-1 ring-white/5">
+          <div className="px-6 py-4 bg-zinc-900/65">
+            <h2 className="text-white text-lg font-semibold">Finance Audit Snapshot</h2>
+            <p className="text-red-100/70 text-sm">
+              Operational checks to catch failed, overdue, or inconsistent payout records.
+            </p>
+          </div>
+
+          <div className="px-6 py-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 bg-zinc-900/40">
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">SCHEDULED</div>
+              <div className="text-white text-lg font-semibold">{payoutStatusCounts.SCHEDULED || 0}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">READY</div>
+              <div className="text-white text-lg font-semibold">{payoutStatusCounts.READY || 0}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">HELD</div>
+              <div className="text-white text-lg font-semibold">{payoutStatusCounts.HELD || 0}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">PAID</div>
+              <div className="text-white text-lg font-semibold">{payoutStatusCounts.PAID || 0}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">FAILED</div>
+              <div className="text-amber-300 text-lg font-semibold">{payoutStatusCounts.FAILED || 0}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">MANUAL DUE NOW</div>
+              <div className="text-emerald-300 text-lg font-semibold">{manualDueNowCount}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">OVERDUE AUTO</div>
+              <div className="text-orange-300 text-lg font-semibold">{overdueAutoPayoutCount}</div>
+            </div>
+            <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">PAID W/O REF</div>
+              <div className="text-rose-300 text-lg font-semibold">{paidWithoutTransferCount}</div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {financeAuditRows.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                No audit anomalies detected in current payout preview.
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-zinc-800/50">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Event</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Organizer</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Status</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Net</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Release</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Transfer Ref</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Issue</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/70">
+                  {financeAuditRows.map((item) => {
+                    const issue =
+                      item?.status === "FAILED"
+                        ? item?.lastError || "Stripe transfer failed"
+                        : item?.status === "PAID" && !item?.stripeTransferId
+                          ? "Paid status without transfer reference"
+                          : "Auto payout overdue after release time";
+
+                    return (
+                      <tr key={`audit-${item.payoutId}`} className="hover:bg-zinc-800/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-200">
+                          <div className="font-medium">{item.eventTitle}</div>
+                          <div className="text-xs text-gray-500">Event #{item.eventId}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-300">
+                          <div>{item.organizerName}</div>
+                          <div className="text-xs text-gray-500">{item.organizerEmail}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs px-2 py-1 rounded bg-zinc-800 text-gray-200 border border-zinc-700">
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-200 font-semibold">
+                          {formatCurrency(item.netPayout, item.currency)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">{formatDate(item.releaseAt)}</td>
+                        <td className="px-6 py-4 text-xs text-gray-300 font-mono">
+                          {item.stripeTransferId || "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-amber-300">{issue}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
         {/* Payouts List */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+        <div className="bg-zinc-900/85 rounded-2xl overflow-hidden shadow-[0_20px_45px_rgba(0,0,0,0.4)] ring-1 ring-white/5">
           <div className="overflow-x-auto">
             {payouts.length === 0 ? (
               <div className="text-center py-20">
@@ -580,7 +854,7 @@ export default function AdminPayoutManagement() {
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-zinc-800">
+                <thead className="bg-zinc-800/50">
                   <tr>
                     <th className="text-left px-6 py-4 text-gray-300 font-medium">
                       Organizer
@@ -602,7 +876,7 @@ export default function AdminPayoutManagement() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800">
+                <tbody className="divide-y divide-zinc-800/70">
                   {payouts.map((payout) => (
                     <tr
                       key={payout.id}

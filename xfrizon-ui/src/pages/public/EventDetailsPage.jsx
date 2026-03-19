@@ -224,11 +224,6 @@ export default function EventDetailsPage() {
         throw new Error("Missing payment intent reference");
       }
 
-      const eventIdNumber = Number(eventId);
-      if (!Number.isFinite(eventIdNumber)) {
-        throw new Error("Invalid eventId");
-      }
-
       setProcessingPayment(true);
       console.log(
         "💳 Payment complete, confirming payment status...",
@@ -257,77 +252,6 @@ export default function EventDetailsPage() {
         console.error("Error message:", confirmError?.message);
         throw confirmError;
       }
-
-      // Step 2: Validate event and tickets
-      if (!event || !event.ticketTiers) {
-        throw new Error("Event data not available");
-      }
-
-      // Step 3: Record all selected tickets in database
-      const ticketPromises = Object.entries(selectedTicketsToPurchase).map(
-        async ([tierId, quantity]) => {
-          if (quantity > 0) {
-            const tier = event.ticketTiers.find(
-              (t) => parseInt(t.id) === parseInt(tierId),
-            );
-            if (!tier) {
-              console.warn(`Ticket tier ${tierId} not found in event`);
-              return;
-            }
-
-            const ticketTierIdNumber = Number(tier.id);
-            if (!Number.isFinite(ticketTierIdNumber)) {
-              throw new Error(`Invalid ticketTierId for tier ${tierId}`);
-            }
-
-            const currency = tier.currency || event.currency;
-            if (!currency) {
-              throw new Error("Missing currency for ticket purchase");
-            }
-
-            const tierSubtotal = roundCurrency(
-              Number(tier.price) * Number(quantity),
-            );
-            const tierServiceFee = roundCurrency(
-              tierSubtotal * SERVICE_FEE_RATE,
-            );
-            const tierTotal = roundCurrency(tierSubtotal + tierServiceFee);
-
-            const payload = {
-              eventId: eventIdNumber,
-              ticketTierId: ticketTierIdNumber,
-              quantity: Number(quantity),
-              paymentIntentId,
-              totalPrice: tierTotal,
-              currency,
-              referralCode:
-                (localStorage.getItem("xfrizon_referral") || "").trim() ||
-                undefined,
-            };
-
-            try {
-              const ticketResponse = await api.post("/user-tickets", payload);
-              console.log("✅ Ticket recorded successfully:", {
-                tierId: payload.ticketTierId,
-                quantity: payload.quantity,
-                response: ticketResponse.data,
-              });
-            } catch (postError) {
-              console.error("❌ Failed to record user ticket:");
-              console.error("Payload sent:", JSON.stringify(payload, null, 2));
-              console.error("HTTP status:", postError?.response?.status);
-              console.error(
-                "Error data:",
-                JSON.stringify(postError?.response?.data, null, 2),
-              );
-              console.error("Error message:", postError?.message);
-              throw postError;
-            }
-          }
-        },
-      );
-
-      await Promise.all(ticketPromises);
 
       window.dispatchEvent(
         new CustomEvent("points:refresh", {
