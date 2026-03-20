@@ -20,7 +20,9 @@ public class CorsConfig implements WebMvcConfigurer {
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:5177",
                 "https://xfrizon.up.railway.app",
-                "https://xfrizonprod-production.up.railway.app"
+                "https://xfrizonprod-production.up.railway.app",
+                "https://xfrizon-ts.com",
+                "https://www.xfrizon-ts.com"
             )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
