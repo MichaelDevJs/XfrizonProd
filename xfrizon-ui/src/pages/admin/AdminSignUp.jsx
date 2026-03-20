@@ -107,6 +107,8 @@ export default function AdminSignUp() {
             firstName: response.data.firstName,
             lastName: response.data.lastName,
             role: response.data.role,
+            roles: response.data.roles,
+            permissions: response.data.permissions,
           }),
         );
 

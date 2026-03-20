@@ -14,14 +14,24 @@ import {
   FaHome,
   FaStore,
 } from "react-icons/fa";
+import { canAccessRoute } from "../../utils/adminAccess";
 
 export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const adminUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("adminUser") || "null");
+    } catch {
+      return null;
+    }
+  })();
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
-    window.location.href = "/";
+    localStorage.removeItem("adminUser");
+    localStorage.removeItem("pendingAdminGoogleLogin");
+    window.location.href = "/admin-login";
   };
 
   const navItemClass = ({ isActive }) =>
@@ -56,6 +66,13 @@ export default function AdminLayout() {
       ],
     },
   ];
+
+  const allowedSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => canAccessRoute(adminUser, item.to)),
+    }))
+    .filter((section) => section.items.length > 0);
 
   const pageTitle = useMemo(() => {
     if (location.pathname.includes("/admin/dashboard")) return "Dashboard";
@@ -100,7 +117,7 @@ export default function AdminLayout() {
         {/* Navigation */}
         <nav className="p-3 sm:p-4">
           <div className="flex h-[calc(100dvh-185px)] lg:h-[calc(100dvh-190px)] flex-col gap-4 overflow-y-auto hide-scrollbar pb-2">
-            {navSections.map((section) => (
+            {allowedSections.map((section) => (
               <div key={section.title} className="space-y-2">
                 <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                   {section.title}
@@ -171,7 +188,7 @@ export default function AdminLayout() {
           </div>
           <div className="flex items-center gap-2">
             <div className="text-xs text-zinc-400 uppercase tracking-wider">
-              Welcome, <span className="font-semibold">Admin</span>
+              Welcome, <span className="font-semibold">{adminUser?.name || adminUser?.email || "Admin"}</span>
             </div>
             <button
               onClick={handleLogout}

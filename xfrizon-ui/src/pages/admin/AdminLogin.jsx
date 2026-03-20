@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaShieldAlt, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import api from "../../api/axios";
+import authService from "../../api/authService";
+import {
+  getDefaultAdminPath,
+  hasAdminDashboardAccess,
+} from "../../utils/adminAccess";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -15,7 +21,16 @@ export default function AdminLogin() {
   useEffect(() => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
+    localStorage.removeItem("pendingAdminGoogleLogin");
   }, []);
+
+  const handleGoogleAdminLogin = () => {
+    localStorage.setItem("pendingAdminGoogleLogin", "1");
+    authService.startGoogleSignup({
+      accountType: "USER",
+      redirectPath: "/admin/auth/google/complete",
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,40 +43,50 @@ export default function AdminLogin() {
         password,
       });
 
-      if (
-        response.data.success &&
-        response.data.token &&
-        String(response.data.role || "").toUpperCase() === "ADMIN"
-      ) {
+      if (response.data.success && response.data.token) {
+        const adminUserData = {
+          id: response.data.userId,
+          email: response.data.email,
+          role: response.data.role,
+          roles: response.data.roles,
+          permissions: response.data.permissions,
+          name: response.data.name || response.data.firstName,
+        };
+
+        if (!hasAdminDashboardAccess(adminUserData)) {
+          toast.error("Access denied. Admin dashboard role required.");
+          setLoading(false);
+          return;
+        }
+
+        // Ensure admin login does not inherit stale public user session state.
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("pendingAdminGoogleLogin");
+
         // Store the real JWT token as adminToken
         localStorage.setItem("adminToken", response.data.token);
-        localStorage.setItem(
-          "adminUser",
-          JSON.stringify({
-            id: response.data.userId,
-            email: response.data.email,
-            role: response.data.role,
-            name: response.data.name || response.data.firstName,
-          }),
-        );
+        localStorage.setItem("adminUser", JSON.stringify(adminUserData));
 
         toast.success("✓ Admin login successful!");
 
-        // Add small delay to ensure token is persisted before navigation
-        setTimeout(() => {
-          setLoading(false);
-          const from = location.state?.from;
-          const fromPath = from?.pathname
-            ? `${from.pathname}${from.search || ""}${from.hash || ""}`
-            : null;
-          const isFromLogin = from?.pathname === "/admin-login";
+        setLoading(false);
+        const from = location.state?.from;
+        const fromPath = from?.pathname
+          ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+          : null;
+        const isFromLogin = from?.pathname === "/admin-login";
+        const isAdminFromPath = String(from?.pathname || "").startsWith("/admin");
 
-          navigate(!isFromLogin && fromPath ? fromPath : "/admin/dashboard", {
+        const defaultPath = getDefaultAdminPath(adminUserData);
+        navigate(
+          !isFromLogin && isAdminFromPath && fromPath ? fromPath : defaultPath,
+          {
             replace: true,
-          });
-        }, 100);
+          },
+        );
       } else {
-        toast.error("Access denied. Admin account required.");
+        toast.error("Access denied. Admin dashboard role required.");
         setLoading(false);
       }
     } catch (error) {
@@ -145,6 +170,21 @@ export default function AdminLogin() {
               {loading ? "Authenticating..." : "Access Dashboard"}
             </button>
           </form>
+
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 border-t border-zinc-800" />
+            <span className="text-[10px] text-zinc-500 uppercase tracking-[0.16em]">or</span>
+            <div className="flex-1 border-t border-zinc-800" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleAdminLogin}
+            className="w-full flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white py-2.5 rounded-lg transition-all duration-300 font-light text-sm border border-zinc-700"
+          >
+            <FcGoogle className="w-4 h-4" />
+            Continue with Google
+          </button>
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">

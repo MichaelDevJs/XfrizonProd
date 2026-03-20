@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import api from "../../api/axios";
+import {
+  canAccessRoute,
+  getDefaultAdminPath,
+  hasAdminDashboardAccess,
+} from "../../utils/adminAccess";
 
 export default function AdminRoute({ children }) {
   const location = useLocation();
@@ -13,9 +18,8 @@ export default function AdminRoute({ children }) {
       return null;
     }
   })();
-  const isAdminAuthenticated =
-    Boolean(adminToken) &&
-    String(adminUser?.role || "").toUpperCase() === "ADMIN";
+  const hasAdminAccess = hasAdminDashboardAccess(adminUser);
+  const isAdminAuthenticated = Boolean(adminToken) && hasAdminAccess;
 
   useEffect(() => {
     let cancelled = false;
@@ -33,9 +37,25 @@ export default function AdminRoute({ children }) {
           },
         });
 
-        const role = String(response?.data?.role || "").toUpperCase();
+        const refreshedAdminUser = {
+          ...(adminUser || {}),
+          id: response?.data?.id ?? adminUser?.id,
+          email: response?.data?.email ?? adminUser?.email,
+          name:
+            response?.data?.name ||
+            response?.data?.firstName ||
+            adminUser?.name ||
+            adminUser?.firstName,
+          role: response?.data?.role ?? adminUser?.role,
+          roles: response?.data?.roles ?? adminUser?.roles,
+          permissions: response?.data?.permissions ?? adminUser?.permissions,
+        };
+
+        localStorage.setItem("adminUser", JSON.stringify(refreshedAdminUser));
+
         if (!cancelled) {
-          setStatus(role === "ADMIN" ? "valid" : "invalid");
+          const hasAccess = canAccessRoute(refreshedAdminUser, location.pathname);
+          setStatus(hasAccess ? "valid" : "invalid");
         }
       } catch {
         if (!cancelled) setStatus("invalid");
@@ -49,6 +69,18 @@ export default function AdminRoute({ children }) {
   }, [adminToken, isAdminAuthenticated]);
 
   if (!isAdminAuthenticated || status === "invalid") {
+    if (!isAdminAuthenticated) {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+    }
+
+    if (adminUser) {
+      const fallback = getDefaultAdminPath(adminUser);
+      if (fallback !== "/admin-login") {
+        return <Navigate to={fallback} replace />;
+      }
+    }
+
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
     return (

@@ -34,6 +34,20 @@ const Header = () => {
   const isPartnerUser =
     organizer?.role === "PARTNER" || roleTokens.includes("PARTNER");
 
+  const handleAccountLogout = () => {
+    const hasAdminSession = Boolean(localStorage.getItem("adminToken"));
+    if (hasAdminSession) {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      localStorage.removeItem("pendingAdminGoogleLogin");
+      navigate("/admin-login");
+      return;
+    }
+
+    logout();
+    navigate("/");
+  };
+
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event) {
@@ -613,8 +627,7 @@ const Header = () => {
                       <button
                         onClick={() => {
                           setDropdownOpen(false);
-                          logout();
-                          navigate("/");
+                          handleAccountLogout();
                         }}
                         className="w-full text-left px-4 py-2.5 text-xf-accent hover:text-opacity-80 hover:bg-zinc-800 transition-all duration-200 text-xs font-light cursor-pointer uppercase tracking-widest"
                       >

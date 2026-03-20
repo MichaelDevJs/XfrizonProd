@@ -22,6 +22,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class GoogleOAuthHandlers implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
 
+    public static final String SESSION_REDIRECT_URI_ATTR = "oauth_redirect_uri";
+    public static final String SESSION_ACCOUNT_TYPE_ATTR = "oauth_account_type";
+
     private final AuthService authService;
 
     @Value("${xfrizon.oauth.google.frontend-complete-url:http://localhost:5173/auth/google/complete}")
@@ -50,8 +53,8 @@ public class GoogleOAuthHandlers implements AuthenticationSuccessHandler, Authen
         String firstName = stringAttr(oauthUser, "given_name");
         String lastName = stringAttr(oauthUser, "family_name");
         String profilePicture = stringAttr(oauthUser, "picture");
-        String requestedAccountType = normalizeAccountType(request.getParameter("accountType"));
-        String callbackOverride = safeTrim(request.getParameter("redirect_uri"));
+        String requestedAccountType = resolveRequestedAccountType(request);
+        String callbackOverride = resolveCallbackOverride(request);
 
         if (firstName.isBlank() || lastName.isBlank()) {
             String displayName = stringAttr(oauthUser, "name").trim();
@@ -75,7 +78,7 @@ public class GoogleOAuthHandlers implements AuthenticationSuccessHandler, Authen
         );
 
         if (!Boolean.TRUE.equals(authResult.getSuccess())) {
-            redirectFailure(response, "google_signin_rejected");
+            redirectFailure(response, "google_signin_rejected", callbackOverride);
             return;
         }
 
@@ -106,12 +109,56 @@ public class GoogleOAuthHandlers implements AuthenticationSuccessHandler, Authen
     ) throws IOException, ServletException {
         String normalizedReason = mapFailureReason(exception);
         log.warn("Google OAuth authentication failed: reason={}, message={}", normalizedReason, safeTrim(exception == null ? "" : exception.getMessage()));
-        redirectFailure(response, normalizedReason);
+        String callbackOverride = resolveCallbackOverride(request);
+        redirectFailure(response, normalizedReason, callbackOverride);
+    }
+
+    private String resolveRequestedAccountType(HttpServletRequest request) {
+        String accountType = safeTrim(request.getParameter("accountType"));
+        if (!accountType.isBlank()) {
+            return normalizeAccountType(accountType);
+        }
+
+        Object sessionValue = request.getSession(false) == null
+            ? null
+            : request.getSession(false).getAttribute(SESSION_ACCOUNT_TYPE_ATTR);
+        clearSessionAttribute(request, SESSION_ACCOUNT_TYPE_ATTR);
+
+        return normalizeAccountType(sessionValue == null ? "" : String.valueOf(sessionValue));
+    }
+
+    private String resolveCallbackOverride(HttpServletRequest request) {
+        String callbackOverride = safeTrim(request.getParameter("redirect_uri"));
+        if (!callbackOverride.isBlank()) {
+            clearSessionAttribute(request, SESSION_REDIRECT_URI_ATTR);
+            return callbackOverride;
+        }
+
+        Object sessionValue = request.getSession(false) == null
+            ? null
+            : request.getSession(false).getAttribute(SESSION_REDIRECT_URI_ATTR);
+        clearSessionAttribute(request, SESSION_REDIRECT_URI_ATTR);
+
+        String fromSession = sessionValue == null ? "" : String.valueOf(sessionValue).trim();
+        return fromSession.startsWith("http") ? fromSession : "";
+    }
+
+    private void clearSessionAttribute(HttpServletRequest request, String key) {
+        if (request.getSession(false) != null) {
+            request.getSession(false).removeAttribute(key);
+        }
     }
 
     private void redirectFailure(HttpServletResponse response, String code) throws IOException {
+        redirectFailure(response, code, "");
+    }
+
+    private void redirectFailure(HttpServletResponse response, String code, String callbackOverride) throws IOException {
+        String baseUrl = !callbackOverride.isBlank() && callbackOverride.startsWith("http")
+            ? callbackOverride
+            : frontendLoginUrl;
         String redirectUrl = UriComponentsBuilder
-                .fromUriString(frontendLoginUrl)
+                .fromUriString(baseUrl)
                 .queryParam("error", code)
                 .build()
                 .encode()

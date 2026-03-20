@@ -52,9 +52,11 @@ import RoleBasedRoute from "./component/RoleBasedRoute";
 import UserRoute from "./component/UserRoute";
 import PartnerRoute from "./component/PartnerRoute";
 import AdminRoute from "./component/admin/AdminRoute";
+import AdminPageRoute from "./component/admin/AdminPageRoute";
 import UnauthorizedRedirectListener from "./component/UnauthorizedRedirectListener";
 
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminGoogleComplete from "./pages/admin/AdminGoogleComplete";
 import AdminSignUp from "./pages/admin/AdminSignUp";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -233,6 +235,7 @@ function RootApp() {
 
             {/* Admin Auth Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin/auth/google/complete" element={<AdminGoogleComplete />} />
             <Route path="/admin-signup" element={<AdminSignUp />} />
 
             {/* Admin Protected Routes */}
@@ -244,18 +247,78 @@ function RootApp() {
                 </AdminRoute>
               }
             >
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="blogs" element={<BlogManagement />} />
+              <Route
+                path="dashboard"
+                element={
+                  <AdminPageRoute>
+                    <AdminDashboard />
+                  </AdminPageRoute>
+                }
+              />
+              <Route
+                path="blogs"
+                element={
+                  <AdminPageRoute>
+                    <BlogManagement />
+                  </AdminPageRoute>
+                }
+              />
               <Route
                 path="blog-hero-blocks"
-                element={<AdminBlogHeroBlocksPage />}
+                element={
+                  <AdminPageRoute>
+                    <AdminBlogHeroBlocksPage />
+                  </AdminPageRoute>
+                }
               />
-              <Route path="users" element={<UsersManagement />} />
-              <Route path="organizers" element={<OrganizersManagement />} />
-              <Route path="home-blocks" element={<AdminHomeBlocksPage />} />
-              <Route path="messages" element={<MessagesManagement />} />
-              <Route path="payouts" element={<AdminPayoutManagement />} />
-              <Route path="partners" element={<AdminPartnersPage />} />
+              <Route
+                path="users"
+                element={
+                  <AdminPageRoute>
+                    <UsersManagement />
+                  </AdminPageRoute>
+                }
+              />
+              <Route
+                path="organizers"
+                element={
+                  <AdminPageRoute>
+                    <OrganizersManagement />
+                  </AdminPageRoute>
+                }
+              />
+              <Route
+                path="home-blocks"
+                element={
+                  <AdminPageRoute>
+                    <AdminHomeBlocksPage />
+                  </AdminPageRoute>
+                }
+              />
+              <Route
+                path="messages"
+                element={
+                  <AdminPageRoute>
+                    <MessagesManagement />
+                  </AdminPageRoute>
+                }
+              />
+              <Route
+                path="payouts"
+                element={
+                  <AdminPageRoute>
+                    <AdminPayoutManagement />
+                  </AdminPageRoute>
+                }
+              />
+              <Route
+                path="partners"
+                element={
+                  <AdminPageRoute>
+                    <AdminPartnersPage />
+                  </AdminPageRoute>
+                }
+              />
             </Route>
           </Routes>
         </App>

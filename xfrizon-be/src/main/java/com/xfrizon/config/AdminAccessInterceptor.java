@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -44,12 +47,55 @@ public class AdminAccessInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (user.getRole() != User.UserRole.ADMIN) {
-            writeError(response, HttpServletResponse.SC_FORBIDDEN, "Admin role required");
+        if (!hasAdminApiAccess(user, request.getRequestURI())) {
+            writeError(response, HttpServletResponse.SC_FORBIDDEN, "Insufficient permissions for this admin endpoint");
             return false;
         }
 
         return true;
+    }
+
+    private boolean hasAdminApiAccess(User user, String requestUri) {
+        Set<String> roleTokens = collectRoleTokens(user);
+
+        if (roleTokens.contains("ADMIN")) {
+            return true;
+        }
+
+        // BLOG_WRITER has strict backend access to blog-related admin endpoints only.
+        if (roleTokens.contains("BLOG_WRITER")) {
+            return isBlogWriterAllowedPath(requestUri);
+        }
+
+        return false;
+    }
+
+    private Set<String> collectRoleTokens(User user) {
+        Set<String> roles = new LinkedHashSet<>();
+
+        if (user.getRole() != null) {
+            roles.add(user.getRole().name().toUpperCase(Locale.ROOT));
+        }
+
+        if (user.getRoles() != null && !user.getRoles().isBlank()) {
+            for (String token : user.getRoles().split(",")) {
+                String normalized = token == null ? "" : token.trim().toUpperCase(Locale.ROOT);
+                if (!normalized.isBlank()) {
+                    roles.add(normalized);
+                }
+            }
+        }
+
+        return roles;
+    }
+
+    private boolean isBlogWriterAllowedPath(String uri) {
+        if (uri == null) return false;
+
+        return uri.startsWith("/api/v1/admin/upload")
+            || uri.startsWith("/api/v1/admin/blogs")
+            || uri.startsWith("/api/v1/admin/blog-hero")
+            || uri.startsWith("/api/v1/admin/blog-hero-blocks");
     }
 
     private void writeError(HttpServletResponse response, int status, String message) throws IOException {

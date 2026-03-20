@@ -501,7 +501,6 @@ export default function BlogManagement() {
 
       setBlogs(Array.isArray(blogList) ? blogList : []);
       console.log("Blogs fetched:", blogList);
-      toast.success("Blogs loaded");
     } catch (error) {
       console.error("Failed to fetch blogs:", error);
       toast.error("Failed to load blogs");

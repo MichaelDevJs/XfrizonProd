@@ -3,6 +3,11 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../../context/AuthContext";
 import authService from "../../../api/authService";
+import api from "../../../api/axios";
+import {
+  getDefaultAdminPath,
+  hasAdminDashboardAccess,
+} from "../../../utils/adminAccess";
 
 const ACCOUNT_TYPE_OPTIONS = ["USER", "ORGANIZER"];
 
@@ -34,16 +39,13 @@ export default function GoogleSignupComplete() {
 
   const tokenFromQuery = query.get("token") || query.get("accessToken") || "";
   const signupToken = query.get("signupToken") || "";
+  const pendingAdminGoogle =
+    localStorage.getItem("pendingAdminGoogleLogin") === "1" ||
+    parseBoolean(query.get("adminLogin"));
   const completionRequired =
     parseBoolean(query.get("needsProfileCompletion")) ||
     parseBoolean(query.get("isNewUser")) ||
     parseBoolean(query.get("signup"));
-
-  useEffect(() => {
-    if (tokenFromQuery) {
-      localStorage.setItem("userToken", tokenFromQuery);
-    }
-  }, [tokenFromQuery]);
 
   const validate = () => {
     const nextErrors = {};
@@ -89,9 +91,44 @@ export default function GoogleSignupComplete() {
   };
 
   useEffect(() => {
-    // If backend already finalized account and sent profile data, we can complete sign-in immediately.
-    const hasProfileData = formData.firstName && formData.lastName && formData.email;
-    if (!completionRequired && hasProfileData && tokenFromQuery) {
+    if (pendingAdminGoogle) return;
+
+    const finalizePublicGoogleLogin = async () => {
+      // If backend already finalized account and sent profile data, we can complete sign-in immediately.
+      const hasProfileData =
+        formData.firstName && formData.lastName && formData.email;
+      if (completionRequired || !hasProfileData || !tokenFromQuery) return;
+
+      try {
+        const response = await api.get("/auth/user", {
+          headers: {
+            Authorization: `Bearer ${tokenFromQuery}`,
+          },
+        });
+
+        const user = response?.data || {};
+        const adminUserData = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          roles: user.roles,
+          permissions: user.permissions,
+          name: user.name || user.firstName,
+        };
+
+        // If this account has admin dashboard access, route directly to admin to avoid home flicker.
+        if (hasAdminDashboardAccess(adminUserData)) {
+          localStorage.removeItem("userToken");
+          localStorage.removeItem("user");
+          localStorage.setItem("adminToken", tokenFromQuery);
+          localStorage.setItem("adminUser", JSON.stringify(adminUserData));
+          navigate(getDefaultAdminPath(adminUserData), { replace: true });
+          return;
+        }
+      } catch {
+        // Fall through to normal public session handling.
+      }
+
       applyAuthSession({
         token: tokenFromQuery,
         firstName: formData.firstName,
@@ -100,9 +137,79 @@ export default function GoogleSignupComplete() {
         role: formData.accountType,
       });
       routeToDashboard(formData.accountType);
-    }
+    };
+
+    finalizePublicGoogleLogin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [completionRequired, tokenFromQuery]);
+  }, [pendingAdminGoogle, completionRequired, tokenFromQuery]);
+
+  useEffect(() => {
+    if (!pendingAdminGoogle) return;
+
+    const finalizeAdminGoogleLogin = async () => {
+      if (completionRequired || !tokenFromQuery || signupToken) {
+        localStorage.removeItem("pendingAdminGoogleLogin");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("user");
+        toast.error("Admin Google sign-in requires an existing role-assigned account.");
+        navigate("/admin-login", { replace: true });
+        return;
+      }
+
+      try {
+        const response = await api.get("/auth/user", {
+          headers: {
+            Authorization: `Bearer ${tokenFromQuery}`,
+          },
+        });
+
+        const user = response?.data || {};
+        const adminUserData = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          roles: user.roles,
+          permissions: user.permissions,
+          name: user.name || user.firstName,
+        };
+
+        if (!hasAdminDashboardAccess(adminUserData)) {
+          localStorage.removeItem("pendingAdminGoogleLogin");
+          localStorage.removeItem("userToken");
+          localStorage.removeItem("user");
+          toast.error("Access denied. Admin dashboard role required.");
+          navigate("/admin-login", { replace: true });
+          return;
+        }
+
+        localStorage.removeItem("pendingAdminGoogleLogin");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("user");
+        localStorage.setItem("adminToken", tokenFromQuery);
+        localStorage.setItem("adminUser", JSON.stringify(adminUserData));
+
+        toast.success("Google admin login successful!");
+        navigate(getDefaultAdminPath(adminUserData), { replace: true });
+      } catch (error) {
+        localStorage.removeItem("pendingAdminGoogleLogin");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("user");
+        toast.error(
+          error?.response?.data?.message ||
+            "Unable to complete admin Google login.",
+        );
+        navigate("/admin-login", { replace: true });
+      }
+    };
+
+    finalizeAdminGoogleLogin();
+  }, [
+    completionRequired,
+    navigate,
+    pendingAdminGoogle,
+    signupToken,
+    tokenFromQuery,
+  ]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -140,6 +247,16 @@ export default function GoogleSignupComplete() {
       setSubmitting(false);
     }
   };
+
+  if (pendingAdminGoogle) {
+    return (
+      <div className="bg-black text-white min-h-screen flex items-center justify-center px-4 py-8">
+        <p className="text-sm text-gray-400 font-light uppercase tracking-wide">
+          Verifying admin access...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black text-white min-h-screen flex items-center justify-center px-4 py-8">

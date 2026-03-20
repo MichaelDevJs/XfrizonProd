@@ -17,9 +17,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -431,10 +434,10 @@ public class AuthService {
                     .build();
             }
 
-            if (user.getRole() != User.UserRole.ADMIN) {
+                if (!hasAdminDashboardAccess(user)) {
                 return AuthResponse.builder()
                     .success(false)
-                    .message("Access denied. Admin account required")
+                    .message("Access denied. Admin dashboard role required")
                     .build();
             }
 
@@ -591,6 +594,23 @@ public class AuthService {
 
     private String safeTrim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private boolean hasAdminDashboardAccess(User user) {
+        if (user == null) return false;
+        if (user.getRole() == User.UserRole.ADMIN) return true;
+
+        Set<String> roleTokens = new LinkedHashSet<>();
+        if (user.getRoles() != null && !user.getRoles().isBlank()) {
+            for (String token : user.getRoles().split(",")) {
+                String normalized = token == null ? "" : token.trim().toUpperCase(Locale.ROOT);
+                if (!normalized.isBlank()) {
+                    roleTokens.add(normalized);
+                }
+            }
+        }
+
+        return roleTokens.contains("ADMIN") || roleTokens.contains("BLOG_WRITER");
     }
 }
 

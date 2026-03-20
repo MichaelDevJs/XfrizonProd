@@ -39,6 +39,52 @@ const adminUsersApi = {
 
     throw lastError || new Error("Failed to load users");
   },
+
+  assignRole: async ({ userId, role }) => {
+    const endpoints = [
+      {
+        method: "put",
+        url: `/admin/users/${userId}/role`,
+        body: { role },
+      },
+      {
+        method: "patch",
+        url: `/admin/users/${userId}/role`,
+        body: { role },
+      },
+      {
+        method: "put",
+        url: "/admin/users/assign-role",
+        body: { userId, role },
+      },
+      {
+        method: "patch",
+        url: "/admin/users/assign-role",
+        body: { userId, role },
+      },
+      {
+        method: "patch",
+        url: `/admin/users/${userId}`,
+        body: { role },
+      },
+    ];
+
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await api[endpoint.method](endpoint.url, endpoint.body);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (error?.response?.status === 404 || error?.response?.status === 405) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw lastError || new Error("Failed to assign role");
+  },
 };
 
 export default adminUsersApi;

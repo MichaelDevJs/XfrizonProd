@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +27,38 @@ public class AdminUserService {
                 .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(this::toRow)
                 .collect(Collectors.toList());
+    }
+
+    public User assignRole(Long userId, String requestedRole) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        String normalizedRole = requestedRole == null ? "" : requestedRole.trim().toUpperCase(Locale.ROOT);
+        if (normalizedRole.isBlank()) {
+            throw new IllegalArgumentException("Role is required");
+        }
+
+        switch (normalizedRole) {
+            case "ADMIN" -> {
+                user.setRole(User.UserRole.ADMIN);
+                user.setRoles("ADMIN");
+            }
+            case "ORGANIZER" -> {
+                user.setRole(User.UserRole.ORGANIZER);
+                user.setRoles("ORGANIZER");
+            }
+            case "BLOG_WRITER" -> {
+                user.setRole(User.UserRole.USER);
+                user.setRoles("USER,BLOG_WRITER");
+            }
+            case "USER" -> {
+                user.setRole(User.UserRole.USER);
+                user.setRoles("USER");
+            }
+            default -> throw new IllegalArgumentException("Unsupported role: " + normalizedRole);
+        }
+
+        return userRepository.save(user);
     }
 
     private AdminUserManagementRow toRow(User user) {
@@ -71,4 +104,5 @@ public class AdminUserService {
     private String safeText(String value) {
         return value == null || value.isBlank() ? "N/A" : value;
     }
+
 }
