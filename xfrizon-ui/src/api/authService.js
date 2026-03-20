@@ -142,12 +142,12 @@ const authService = {
     const oauthStartPath =
       import.meta.env.VITE_GOOGLE_OAUTH_START_PATH ||
       "/oauth2/authorization/google";
-    const callbackPath = redirectPath || "/auth/google/complete";
-    const callbackUrl = new URL(callbackPath, getSiteBaseUrl());
-    callbackUrl.searchParams.set("accountType", String(accountType).toUpperCase());
-
     const startUrl = new URL(resolveBackendUrl(oauthStartPath));
-    startUrl.searchParams.set("redirect_uri", callbackUrl.toString());
+    if (redirectPath) {
+      const callbackUrl = new URL(redirectPath, getSiteBaseUrl());
+      callbackUrl.searchParams.set("accountType", String(accountType).toUpperCase());
+      startUrl.searchParams.set("redirect_uri", callbackUrl.toString());
+    }
     startUrl.searchParams.set("accountType", String(accountType).toUpperCase());
 
     window.location.assign(startUrl.toString());
