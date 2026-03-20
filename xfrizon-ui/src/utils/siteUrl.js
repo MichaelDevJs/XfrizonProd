@@ -1,11 +1,24 @@
 const FALLBACK_SITE_URL = "https://xfrizon.up.railway.app";
 
+const isLocalhostHostname = (hostname = "") =>
+  ["localhost", "127.0.0.1"].includes(String(hostname).toLowerCase());
+
 export const getSiteBaseUrl = () => {
+  const fromEnv = (import.meta.env.VITE_SITE_URL || "").trim();
+
   if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin;
+    const runtimeOrigin = window.location.origin;
+    const runtimeHostname = window.location.hostname;
+
+    if (!isLocalhostHostname(runtimeHostname)) {
+      return runtimeOrigin;
+    }
+
+    if (fromEnv) {
+      return fromEnv.endsWith("/") ? fromEnv.slice(0, -1) : fromEnv;
+    }
   }
 
-  const fromEnv = (import.meta.env.VITE_SITE_URL || "").trim();
   if (fromEnv) {
     return fromEnv.endsWith("/") ? fromEnv.slice(0, -1) : fromEnv;
   }

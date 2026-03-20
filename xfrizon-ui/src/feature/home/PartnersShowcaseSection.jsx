@@ -62,13 +62,11 @@ export default function PartnersShowcaseSection({ partners = [] }) {
           <div className="partners-marquee-track flex min-w-max gap-3 sm:gap-4">
             {partners.map((partner) => {
               const logoSrc = getPartnerLogo(partner);
-
-              return (
-                <Link
-                  key={partner.id}
-                  to={`/partners/${partner.id}`}
-                  className="group flex w-40 shrink-0 flex-col p-3 transition-colors sm:w-44"
-                >
+              const isManualPartner = !partner?.id || String(partner.id).startsWith("manual-");
+              const cardClassName =
+                "group flex w-40 shrink-0 flex-col p-3 transition-colors sm:w-44";
+              const content = (
+                <>
                   <div className="flex h-24 items-center justify-center overflow-hidden p-2">
                     {logoSrc ? (
                       <img
@@ -88,6 +86,24 @@ export default function PartnersShowcaseSection({ partners = [] }) {
                       {partner.name || "Partner"}
                     </p>
                   </div>
+                </>
+              );
+
+              if (isManualPartner) {
+                return (
+                  <div key={partner.id || partner.name} className={cardClassName}>
+                    {content}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={partner.id}
+                  to={`/partners/${partner.id}`}
+                  className={cardClassName}
+                >
+                  {content}
                 </Link>
               );
             })}

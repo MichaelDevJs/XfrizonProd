@@ -66,7 +66,6 @@ import AdminHomeBlocksPage from "./pages/admin/AdminHomeBlocksPage";
 import AdminBlogHeroBlocksPage from "./pages/admin/AdminBlogHeroBlocksPage";
 import AdminPayoutManagement from "./pages/admin/AdminPayoutManagement";
 import AdminPartnersPage from "./pages/admin/AdminPartnersPage";
-import Whiteboard from "./pages/admin/Whiteboard";
 import { captureReferralFromUrl } from "./utils/share";
 
 function RootApp() {
@@ -257,7 +256,6 @@ function RootApp() {
               <Route path="messages" element={<MessagesManagement />} />
               <Route path="payouts" element={<AdminPayoutManagement />} />
               <Route path="partners" element={<AdminPartnersPage />} />
-              <Route path="whiteboard" element={<Whiteboard />} />
             </Route>
           </Routes>
         </App>

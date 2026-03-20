@@ -36,6 +36,14 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
     note: "",
   });
 
+  const formatSaleStatusDate = (date) =>
+    new Date(date).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -111,8 +119,10 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
 
   const isTicketAvailable = (tier) => {
     const now = currentTime;
-    const saleStart = tier.saleStart ? new Date(tier.saleStart) : null;
-    const saleEnd = tier.saleEnd ? new Date(tier.saleEnd) : null;
+    const saleStartValue = tier.saleStart || tier.saleStartsAt;
+    const saleEndValue = tier.saleEnd || tier.saleEndsAt;
+    const saleStart = saleStartValue ? new Date(saleStartValue) : null;
+    const saleEnd = saleEndValue ? new Date(saleEndValue) : null;
 
     if (saleStart && now < saleStart) {
       return { available: false, reason: "notStarted", startsAt: saleStart };
@@ -441,8 +451,8 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                           (tier.quantity || 0) - (tier.quantitySold || 0);
                         const availability = isTicketAvailable(tier);
                         const timeLeft =
-                          availability.available && tier.saleEnd
-                            ? getTimeUntilEnd(tier.saleEnd)
+                          availability.available && (tier.saleEnd || tier.saleEndsAt)
+                            ? getTimeUntilEnd(tier.saleEnd || tier.saleEndsAt)
                             : null;
 
                         return (
@@ -464,16 +474,8 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                     {availableQty} available
                                   </p>
                                 ) : availability.reason === "notStarted" ? (
-                                  <p className="text-xs text-yellow-500">
-                                    Sales start{" "}
-                                    {new Date(
-                                      availability.startsAt,
-                                    ).toLocaleString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
+                                  <p className="text-xs text-yellow-400 font-medium">
+                                    Sales have not opened yet
                                   </p>
                                 ) : (
                                   <p className="text-xs text-red-500">
@@ -495,6 +497,19 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                                   Ends in {timeLeft.hours}h {timeLeft.minutes}m{" "}
                                   {timeLeft.seconds}s
                                 </span>
+                              </div>
+                            )}
+                            {availability.reason === "notStarted" && (
+                              <div className="mb-2 rounded border border-yellow-700/60 bg-yellow-950/40 px-3 py-2 flex items-start gap-2">
+                                <FaClock className="text-yellow-400 text-xs mt-0.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-[11px] font-semibold text-yellow-300 uppercase tracking-wide">
+                                    On Sale Soon
+                                  </p>
+                                  <p className="text-[11px] text-yellow-100/90 leading-relaxed">
+                                    Sales start on {formatSaleStatusDate(availability.startsAt)}
+                                  </p>
+                                </div>
                               </div>
                             )}
                             <div className="flex items-center gap-2 pt-2">

@@ -6,6 +6,13 @@ import api from "../../api/axios";
 import partnersApi from "../../api/partnersApi";
 import { toast } from "react-toastify";
 import { COUNTRIES_DATA } from "../../data/countriesData";
+import {
+  createManualOrderToken,
+  normalizeManualPartnerEntry,
+  parsePartnersSectionConfig,
+  serializePartnersSectionConfig,
+  syncPartnersSectionOrder,
+} from "../../utils/partnersSectionConfig";
 
 export default function AdminHomeBlocksPage() {
   const [loading, setLoading] = useState(true);
@@ -57,7 +64,10 @@ export default function AdminHomeBlocksPage() {
   ]);
   const [allPartners, setAllPartners] = useState([]);
   const [selectedPartnerIds, setSelectedPartnerIds] = useState([]);
+  const [manualPartners, setManualPartners] = useState([]);
+  const [partnerDisplayOrder, setPartnerDisplayOrder] = useState([]);
   const [loadingPartners, setLoadingPartners] = useState(false);
+  const [uploadingManualPartnerId, setUploadingManualPartnerId] = useState(null);
   const [partnerFilters, setPartnerFilters] = useState({
     query: "",
     location: "all",
@@ -73,6 +83,10 @@ export default function AdminHomeBlocksPage() {
   // Drag and drop state
   const [draggedSlideId, setDraggedSlideId] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [draggedFeaturedPartnerToken, setDraggedFeaturedPartnerToken] =
+    useState(null);
+  const [dragOverFeaturedPartnerIndex, setDragOverFeaturedPartnerIndex] =
+    useState(null);
 
   // Country-based organizer selection
   const [selectedCountry, setSelectedCountry] = useState("");
@@ -734,12 +748,14 @@ export default function AdminHomeBlocksPage() {
 
       if (settings.partnersSectionPartnerIds) {
         try {
-          const parsed = JSON.parse(settings.partnersSectionPartnerIds);
-          setSelectedPartnerIds(
-            Array.isArray(parsed) ? parsed.map((id) => String(id)) : [],
+          const parsedConfig = parsePartnersSectionConfig(
+            settings.partnersSectionPartnerIds,
           );
+          setSelectedPartnerIds(parsedConfig.partnerIds);
+          setManualPartners(parsedConfig.manualPartners);
+          setPartnerDisplayOrder(parsedConfig.order || []);
         } catch (e) {
-          console.error("Error parsing partners section IDs:", e);
+          console.error("Error parsing partners section config:", e);
         }
       }
 
@@ -799,7 +815,13 @@ export default function AdminHomeBlocksPage() {
         blogsHeadlineTitleColor,
         blogsLatestTitleColor,
         blockOrder: JSON.stringify(blockOrder.map((block) => block.id)),
-        partnersSectionPartnerIds: JSON.stringify(selectedPartnerIds),
+        partnersSectionPartnerIds: serializePartnersSectionConfig({
+          partnerIds: selectedPartnerIds,
+          manualPartners: manualPartners.filter(
+            (entry) => entry?.name?.trim() || entry?.logoUrl?.trim(),
+          ),
+          order: partnerDisplayOrder,
+        }),
       });
 
       toast.success("Homepage settings saved successfully!");
@@ -1101,6 +1123,182 @@ export default function AdminHomeBlocksPage() {
     setSelectedPartnerIds((prev) =>
       prev.includes(key) ? prev.filter((id) => id !== key) : [...prev, key],
     );
+  };
+
+  useEffect(() => {
+    setPartnerDisplayOrder((prev) => {
+      const next = syncPartnersSectionOrder({
+        order: prev,
+        partnerIds: selectedPartnerIds,
+        manualPartners,
+      });
+
+      if (
+        prev.length === next.length &&
+        prev.every((token, index) => token === next[index])
+      ) {
+        return prev;
+      }
+
+      return next;
+    });
+  }, [selectedPartnerIds, manualPartners]);
+
+  const handleAddManualPartner = () => {
+    const newPartner = normalizeManualPartnerEntry({
+      id: `manual-${Date.now()}-${manualPartners.length}`,
+      name: "",
+      logoUrl: "",
+    });
+    setManualPartners((prev) => [...prev, newPartner]);
+    setPartnerDisplayOrder((prev) => [...prev, createManualOrderToken(newPartner.id)]);
+  };
+
+  const handleManualPartnerChange = (partnerId, field, value) => {
+    setManualPartners((prev) =>
+      prev.map((partner) =>
+        partner.id === partnerId
+          ? {
+              ...partner,
+              [field]: value,
+            }
+          : partner,
+      ),
+    );
+  };
+
+  const handleRemoveManualPartner = (partnerId) => {
+    setManualPartners((prev) => prev.filter((partner) => partner.id !== partnerId));
+  };
+
+  const uploadManualPartnerLogo = async (partnerId, file) => {
+    if (!file) return;
+
+    if (!String(file.type || "").startsWith("image/")) {
+      toast.error("Select an image file for the manual brand logo");
+      return;
+    }
+
+    try {
+      setUploadingManualPartnerId(partnerId);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "image");
+
+      const endpoints = [
+        "/uploads/cover-photo",
+        "/uploads/organizer-logo",
+        "/uploads/media",
+      ];
+
+      let uploadedUrl = "";
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await api.post(endpoint, formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            timeout: 60000,
+          });
+
+          uploadedUrl = response?.data?.url || response?.data?.filePath || "";
+          if (uploadedUrl) {
+            break;
+          }
+        } catch (error) {
+          lastError = error;
+          const status = error?.response?.status;
+          const canFallback =
+            !status ||
+            status === 400 ||
+            status === 404 ||
+            status === 405 ||
+            status === 413 ||
+            status === 415 ||
+            (status >= 500 && status < 600) ||
+            String(error?.code || "").toUpperCase() === "ECONNABORTED";
+
+          if (!canFallback) {
+            throw error;
+          }
+        }
+      }
+
+      if (!uploadedUrl) {
+        throw lastError || new Error("Manual partner logo upload failed");
+      }
+
+      setManualPartners((prev) =>
+        prev.map((partner) =>
+          partner.id === partnerId
+            ? {
+                ...partner,
+                logoUrl: uploadedUrl,
+              }
+            : partner,
+        ),
+      );
+      toast.success("Brand logo uploaded");
+    } catch (error) {
+      console.error("Error uploading manual partner logo:", error);
+      toast.error("Image upload failed. Please retry.");
+    } finally {
+      setUploadingManualPartnerId(null);
+    }
+  };
+
+  const handleManualPartnerFileSelect = async (partnerId, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await uploadManualPartnerLogo(partnerId, file);
+    event.target.value = "";
+  };
+
+  const handleFeaturedPartnerDragStart = (event, token) => {
+    setDraggedFeaturedPartnerToken(token);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", token);
+  };
+
+  const handleFeaturedPartnerDragOver = (event, index) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragOverFeaturedPartnerIndex(index);
+  };
+
+  const handleFeaturedPartnerDragLeave = () => {
+    setDragOverFeaturedPartnerIndex(null);
+  };
+
+  const handleFeaturedPartnerDrop = (event, dropIndex) => {
+    event.preventDefault();
+    if (!draggedFeaturedPartnerToken) return;
+
+    setPartnerDisplayOrder((prev) => {
+      const draggedIndex = prev.findIndex(
+        (token) => token === draggedFeaturedPartnerToken,
+      );
+
+      if (draggedIndex === -1 || draggedIndex === dropIndex) {
+        return prev;
+      }
+
+      const next = [...prev];
+      const [draggedToken] = next.splice(draggedIndex, 1);
+      next.splice(dropIndex, 0, draggedToken);
+      return next;
+    });
+
+    setDraggedFeaturedPartnerToken(null);
+    setDragOverFeaturedPartnerIndex(null);
+  };
+
+  const handleFeaturedPartnerDragEnd = () => {
+    setDraggedFeaturedPartnerToken(null);
+    setDragOverFeaturedPartnerIndex(null);
   };
 
   if (loading) {
@@ -2358,13 +2556,213 @@ export default function AdminHomeBlocksPage() {
           <h2 className="text-xl font-semibold text-white">
             Partners Block Content
           </h2>
-          <span className="text-xs text-zinc-400">
-            Selected: {selectedPartnerIds.length}
-          </span>
+          <div className="text-right text-xs text-zinc-400">
+            <div>Selected: {selectedPartnerIds.length}</div>
+            <div>Manual: {manualPartners.length}</div>
+          </div>
         </div>
         <p className="text-sm text-gray-400 mb-4">
-          Choose which partners appear in the homepage partners carousel.
+          Choose partners from the directory or add manual brand entries with a name and logo URL.
         </p>
+
+        {(() => {
+          const selectedPartnersById = new Map(
+            allPartners.map((partner) => [String(partner.id), partner]),
+          );
+          const manualPartnersById = new Map(
+            manualPartners.map((partner) => [String(partner.id), partner]),
+          );
+          const orderedItems = partnerDisplayOrder
+            .map((token) => {
+              if (token.startsWith("partner:")) {
+                const partnerId = token.slice("partner:".length);
+                const partner = selectedPartnersById.get(partnerId);
+                if (!partner) return null;
+
+                return {
+                  token,
+                  kind: "partner",
+                  id: partnerId,
+                  name: partner.name || `Partner ${partnerId}`,
+                  subtitle: partner.contactEmail || partner.email || "Directory partner",
+                };
+              }
+
+              if (token.startsWith("manual:")) {
+                const manualId = token.slice("manual:".length);
+                const partner = manualPartnersById.get(manualId);
+                if (!partner) return null;
+
+                return {
+                  token,
+                  kind: "manual",
+                  id: manualId,
+                  name: partner.name || "Untitled manual brand",
+                  subtitle: partner.logoUrl || "Manual brand entry",
+                };
+              }
+
+              return null;
+            })
+            .filter(Boolean);
+
+          return (
+            <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold text-white">Showcase Order</h3>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Drag the selected partners and manual brands to control homepage display order.
+                </p>
+              </div>
+
+              {orderedItems.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-zinc-700 px-4 py-5 text-sm text-zinc-400">
+                  Add manual brands or select partners to build the showcase list.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {orderedItems.map((item, index) => (
+                    <div
+                      key={item.token}
+                      draggable
+                      onDragStart={(event) =>
+                        handleFeaturedPartnerDragStart(event, item.token)
+                      }
+                      onDragOver={(event) =>
+                        handleFeaturedPartnerDragOver(event, index)
+                      }
+                      onDragLeave={handleFeaturedPartnerDragLeave}
+                      onDrop={(event) => handleFeaturedPartnerDrop(event, index)}
+                      onDragEnd={handleFeaturedPartnerDragEnd}
+                      className={`flex items-center gap-3 rounded-lg border px-3 py-3 transition ${
+                        draggedFeaturedPartnerToken === item.token
+                          ? "border-red-500/60 bg-red-500/10 opacity-70"
+                          : dragOverFeaturedPartnerIndex === index
+                            ? "border-[#c0f24d]/50 bg-[#c0f24d]/10"
+                            : "border-zinc-800 bg-zinc-900/80"
+                      }`}
+                    >
+                      <div className="cursor-grab select-none text-zinc-500">⋮⋮</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                            item.kind === "manual"
+                              ? "bg-red-500/15 text-red-300"
+                              : "bg-[#c0f24d]/15 text-[#c0f24d]"
+                          }`}>
+                            {item.kind === "manual" ? "Manual" : "Partner"}
+                          </span>
+                          <p className="truncate text-sm font-semibold text-white">{item.name}</p>
+                        </div>
+                        <p className="mt-1 truncate text-xs text-zinc-400">{item.subtitle}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-white">Manual Brand Entries</h3>
+              <p className="mt-1 text-xs text-zinc-400">
+                Use this for sponsors or brands that are not in the partner directory.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddManualPartner}
+              className="rounded-lg border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400 hover:text-red-200"
+            >
+              + Add Manual Brand
+            </button>
+          </div>
+
+          {manualPartners.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-zinc-700 px-4 py-5 text-sm text-zinc-400">
+              No manual brands added yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {manualPartners.map((partner, index) => (
+                <div
+                  key={partner.id}
+                  className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(220px,0.8fr)_auto]"
+                >
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
+                      Brand Name
+                    </label>
+                    <input
+                      type="text"
+                      value={partner.name}
+                      onChange={(e) =>
+                        handleManualPartnerChange(partner.id, "name", e.target.value)
+                      }
+                      placeholder={`Manual brand ${index + 1}`}
+                      className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
+                      Logo URL
+                    </label>
+                    <input
+                      type="text"
+                      value={partner.logoUrl}
+                      onChange={(e) =>
+                        handleManualPartnerChange(partner.id, "logoUrl", e.target.value)
+                      }
+                      placeholder="https://example.com/logo.png"
+                      className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
+                      Logo Upload
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <label className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) =>
+                            handleManualPartnerFileSelect(partner.id, event)
+                          }
+                        />
+                        {uploadingManualPartnerId === partner.id ? "Uploading..." : "Upload Image"}
+                      </label>
+                      {partner.logoUrl ? (
+                        <img
+                          src={partner.logoUrl}
+                          alt={partner.name || `Manual brand ${index + 1}`}
+                          className="h-12 w-20 rounded border border-zinc-700 bg-white/5 object-contain p-1"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-20 items-center justify-center rounded border border-dashed border-zinc-700 text-[10px] uppercase tracking-wide text-zinc-500">
+                          No logo
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveManualPartner(partner.id)}
+                      className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
 
         {(() => {

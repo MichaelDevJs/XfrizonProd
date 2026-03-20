@@ -10,6 +10,10 @@ import api from "../../api/axios";
 import useSeo from "../../hooks/useSeo";
 import { getSiteBaseUrl } from "../../utils/siteUrl";
 import partnersApi from "../../api/partnersApi";
+import {
+  parsePartnersSectionConfig,
+  syncPartnersSectionOrder,
+} from "../../utils/partnersSectionConfig";
 
 export default function HomePage() {
   const defaultBlockOrder = [
@@ -54,7 +58,11 @@ export default function HomePage() {
     useState("#18181b");
   const [blockOrder, setBlockOrder] = useState(defaultBlockOrder);
   const [featuredPartnerIds, setFeaturedPartnerIds] = useState([]);
+  const [manualFeaturedPartners, setManualFeaturedPartners] = useState([]);
+  const [partnerDisplayOrder, setPartnerDisplayOrder] = useState([]);
   const [featuredPartners, setFeaturedPartners] = useState([]);
+  const [partnerShowcaseConfigured, setPartnerShowcaseConfigured] =
+    useState(false);
 
   useSeo({
     title: "Xfrizon | Discover Events and Culture Blogs",
@@ -135,7 +143,12 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchFeaturedPartners();
-  }, [JSON.stringify(featuredPartnerIds)]);
+  }, [
+    JSON.stringify(featuredPartnerIds),
+    JSON.stringify(manualFeaturedPartners),
+    JSON.stringify(partnerDisplayOrder),
+    partnerShowcaseConfigured,
+  ]);
 
   const fetchHomePageSettings = async () => {
     try {
@@ -261,14 +274,15 @@ export default function HomePage() {
 
       if (settings.partnersSectionPartnerIds) {
         try {
-          const partnerIds = JSON.parse(settings.partnersSectionPartnerIds);
-          setFeaturedPartnerIds(
-            Array.isArray(partnerIds)
-              ? partnerIds.map((id) => String(id))
-              : [],
+          const parsedConfig = parsePartnersSectionConfig(
+            settings.partnersSectionPartnerIds,
           );
+          setFeaturedPartnerIds(parsedConfig.partnerIds);
+          setManualFeaturedPartners(parsedConfig.manualPartners);
+          setPartnerDisplayOrder(parsedConfig.order || []);
+          setPartnerShowcaseConfigured(parsedConfig.configured);
         } catch (e) {
-          console.error("Error parsing partners section partner IDs:", e);
+          console.error("Error parsing partners section config:", e);
         }
       }
 
@@ -285,7 +299,7 @@ export default function HomePage() {
       const allPartners = await partnersApi.getAll();
       const activePartners = Array.isArray(allPartners) ? allPartners : [];
 
-      if (!featuredPartnerIds.length) {
+      if (!partnerShowcaseConfigured) {
         setFeaturedPartners(activePartners.slice(0, 12));
         return;
       }
@@ -294,18 +308,36 @@ export default function HomePage() {
       const selectedPartners = activePartners.filter((partner) =>
         selectedSet.has(String(partner.id)),
       );
+      const selectedPartnerMap = new Map(
+        selectedPartners.map((partner) => [String(partner.id), partner]),
+      );
+      const manualPartnerMap = new Map(
+        manualFeaturedPartners.map((partner) => [String(partner.id), partner]),
+      );
+      const effectiveOrder = syncPartnersSectionOrder({
+        order: partnerDisplayOrder,
+        partnerIds: featuredPartnerIds,
+        manualPartners: manualFeaturedPartners,
+      });
 
-      // Preserve admin-selected order for homepage display.
-      const sortedBySelection = featuredPartnerIds
-        .map((id) =>
-          selectedPartners.find((partner) => String(partner.id) === String(id)),
-        )
+      const sortedBySelection = effectiveOrder
+        .map((token) => {
+          if (token.startsWith("partner:")) {
+            return selectedPartnerMap.get(token.slice("partner:".length));
+          }
+
+          if (token.startsWith("manual:")) {
+            return manualPartnerMap.get(token.slice("manual:".length));
+          }
+
+          return null;
+        })
         .filter(Boolean);
 
       setFeaturedPartners(sortedBySelection);
     } catch (error) {
       console.error("Error fetching featured partners:", error);
-      setFeaturedPartners([]);
+      setFeaturedPartners(partnerShowcaseConfigured ? manualFeaturedPartners : []);
     }
   };
 

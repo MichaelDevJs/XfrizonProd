@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.HashMap;
 import java.util.Map;
@@ -139,6 +140,14 @@ public class PaymentService {
                 // Validate ticket tier belongs to event
                 if (!ticketTier.getEvent().getId().equals(event.getId())) {
                     throw new IllegalArgumentException("Ticket tier does not belong to this event");
+                }
+
+                LocalDateTime now = LocalDateTime.now();
+                if (ticketTier.getSaleStartsAt() != null && now.isBefore(ticketTier.getSaleStartsAt())) {
+                    throw new IllegalArgumentException("Ticket sales have not started yet for " + ticketTier.getTicketType());
+                }
+                if (ticketTier.getSaleEndsAt() != null && now.isAfter(ticketTier.getSaleEndsAt())) {
+                    throw new IllegalArgumentException("Ticket sales have ended for " + ticketTier.getTicketType());
                 }
 
                 // Validate quantity available

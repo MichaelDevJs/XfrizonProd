@@ -13,7 +13,6 @@ import {
   FaTimes,
   FaHome,
   FaStore,
-  FaDrawPolygon,
 } from "react-icons/fa";
 
 export default function AdminLayout() {
@@ -39,7 +38,6 @@ export default function AdminLayout() {
         { to: "/admin/dashboard", label: "Dashboard", icon: FaChartBar },
         { to: "/admin/home-blocks", label: "Homepage Blocks", icon: FaThLarge },
         { to: "/admin/blogs", label: "Blog Management", icon: FaPen },
-        { to: "/admin/whiteboard", label: "Whiteboard", icon: FaDrawPolygon },
       ],
     },
     {
@@ -67,7 +65,6 @@ export default function AdminLayout() {
     if (location.pathname.includes("/admin/messages")) return "Messages";
     if (location.pathname.includes("/admin/payouts")) return "Payouts";
     if (location.pathname.includes("/admin/partners")) return "Partners";
-    if (location.pathname.includes("/admin/whiteboard")) return "Whiteboard";
     if (location.pathname.includes("/admin/home-blocks"))
       return "Homepage Blocks";
     return "Admin Dashboard";

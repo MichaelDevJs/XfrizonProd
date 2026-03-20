@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -111,8 +112,8 @@ public class EventService {
                     .quantity(tierRequest.getQuantity())
                     .quantitySold(0)
                     .maxPerPerson(tierRequest.getMaxPerPerson() != null ? tierRequest.getMaxPerPerson() : 1)
-                    .saleEndsAt(tierRequest.getPriceEnds() != null ? 
-                        LocalDateTime.parse(tierRequest.getPriceEnds(), DATE_TIME_FORMATTER) : null)
+                    .saleStartsAt(parseOptionalDateTime(tierRequest.getSaleStart()))
+                    .saleEndsAt(resolveSaleEnd(tierRequest))
                     .status(TicketTier.TicketStatus.ACTIVE)
                     .description(tierRequest.getDescription())
                     .displayOrder(i)
@@ -214,6 +215,7 @@ public class EventService {
                     .quantity(sourceTier.getQuantity())
                     .quantitySold(0)
                     .maxPerPerson(sourceTier.getMaxPerPerson() != null ? sourceTier.getMaxPerPerson() : 1)
+                    .saleStartsAt(sourceTier.getSaleStartsAt())
                     .saleEndsAt(sourceTier.getSaleEndsAt())
                     .status(TicketTier.TicketStatus.ACTIVE)
                     .description(sourceTier.getDescription())
@@ -396,8 +398,8 @@ public class EventService {
                     .quantity(tierRequest.getQuantity())
                     .quantitySold(0)
                     .maxPerPerson(tierRequest.getMaxPerPerson() != null ? tierRequest.getMaxPerPerson() : 1)
-                    .saleEndsAt(tierRequest.getPriceEnds() != null ? 
-                        LocalDateTime.parse(tierRequest.getPriceEnds(), DATE_TIME_FORMATTER) : null)
+                    .saleStartsAt(parseOptionalDateTime(tierRequest.getSaleStart()))
+                    .saleEndsAt(resolveSaleEnd(tierRequest))
                     .status(TicketTier.TicketStatus.ACTIVE)
                     .description(tierRequest.getDescription())
                     .displayOrder(i)
@@ -712,10 +714,39 @@ public class EventService {
             .quantity(tier.getQuantity() != null ? tier.getQuantity() : 0)
             .quantitySold(tier.getQuantitySold() != null ? tier.getQuantitySold() : 0)
             .maxPerPerson(tier.getMaxPerPerson() != null ? tier.getMaxPerPerson() : 1)
+            .saleStartsAt(tier.getSaleStartsAt())
             .saleEndsAt(tier.getSaleEndsAt())
+            .saleStart(tier.getSaleStartsAt())
+            .saleEnd(tier.getSaleEndsAt())
             .status(tier.getStatus() != null ? tier.getStatus().toString() : "ACTIVE")
             .description(tier.getDescription())
             .build();
+    }
+
+    private LocalDateTime resolveSaleEnd(TicketTierRequest tierRequest) {
+        if (tierRequest == null) {
+            return null;
+        }
+        LocalDateTime fromSaleEnd = parseOptionalDateTime(tierRequest.getSaleEnd());
+        if (fromSaleEnd != null) {
+            return fromSaleEnd;
+        }
+        return parseOptionalDateTime(tierRequest.getPriceEnds());
+    }
+
+    private LocalDateTime parseOptionalDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value, DATE_TIME_FORMATTER);
+        } catch (Exception ignored) {
+            try {
+                return OffsetDateTime.parse(value, DATE_TIME_FORMATTER).toLocalDateTime();
+            } catch (Exception ignoredAgain) {
+                throw new IllegalArgumentException("Invalid date-time format: " + value);
+            }
+        }
     }
 
     /**

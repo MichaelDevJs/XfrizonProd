@@ -67,7 +67,8 @@ export default function EditEvent() {
     ticketType: "",
     quantity: "",
     price: "",
-    priceEnds: null,
+    saleStart: null,
+    saleEnd: null,
     currency:
       COUNTRY_CURRENCY[form.country] || COUNTRY_CURRENCY["Nigeria"] || "NGN",
   });
@@ -292,8 +293,11 @@ export default function EditEvent() {
             price: parseFloat(ticketInput.price),
             currency: COUNTRY_CURRENCY[form.country] || "NGN",
             description: ticketInput.description || "",
-            priceEnds: ticketInput.priceEnds
-              ? ticketInput.priceEnds.toISOString()
+            saleStart: ticketInput.saleStart
+              ? ticketInput.saleStart.toISOString()
+              : null,
+            saleEnd: ticketInput.saleEnd
+              ? ticketInput.saleEnd.toISOString()
               : null,
           },
         ],
@@ -302,7 +306,8 @@ export default function EditEvent() {
         ticketType: "",
         quantity: "",
         price: "",
-        priceEnds: null,
+        saleStart: null,
+        saleEnd: null,
         currency: COUNTRY_CURRENCY[form.country] || "NGN",
       });
     }
@@ -380,7 +385,8 @@ export default function EditEvent() {
           price: parseFloat(ticket.price) || 0,
           quantity: parseInt(ticket.quantity) || 1,
           maxPerPerson: parseInt(ticket.maxPerPerson) || 1,
-          priceEnds: ticket.priceEnds || null,
+          saleStart: ticket.saleStart || ticket.saleStartsAt || null,
+          saleEnd: ticket.saleEnd || ticket.saleEndsAt || ticket.priceEnds || null,
           description: ticket.description || "",
         })),
       };
@@ -1005,18 +1011,35 @@ export default function EditEvent() {
               </div>
               <div>
                 <label className="block mb-2 font-light text-gray-200 text-sm">
+                  Sale Starts
+                </label>
+                <DatePicker
+                  selected={ticketInput.saleStart}
+                  onChange={(date) =>
+                    setTicketInput({ ...ticketInput, saleStart: date })
+                  }
+                  showTimeSelect
+                  dateFormat="yyyy-MM-dd HH:mm"
+                  timeIntervals={15}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
+                  placeholderText="Select sale start date & time"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 font-light text-gray-200 text-sm">
                   Sale Ends
                 </label>
                 <DatePicker
-                  selected={ticketInput.priceEnds}
+                  selected={ticketInput.saleEnd}
                   onChange={(date) =>
-                    setTicketInput({ ...ticketInput, priceEnds: date })
+                    setTicketInput({ ...ticketInput, saleEnd: date })
                   }
                   showTimeSelect
                   dateFormat="yyyy-MM-dd HH:mm"
                   timeIntervals={15}
                   className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
                   placeholderText="Select sale end date & time"
+                  minDate={ticketInput.saleStart || new Date()}
                 />
               </div>
               <button

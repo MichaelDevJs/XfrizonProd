@@ -45,6 +45,23 @@ const getImageUrl = (path) => {
 export default function CreateEvent() {
   const navigate = useNavigate();
 
+  const saleWindowDateFormat = {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+
+  const startOfDay = new Date(0, 0, 0, 0, 0);
+
+  const endOfDay = new Date(0, 0, 0, 23, 45);
+
+  const isSameDay = (left, right) =>
+    Boolean(left && right) &&
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate();
+
   const [flyer, setFlyer] = useState(null);
   const [flyerPreview, setFlyerPreview] = useState(null);
   const [flyerInputMethod, setFlyerInputMethod] = useState('upload'); // 'upload' or 'url'
@@ -85,6 +102,14 @@ export default function CreateEvent() {
   });
 
   const [genreInput, setGenreInput] = useState("");
+
+  const getMinSaleEndTime = () => {
+    if (ticketInput.saleStart && isSameDay(ticketInput.saleStart, ticketInput.saleEnd)) {
+      return ticketInput.saleStart;
+    }
+
+    return startOfDay;
+  };
 
   const handleFlyerUpload = (e) => {
     const file = e.target.files[0];
@@ -169,6 +194,15 @@ export default function CreateEvent() {
       return;
     }
 
+    if (
+      ticketInput.saleStart &&
+      ticketInput.saleEnd &&
+      ticketInput.saleEnd <= ticketInput.saleStart
+    ) {
+      toast.error("Ticket sale end must be after the sale start");
+      return;
+    }
+
     const newTicket = {
       ticketType: ticketInput.ticketType,
       quantity: parseInt(ticketInput.quantity) || 1,
@@ -237,6 +271,20 @@ export default function CreateEvent() {
 
     if (form.tickets.length === 0 && !form.rsvpEnabled) {
       toast.error("Add at least one ticket tier or enable RSVP");
+      return;
+    }
+
+    const invalidSaleWindowTicket = form.tickets.find(
+      (ticket) =>
+        ticket.saleStart &&
+        ticket.saleEnd &&
+        new Date(ticket.saleEnd) <= new Date(ticket.saleStart),
+    );
+
+    if (invalidSaleWindowTicket) {
+      toast.error(
+        `${invalidSaleWindowTicket.ticketType || "Ticket tier"} must end after it starts`,
+      );
       return;
     }
 
@@ -873,7 +921,14 @@ export default function CreateEvent() {
                   <DatePicker
                     selected={ticketInput.saleStart}
                     onChange={(date) =>
-                      setTicketInput({ ...ticketInput, saleStart: date })
+                      setTicketInput((current) => ({
+                        ...current,
+                        saleStart: date,
+                        saleEnd:
+                          current.saleEnd && date && current.saleEnd <= date
+                            ? null
+                            : current.saleEnd,
+                      }))
                     }
                     showTimeSelect
                     dateFormat="yyyy-MM-dd HH:mm"
@@ -900,11 +955,16 @@ export default function CreateEvent() {
                     className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
                     placeholderText="Select sale end date & time"
                     minDate={ticketInput.saleStart || new Date()}
+                    minTime={getMinSaleEndTime()}
+                    maxTime={endOfDay}
                     withPortal={window.innerWidth < 640}
                     popperClassName="react-datepicker-xf-theme"
                   />
                 </div>
               </div>
+              <p className="text-[11px] text-gray-500 font-light">
+                Sale end must be later than the selected sale start.
+              </p>
             </div>
             
             <button
@@ -935,27 +995,14 @@ export default function CreateEvent() {
                         {ticket.saleStart && (
                           <span>
                             Starts:{" "}
-                            {new Date(ticket.saleStart).toLocaleString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )}
+                            {new Date(ticket.saleStart).toLocaleString("en-US", saleWindowDateFormat)}
                           </span>
                         )}
                         {ticket.saleStart && ticket.saleEnd && " | "}
                         {ticket.saleEnd && (
                           <span>
                             Ends:{" "}
-                            {new Date(ticket.saleEnd).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {new Date(ticket.saleEnd).toLocaleString("en-US", saleWindowDateFormat)}
                           </span>
                         )}
                       </p>

@@ -1,5 +1,6 @@
 package com.xfrizon.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,12 @@ public class TicketTierRequest {
     @PositiveOrZero(message = "Max per person must be zero or positive")
     private Integer maxPerPerson;
 
+    private String saleStart;
+
+    @JsonAlias({"priceEnds"})
+    private String saleEnd;
+
+    @Deprecated
     private String priceEnds;
 
     private String description;

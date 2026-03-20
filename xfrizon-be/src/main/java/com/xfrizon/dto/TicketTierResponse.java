@@ -19,7 +19,10 @@ public class TicketTierResponse {
     private Integer quantity;
     private Integer quantitySold;
     private Integer maxPerPerson;
+    private LocalDateTime saleStartsAt;
     private LocalDateTime saleEndsAt;
+    private LocalDateTime saleStart;
+    private LocalDateTime saleEnd;
     private String status;
     private String description;
 }

@@ -572,16 +572,20 @@ const Header = () => {
                       {organizer.role !== "ORGANIZER" && !isPartnerUser && (
                         <>
                           <button
-                            type="button"
-                            disabled
-                            className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate(organizer?.id ? `/user/${organizer.id}` : "/profile");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
                           >
                             View Profile
                           </button>
                           <button
-                            type="button"
-                            disabled
-                            className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/user-profile-edit");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
                           >
                             Edit Profile
                           </button>
@@ -595,9 +599,11 @@ const Header = () => {
                             My Tickets
                           </button>
                           <button
-                            type="button"
-                            disabled
-                            className="w-full text-left px-4 py-2.5 text-gray-600 bg-zinc-900/40 border-b border-zinc-800 text-xs font-light cursor-not-allowed uppercase tracking-widest"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              navigate("/saved-events");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
                           >
                             Saved Events
                           </button>

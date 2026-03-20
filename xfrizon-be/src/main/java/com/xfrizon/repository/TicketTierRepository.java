@@ -18,7 +18,7 @@ public interface TicketTierRepository extends JpaRepository<TicketTier, Long> {
 
     Optional<TicketTier> findByIdAndEventId(Long ticketId, Long eventId);
 
-    @Query("SELECT t FROM TicketTier t WHERE t.event.id = :eventId AND t.status = 'ACTIVE' AND (t.saleEndsAt IS NULL OR t.saleEndsAt > CURRENT_TIMESTAMP)")
+    @Query("SELECT t FROM TicketTier t WHERE t.event.id = :eventId AND t.status = 'ACTIVE' AND (t.saleStartsAt IS NULL OR t.saleStartsAt <= CURRENT_TIMESTAMP) AND (t.saleEndsAt IS NULL OR t.saleEndsAt > CURRENT_TIMESTAMP)")
     List<TicketTier> findAvailableTicketsByEvent(@Param("eventId") Long eventId);
 
     int countByEventId(Long eventId);

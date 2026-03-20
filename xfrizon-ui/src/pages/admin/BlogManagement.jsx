@@ -7,12 +7,11 @@ import api from "../../api/axios";
 import BlogEditor from "./blog/BlogEditor";
 import BlogList from "./blog/BlogList";
 import BlogPlannerCalendar from "./blog/BlogPlannerCalendar";
-import AiBlogAssistant from "./blog/AiBlogAssistant";
 
 const BLOG_PLANNER_SETTINGS_KEY = "blogPlannerSchedule";
 const BLOG_PLANNER_LOCAL_KEY = "xfrizonBlogPlannerScheduleV1";
 const BLOG_ACTIVE_SECTION_STORAGE_KEY = "xfrizonAdminBlogActiveSectionV1";
-const BLOG_SECTIONS = new Set(["posts", "planner", "ai"]);
+const BLOG_SECTIONS = new Set(["posts", "planner"]);
 const BLOG_PLANNER_CHUNK_COUNT_KEY = "blogPlannerScheduleChunkCount";
 const BLOG_PLANNER_CHUNK_KEY_PREFIX = "blogPlannerScheduleChunk_";
 const BLOG_PLANNER_CHUNK_SIZE = 12000;
@@ -1140,18 +1139,6 @@ export default function BlogManagement() {
         >
           Hero Slideshow
         </button>
-        <button
-          onClick={() => {
-            setSection("ai");
-          }}
-          className={`shrink-0 px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
-            location.pathname === "/admin/blogs" && activeSection === "ai"
-              ? "bg-violet-600/30 text-violet-300 border border-violet-500/30"
-              : "text-zinc-400 hover:text-white hover:bg-zinc-900"
-          }`}
-        >
-          <span className="text-[10px]">✦</span> AI Writer
-        </button>
       </div>
 
       {/* Header with New Button */}
@@ -1184,17 +1171,6 @@ export default function BlogManagement() {
           entries={plannerEntries}
           onChange={handlePlannerEntriesChange}
           isSaving={isPlannerSaving}
-        />
-      )}
-
-      {activeSection === "ai" && (
-        <AiBlogAssistant
-          onInsertContent={(content) => {
-            setIsCreating(true);
-            setEditingBlog(null);
-            // Store the AI content for the editor to pick up
-            sessionStorage.setItem("xf_ai_draft_content", content);
-          }}
         />
       )}
 

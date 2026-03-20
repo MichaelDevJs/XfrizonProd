@@ -42,6 +42,9 @@ public class TicketTier {
 
     private Integer maxPerPerson = 1;
 
+    @Column(name = "sale_starts_at")
+    private LocalDateTime saleStartsAt;
+
     @Column(name = "sale_ends_at")
     private LocalDateTime saleEndsAt;
 

@@ -1,11 +1,25 @@
 import api from "./axios";
+import { getSiteBaseUrl } from "../utils/siteUrl";
+
+const isLocalhostHostname = (hostname = "") =>
+  ["localhost", "127.0.0.1"].includes(String(hostname).toLowerCase());
+
+const isLocalhostUrl = (value = "") => {
+  try {
+    return isLocalhostHostname(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+};
 
 const getBackendOrigin = () => {
+  const currentHostname = window.location.hostname;
+  const isDeployedHost = !isLocalhostHostname(currentHostname);
   const explicitOauthOrigin =
     import.meta.env.VITE_OAUTH_BACKEND_ORIGIN ||
     import.meta.env.VITE_BACKEND_ORIGIN;
 
-  if (explicitOauthOrigin) {
+  if (explicitOauthOrigin && !(isDeployedHost && isLocalhostUrl(explicitOauthOrigin))) {
     try {
       return new URL(explicitOauthOrigin).origin;
     } catch {
@@ -16,10 +30,12 @@ const getBackendOrigin = () => {
   const configuredBaseUrl =
     api.defaults.baseURL || import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
+  if (isDeployedHost && isLocalhostUrl(configuredBaseUrl)) {
+    return window.location.origin;
+  }
+
   const isAbsoluteBaseUrl = /^https?:\/\//i.test(String(configuredBaseUrl));
-  const isLocalDevHost = ["localhost", "127.0.0.1"].includes(
-    window.location.hostname,
-  );
+  const isLocalDevHost = isLocalhostHostname(currentHostname);
 
   if (!isAbsoluteBaseUrl && import.meta.env.DEV && isLocalDevHost) {
     // In dev, a relative API base can accidentally point OAuth to the Vite origin.
@@ -127,7 +143,7 @@ const authService = {
       import.meta.env.VITE_GOOGLE_OAUTH_START_PATH ||
       "/oauth2/authorization/google";
     const callbackPath = redirectPath || "/auth/google/complete";
-    const callbackUrl = new URL(callbackPath, window.location.origin);
+    const callbackUrl = new URL(callbackPath, getSiteBaseUrl());
     callbackUrl.searchParams.set("accountType", String(accountType).toUpperCase());
 
     const startUrl = new URL(resolveBackendUrl(oauthStartPath));
