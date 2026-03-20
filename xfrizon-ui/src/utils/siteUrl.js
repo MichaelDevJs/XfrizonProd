@@ -1,4 +1,4 @@
-const FALLBACK_SITE_URL = "https://xfrizon.up.railway.app";
+const FALLBACK_SITE_URL = "https://xfrizon-ts.com";
 
 const isLocalhostHostname = (hostname = "") =>
   ["localhost", "127.0.0.1"].includes(String(hostname).toLowerCase());
