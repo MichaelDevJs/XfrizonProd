@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FilterContext } from "../../context/FilterContext";
 import {
-  COUNTRIES_LIST,
+  EVENT_ALLOWED_COUNTRIES,
   CITIES_BY_COUNTRY_CODE,
 } from "../../data/countriesData";
 
@@ -55,7 +55,9 @@ export default function CompactFilterBar() {
 
     const setCountryByCode = (code) => {
       if (!code) return false;
-      const match = COUNTRIES_LIST.find((country) => country.code === code);
+      const match = EVENT_ALLOWED_COUNTRIES.find(
+        (country) => country.code === code,
+      );
       if (!match) return false;
       if (!mounted) return true;
       setLockedCountry(match);
@@ -97,7 +99,7 @@ export default function CompactFilterBar() {
 
   const countriesList = [
     { name: "Show All", code: "ALL", flag: "🌍" },
-    ...COUNTRIES_LIST,
+    ...EVENT_ALLOWED_COUNTRIES,
   ];
 
   const citiesByCountry = CITIES_BY_COUNTRY_CODE;

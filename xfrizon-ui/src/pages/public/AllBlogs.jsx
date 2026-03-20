@@ -400,149 +400,193 @@ export default function AllBlogs() {
 
             {/* Compact Filter Bar + Category Tags */}
             <div className="space-y-2">
-            <div className="bg-zinc-950/70 border border-zinc-800 rounded-lg px-3 sm:px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-widest text-zinc-500">
-                  Blogs
+              <div className="bg-zinc-950/70 border border-zinc-800 rounded-lg px-3 sm:px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs uppercase tracking-widest text-zinc-500">
+                    Blogs
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="text-xs uppercase tracking-widest text-zinc-300 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors"
+                  >
+                    Filter
+                    {activeCount > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center text-[10px] bg-red-500/20 text-red-300 border border-red-500/40 rounded-full px-1.5 py-0.5">
+                        {activeCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="text-xs uppercase tracking-widest text-zinc-300 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors"
-                >
-                  Filter
-                  {activeCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center text-[10px] bg-red-500/20 text-red-300 border border-red-500/40 rounded-full px-1.5 py-0.5">
-                      {activeCount}
-                    </span>
-                  )}
-                </button>
-              </div>
 
-              {showFilters && (
-                <div className="mt-3 bg-zinc-950 border border-zinc-800 rounded-lg p-3 sm:p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Search */}
-                    <div className="md:col-span-2">
-                      <div className="relative">
-                        <FaSearch className="absolute left-3 top-2.5 text-zinc-500 text-xs" />
-                        <input
-                          type="text"
-                          placeholder="Search blogs..."
-                          value={filters.search}
-                          onChange={(e) =>
-                            handleFilterChange("search", e.target.value)
-                          }
-                          className="w-full pl-8 pr-3 py-2 bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md placeholder-zinc-500 focus:outline-none focus:border-red-500/60"
-                        />
+                {showFilters && (
+                  <div className="mt-3 bg-zinc-950 border border-zinc-800 rounded-lg p-3 sm:p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Search */}
+                      <div className="md:col-span-2">
+                        <div className="relative">
+                          <FaSearch className="absolute left-3 top-2.5 text-zinc-500 text-xs" />
+                          <input
+                            type="text"
+                            placeholder="Search blogs..."
+                            value={filters.search}
+                            onChange={(e) =>
+                              handleFilterChange("search", e.target.value)
+                            }
+                            className="w-full pl-8 pr-3 py-2 bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md placeholder-zinc-500 focus:outline-none focus:border-red-500/60"
+                          />
+                        </div>
                       </div>
+
+                      {/* Category */}
+                      <select
+                        value={filters.category}
+                        onChange={(e) =>
+                          handleFilterChange("category", e.target.value)
+                        }
+                        className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
+                      >
+                        <option value="">All Categories</option>
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Location */}
+                      <input
+                        type="text"
+                        placeholder="Location..."
+                        value={filters.location}
+                        onChange={(e) =>
+                          handleFilterChange("location", e.target.value)
+                        }
+                        className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 placeholder-zinc-500 focus:outline-none focus:border-red-500/60"
+                      />
+
+                      {/* Tags */}
+                      <input
+                        type="text"
+                        placeholder="Tags..."
+                        value={filters.tags}
+                        onChange={(e) =>
+                          handleFilterChange("tags", e.target.value)
+                        }
+                        className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 placeholder-zinc-500 focus:outline-none focus:border-red-500/60"
+                      />
+
+                      {/* Sort */}
+                      <select
+                        value={filters.sortBy}
+                        onChange={(e) =>
+                          handleFilterChange("sortBy", e.target.value)
+                        }
+                        className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
+                      >
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="title">Title (A-Z)</option>
+                      </select>
                     </div>
 
-                    {/* Category */}
-                    <select
-                      value={filters.category}
-                      onChange={(e) =>
-                        handleFilterChange("category", e.target.value)
-                      }
-                      className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
-                    >
-                      <option value="">All Categories</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
+                    <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                      {hasActiveFilters && (
+                        <button
+                          onClick={clearFilters}
+                          className="text-xs text-zinc-400 hover:text-red-400 transition-colors text-left"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowFilters(false)}
+                        className="text-xs text-zinc-200 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors w-full sm:w-auto"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Category Quick-Filter Tags */}
+              {(() => {
+                const categoryColors = {
+                  General: {
+                    active: "bg-zinc-700 text-zinc-100 border-zinc-500",
+                    inactive:
+                      "bg-zinc-900 text-zinc-400 border-zinc-700 hover:text-zinc-200 hover:border-zinc-500",
+                  },
+                  Music: {
+                    active:
+                      "bg-purple-900/60 text-purple-300 border-purple-600",
+                    inactive:
+                      "bg-zinc-900 text-purple-400/70 border-zinc-700 hover:text-purple-300 hover:border-purple-600/50",
+                  },
+                  News: {
+                    active: "bg-blue-900/60 text-blue-300 border-blue-600",
+                    inactive:
+                      "bg-zinc-900 text-blue-400/70 border-zinc-700 hover:text-blue-300 hover:border-blue-600/50",
+                  },
+                  Culture: {
+                    active: "bg-cyan-900/60 text-cyan-300 border-cyan-600",
+                    inactive:
+                      "bg-zinc-900 text-cyan-400/70 border-zinc-700 hover:text-cyan-300 hover:border-cyan-600/50",
+                  },
+                  Events: {
+                    active:
+                      "bg-violet-900/60 text-violet-300 border-violet-600",
+                    inactive:
+                      "bg-zinc-900 text-violet-400/70 border-zinc-700 hover:text-violet-300 hover:border-violet-600/50",
+                  },
+                  Arts: {
+                    active:
+                      "bg-fuchsia-900/60 text-fuchsia-300 border-fuchsia-600",
+                    inactive:
+                      "bg-zinc-900 text-fuchsia-400/70 border-zinc-700 hover:text-fuchsia-300 hover:border-fuchsia-600/50",
+                  },
+                  Fashion: {
+                    active: "bg-pink-900/60 text-pink-300 border-pink-600",
+                    inactive:
+                      "bg-zinc-900 text-pink-400/70 border-zinc-700 hover:text-pink-300 hover:border-pink-600/50",
+                  },
+                  Reviews: {
+                    active: "bg-amber-900/60 text-amber-300 border-amber-600",
+                    inactive:
+                      "bg-zinc-900 text-amber-400/70 border-zinc-700 hover:text-amber-300 hover:border-amber-600/50",
+                  },
+                  Food: {
+                    active: "bg-lime-900/60 text-lime-300 border-lime-600",
+                    inactive:
+                      "bg-zinc-900 text-lime-400/70 border-zinc-700 hover:text-lime-300 hover:border-lime-600/50",
+                  },
+                };
+                return (
+                  <div
+                    className="flex gap-1.5 overflow-x-auto"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {categories.map((cat) => {
+                      const isActive = filters.category === cat;
+                      const colors =
+                        categoryColors[cat] || categoryColors.General;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() =>
+                            handleFilterChange("category", isActive ? "" : cat)
+                          }
+                          className={`shrink-0 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border transition-colors ${isActive ? colors.active : colors.inactive}`}
+                        >
                           {cat}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Location */}
-                    <input
-                      type="text"
-                      placeholder="Location..."
-                      value={filters.location}
-                      onChange={(e) =>
-                        handleFilterChange("location", e.target.value)
-                      }
-                      className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 placeholder-zinc-500 focus:outline-none focus:border-red-500/60"
-                    />
-
-                    {/* Tags */}
-                    <input
-                      type="text"
-                      placeholder="Tags..."
-                      value={filters.tags}
-                      onChange={(e) =>
-                        handleFilterChange("tags", e.target.value)
-                      }
-                      className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 placeholder-zinc-500 focus:outline-none focus:border-red-500/60"
-                    />
-
-                    {/* Sort */}
-                    <select
-                      value={filters.sortBy}
-                      onChange={(e) =>
-                        handleFilterChange("sortBy", e.target.value)
-                      }
-                      className="bg-zinc-900 text-zinc-200 text-xs border border-zinc-800 rounded-md px-2 py-2 focus:outline-none focus:border-red-500/60"
-                    >
-                      <option value="newest">Newest First</option>
-                      <option value="oldest">Oldest First</option>
-                      <option value="title">Title (A-Z)</option>
-                    </select>
+                        </button>
+                      );
+                    })}
                   </div>
-
-                  <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-                    {hasActiveFilters && (
-                      <button
-                        onClick={clearFilters}
-                        className="text-xs text-zinc-400 hover:text-red-400 transition-colors text-left"
-                      >
-                        Clear
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setShowFilters(false)}
-                      className="text-xs text-zinc-200 border border-zinc-800 px-3 py-1.5 rounded-md hover:border-red-500/40 hover:text-white transition-colors w-full sm:w-auto"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-
-            </div>
-
-            {/* Category Quick-Filter Tags */}
-            {(() => {
-              const categoryColors = {
-                General:  { active: "bg-zinc-700 text-zinc-100 border-zinc-500",         inactive: "bg-zinc-900 text-zinc-400 border-zinc-700 hover:text-zinc-200 hover:border-zinc-500" },
-                Music:    { active: "bg-purple-900/60 text-purple-300 border-purple-600", inactive: "bg-zinc-900 text-purple-400/70 border-zinc-700 hover:text-purple-300 hover:border-purple-600/50" },
-                News:     { active: "bg-blue-900/60 text-blue-300 border-blue-600",       inactive: "bg-zinc-900 text-blue-400/70 border-zinc-700 hover:text-blue-300 hover:border-blue-600/50" },
-                Culture:  { active: "bg-cyan-900/60 text-cyan-300 border-cyan-600",       inactive: "bg-zinc-900 text-cyan-400/70 border-zinc-700 hover:text-cyan-300 hover:border-cyan-600/50" },
-                Events:   { active: "bg-violet-900/60 text-violet-300 border-violet-600", inactive: "bg-zinc-900 text-violet-400/70 border-zinc-700 hover:text-violet-300 hover:border-violet-600/50" },
-                Arts:     { active: "bg-fuchsia-900/60 text-fuchsia-300 border-fuchsia-600", inactive: "bg-zinc-900 text-fuchsia-400/70 border-zinc-700 hover:text-fuchsia-300 hover:border-fuchsia-600/50" },
-                Fashion:  { active: "bg-pink-900/60 text-pink-300 border-pink-600",       inactive: "bg-zinc-900 text-pink-400/70 border-zinc-700 hover:text-pink-300 hover:border-pink-600/50" },
-                Reviews:  { active: "bg-amber-900/60 text-amber-300 border-amber-600",    inactive: "bg-zinc-900 text-amber-400/70 border-zinc-700 hover:text-amber-300 hover:border-amber-600/50" },
-                Food:     { active: "bg-lime-900/60 text-lime-300 border-lime-600",       inactive: "bg-zinc-900 text-lime-400/70 border-zinc-700 hover:text-lime-300 hover:border-lime-600/50" },
-              };
-              return (
-                <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                  {categories.map((cat) => {
-                    const isActive = filters.category === cat;
-                    const colors = categoryColors[cat] || categoryColors.General;
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => handleFilterChange("category", isActive ? "" : cat)}
-                        className={`shrink-0 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border transition-colors ${isActive ? colors.active : colors.inactive}`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+                );
+              })()}
             </div>
 
             {/* Results Count */}

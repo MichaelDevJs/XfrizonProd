@@ -54,8 +54,7 @@ export default function HomePage() {
   const [blogsSectionBgColor, setBlogsSectionBgColor] = useState("#ffffff");
   const [blogsHeadlineTitleColor, setBlogsHeadlineTitleColor] =
     useState("#18181b");
-  const [blogsLatestTitleColor, setBlogsLatestTitleColor] =
-    useState("#18181b");
+  const [blogsLatestTitleColor, setBlogsLatestTitleColor] = useState("#18181b");
   const [blockOrder, setBlockOrder] = useState(defaultBlockOrder);
   const [featuredPartnerIds, setFeaturedPartnerIds] = useState([]);
   const [manualFeaturedPartners, setManualFeaturedPartners] = useState([]);
@@ -337,7 +336,9 @@ export default function HomePage() {
       setFeaturedPartners(sortedBySelection);
     } catch (error) {
       console.error("Error fetching featured partners:", error);
-      setFeaturedPartners(partnerShowcaseConfigured ? manualFeaturedPartners : []);
+      setFeaturedPartners(
+        partnerShowcaseConfigured ? manualFeaturedPartners : [],
+      );
     }
   };
 

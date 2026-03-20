@@ -1061,6 +1061,22 @@ export const CITIES_BY_COUNTRY = Object.entries(COUNTRIES_DATA).reduce(
   {},
 );
 
+export const EVENT_ALLOWED_COUNTRY_NAMES = [
+  "Germany",
+  "France",
+  "Norway",
+  "Italy",
+  "Japan",
+  "United States",
+  "South Korea",
+  "United Kingdom",
+  "Sweden",
+  "Nigeria",
+  "Kenya",
+  "Zimbabwe",
+  "Ghana",
+];
+
 // Countries list for filters with flags and codes
 export const COUNTRIES_LIST = [
   { name: "Afghanistan", code: "AF", flag: "🇦🇫" },
@@ -1259,6 +1275,23 @@ export const COUNTRIES_LIST = [
   { name: "Zambia", code: "ZM", flag: "🇿🇲" },
   { name: "Zimbabwe", code: "ZW", flag: "🇿🇼" },
 ];
+
+export const EVENT_ALLOWED_COUNTRIES = EVENT_ALLOWED_COUNTRY_NAMES.map(
+  (countryName) =>
+    COUNTRIES_LIST.find((country) => country.name === countryName) || {
+      name: countryName,
+      code: "",
+      flag: "🌍",
+    },
+);
+
+export const EVENT_CITIES_BY_COUNTRY = EVENT_ALLOWED_COUNTRY_NAMES.reduce(
+  (acc, countryName) => {
+    acc[countryName] = CITIES_BY_COUNTRY[countryName] || [];
+    return acc;
+  },
+  {},
+);
 
 // Cities by country code for FilterBar
 export const CITIES_BY_COUNTRY_CODE = {

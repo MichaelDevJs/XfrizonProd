@@ -22,7 +22,7 @@ export default function BlogEditor({
   isSaving = false,
 }) {
   // Check if there's an AI-generated draft waiting to be loaded on a new post
-  const aiDraft = !editingId ? (sessionStorage.getItem(AI_DRAFT_KEY) || "") : "";
+  const aiDraft = !editingId ? sessionStorage.getItem(AI_DRAFT_KEY) || "" : "";
 
   const [formData, setFormData] = useState(() => {
     const baseBlocks = initializeBlocks(blog);
@@ -30,7 +30,7 @@ export default function BlogEditor({
     const blocks =
       aiDraft && !editingId
         ? baseBlocks.map((b, i) =>
-            i === 0 && b.type === "text" ? { ...b, content: aiDraft } : b
+            i === 0 && b.type === "text" ? { ...b, content: aiDraft } : b,
           )
         : baseBlocks;
 

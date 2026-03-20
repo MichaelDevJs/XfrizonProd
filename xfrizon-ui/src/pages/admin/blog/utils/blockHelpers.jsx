@@ -130,7 +130,10 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
       const url = window.prompt("Enter URL", "https://");
       if (!url) return;
       const defaultLabel = selectedText || "";
-      const linkLabel = defaultLabel || window.prompt("Enter link text (display name)", "") || "Link";
+      const linkLabel =
+        defaultLabel ||
+        window.prompt("Enter link text (display name)", "") ||
+        "Link";
       formattedText = `[${linkLabel}](${url.trim()})`;
       break;
     }
@@ -249,7 +252,11 @@ export const renderBlockPreview = (block) => {
       <div className="grid grid-cols-2 gap-2">
         {block.images?.slice(0, 4).map((img) => (
           <figure key={img.id}>
-            <img src={img.src} alt="preview" className="w-full h-24 object-cover rounded" />
+            <img
+              src={img.src}
+              alt="preview"
+              className="w-full h-24 object-cover rounded"
+            />
             {(img.caption || img.credit) && (
               <figcaption className="mt-1 text-[10px] text-gray-500">
                 {img.caption || ""}

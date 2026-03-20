@@ -231,7 +231,9 @@ export default function BlogsSection({
                         {headlineBlog.category || "General"}
                       </span>
                       {headlinePublishedDate && (
-                        <span className="shrink-0">{headlinePublishedDate}</span>
+                        <span className="shrink-0">
+                          {headlinePublishedDate}
+                        </span>
                       )}
                     </div>
                     <h4 className="text-lg sm:text-2xl font-semibold text-white line-clamp-2 mb-2">

@@ -155,15 +155,21 @@ export const getEventPayoutPreview = async (status) => {
     params: status ? { status } : {},
   });
   if (response?.data?.success === false) {
-    throw new Error(response?.data?.message || "Failed to load event payout preview");
+    throw new Error(
+      response?.data?.message || "Failed to load event payout preview",
+    );
   }
   return response.data;
 };
 
 export const holdEventPayout = async (payoutId, reason = "") => {
-  const response = await api.post(`/admin/payouts/events/${payoutId}/hold`, null, {
-    params: reason ? { reason } : {},
-  });
+  const response = await api.post(
+    `/admin/payouts/events/${payoutId}/hold`,
+    null,
+    {
+      params: reason ? { reason } : {},
+    },
+  );
   return response.data;
 };
 

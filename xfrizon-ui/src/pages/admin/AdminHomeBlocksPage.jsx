@@ -53,8 +53,7 @@ export default function AdminHomeBlocksPage() {
   const [blogsSectionBgColor, setBlogsSectionBgColor] = useState("#ffffff");
   const [blogsHeadlineTitleColor, setBlogsHeadlineTitleColor] =
     useState("#18181b");
-  const [blogsLatestTitleColor, setBlogsLatestTitleColor] =
-    useState("#18181b");
+  const [blogsLatestTitleColor, setBlogsLatestTitleColor] = useState("#18181b");
   const [blockOrder, setBlockOrder] = useState([
     { id: "centeredBanner", label: "Centered Banner" },
     { id: "heroSection", label: "Hero Section" },
@@ -67,7 +66,8 @@ export default function AdminHomeBlocksPage() {
   const [manualPartners, setManualPartners] = useState([]);
   const [partnerDisplayOrder, setPartnerDisplayOrder] = useState([]);
   const [loadingPartners, setLoadingPartners] = useState(false);
-  const [uploadingManualPartnerId, setUploadingManualPartnerId] = useState(null);
+  const [uploadingManualPartnerId, setUploadingManualPartnerId] =
+    useState(null);
   const [partnerFilters, setPartnerFilters] = useState({
     query: "",
     location: "all",
@@ -1151,7 +1151,10 @@ export default function AdminHomeBlocksPage() {
       logoUrl: "",
     });
     setManualPartners((prev) => [...prev, newPartner]);
-    setPartnerDisplayOrder((prev) => [...prev, createManualOrderToken(newPartner.id)]);
+    setPartnerDisplayOrder((prev) => [
+      ...prev,
+      createManualOrderToken(newPartner.id),
+    ]);
   };
 
   const handleManualPartnerChange = (partnerId, field, value) => {
@@ -1168,7 +1171,9 @@ export default function AdminHomeBlocksPage() {
   };
 
   const handleRemoveManualPartner = (partnerId) => {
-    setManualPartners((prev) => prev.filter((partner) => partner.id !== partnerId));
+    setManualPartners((prev) =>
+      prev.filter((partner) => partner.id !== partnerId),
+    );
   };
 
   const uploadManualPartnerLogo = async (partnerId, file) => {
@@ -1401,1497 +1406,1704 @@ export default function AdminHomeBlocksPage() {
       {activeConfigTab === "hero" && (
         <>
           <div className="bg-zinc-900 p-4 md:p-6 rounded-lg border border-zinc-800">
-        <h2 className="text-lg md:text-xl font-semibold text-white mb-4">
-          Hero Slideshow (Billboard)
-        </h2>
-        <p className="text-xs md:text-sm text-gray-400 mb-4">
-          Add multiple images or videos that will rotate automatically with
-          custom durations
-        </p>
+            <h2 className="text-lg md:text-xl font-semibold text-white mb-4">
+              Hero Slideshow (Billboard)
+            </h2>
+            <p className="text-xs md:text-sm text-gray-400 mb-4">
+              Add multiple images or videos that will rotate automatically with
+              custom durations
+            </p>
 
-        <div className="mb-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700 space-y-4">
-          <h3 className="text-sm font-medium text-white">
-            Carousel Quick Actions
-          </h3>
-          <p className="text-xs text-gray-400">
-            Build homepage carousel slides from existing organizer media and
-            blog content.
-          </p>
+            <div className="mb-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700 space-y-4">
+              <h3 className="text-sm font-medium text-white">
+                Carousel Quick Actions
+              </h3>
+              <p className="text-xs text-gray-400">
+                Build homepage carousel slides from existing organizer media and
+                blog content.
+              </p>
 
-          {/* Organizer Section with Country Filter */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-medium text-gray-300">
-              Add Organizer Video Slide
-            </h4>
+              {/* Organizer Section with Country Filter */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-medium text-gray-300">
+                  Add Organizer Video Slide
+                </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">
-                  Select Country
-                </label>
-                <select
-                  value={selectedCountry}
-                  onChange={(e) => handleCountryChange(e.target.value)}
-                  disabled={loadingOrganizers}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
-                >
-                  <option value="">Choose a country...</option>
-                  {allowedCountries
-                    .filter((country) => COUNTRIES_DATA[country])
-                    .map((country) => (
-                      <option key={country} value={country}>
-                        {country}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">
-                  Select Organizer {loadingOrganizers && "(Loading...)"}
-                </label>
-                <select
-                  value={selectedOrganizer}
-                  onChange={(e) => setSelectedOrganizer(e.target.value)}
-                  disabled={
-                    !selectedCountry ||
-                    loadingOrganizers ||
-                    organizersByCountry.length === 0
-                  }
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
-                >
-                  <option value="">
-                    {!selectedCountry
-                      ? "Select country first..."
-                      : organizersByCountry.length === 0 && !loadingOrganizers
-                        ? "No organizers with videos"
-                        : "Choose organizer..."}
-                  </option>
-                  {organizersByCountry.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.businessName ||
-                        org.name ||
-                        org.displayName ||
-                        `Organizer ${org.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={addNightWithUsFromSelectedOrganizer}
-                disabled={!selectedOrganizer || addingFeatureSlide}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add "Night with Us" Video
-              </button>
-            </div>
-
-            {/* Fallback: Manual Organizer ID Entry */}
-            <details className="mt-3">
-              <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
-                Or enter Organizer ID manually
-              </summary>
-              <div className="mt-2 space-y-2">
-                <input
-                  type="text"
-                  value={featureOrganizerId}
-                  onChange={(e) => setFeatureOrganizerId(e.target.value)}
-                  placeholder="e.g. 42"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
-                />
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={addNightWithUsFromOrganizer}
-                    disabled={addingFeatureSlide}
-                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs rounded disabled:opacity-50"
-                  >
-                    Add Night with Us Video
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addBuyTicketsFromOrganizer}
-                    disabled={addingFeatureSlide}
-                    className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded disabled:opacity-50"
-                  >
-                    Add Buy Tickets Slide
-                  </button>
-                </div>
-              </div>
-            </details>
-          </div>
-
-          {/* Blog Section */}
-          <div className="border-t border-zinc-700 pt-3 space-y-3">
-            <h4 className="text-xs font-medium text-gray-300">
-              Add Blog Highlight Slide
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">
-                  Select Category
-                </label>
-                <select
-                  value={selectedBlogCategory}
-                  onChange={(e) => handleBlogCategoryChange(e.target.value)}
-                  disabled={loadingBlogs}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
-                >
-                  <option value="">Choose a category...</option>
-                  <option value="All">All Blogs</option>
-                  {blogCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">
-                  Select Blog {loadingBlogs && "(Loading...)"}
-                </label>
-                <select
-                  value={selectedBlog}
-                  onChange={(e) => setSelectedBlog(e.target.value)}
-                  disabled={
-                    !selectedBlogCategory ||
-                    loadingBlogs ||
-                    blogsByCategory.length === 0
-                  }
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
-                >
-                  <option value="">
-                    {!selectedBlogCategory
-                      ? "Select category first..."
-                      : blogsByCategory.length === 0 && !loadingBlogs
-                        ? "No published blogs"
-                        : "Choose blog..."}
-                  </option>
-                  {blogsByCategory.map((blog) => (
-                    <option key={blog.id} value={blog.id}>
-                      {blog.title || `Blog ${blog.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={addBlogHighlightFromSelectedBlog}
-                disabled={!selectedBlog || addingFeatureSlide}
-                className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-sm rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add Blog Highlight
-              </button>
-            </div>
-
-            {/* Fallback: Manual Blog ID Entry */}
-            <details className="mt-3">
-              <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
-                Or enter Blog ID manually
-              </summary>
-              <div className="mt-2 space-y-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">
-                      Blog ID
+                      Select Country
+                    </label>
+                    <select
+                      value={selectedCountry}
+                      onChange={(e) => handleCountryChange(e.target.value)}
+                      disabled={loadingOrganizers}
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
+                    >
+                      <option value="">Choose a country...</option>
+                      {allowedCountries
+                        .filter((country) => COUNTRIES_DATA[country])
+                        .map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Select Organizer {loadingOrganizers && "(Loading...)"}
+                    </label>
+                    <select
+                      value={selectedOrganizer}
+                      onChange={(e) => setSelectedOrganizer(e.target.value)}
+                      disabled={
+                        !selectedCountry ||
+                        loadingOrganizers ||
+                        organizersByCountry.length === 0
+                      }
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!selectedCountry
+                          ? "Select country first..."
+                          : organizersByCountry.length === 0 &&
+                              !loadingOrganizers
+                            ? "No organizers with videos"
+                            : "Choose organizer..."}
+                      </option>
+                      {organizersByCountry.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.businessName ||
+                            org.name ||
+                            org.displayName ||
+                            `Organizer ${org.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={addNightWithUsFromSelectedOrganizer}
+                    disabled={!selectedOrganizer || addingFeatureSlide}
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add "Night with Us" Video
+                  </button>
+                </div>
+
+                {/* Fallback: Manual Organizer ID Entry */}
+                <details className="mt-3">
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
+                    Or enter Organizer ID manually
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <input
+                      type="text"
+                      value={featureOrganizerId}
+                      onChange={(e) => setFeatureOrganizerId(e.target.value)}
+                      placeholder="e.g. 42"
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={addNightWithUsFromOrganizer}
+                        disabled={addingFeatureSlide}
+                        className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs rounded disabled:opacity-50"
+                      >
+                        Add Night with Us Video
+                      </button>
+                      <button
+                        type="button"
+                        onClick={addBuyTicketsFromOrganizer}
+                        disabled={addingFeatureSlide}
+                        className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded disabled:opacity-50"
+                      >
+                        Add Buy Tickets Slide
+                      </button>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              {/* Blog Section */}
+              <div className="border-t border-zinc-700 pt-3 space-y-3">
+                <h4 className="text-xs font-medium text-gray-300">
+                  Add Blog Highlight Slide
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Select Category
+                    </label>
+                    <select
+                      value={selectedBlogCategory}
+                      onChange={(e) => handleBlogCategoryChange(e.target.value)}
+                      disabled={loadingBlogs}
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
+                    >
+                      <option value="">Choose a category...</option>
+                      <option value="All">All Blogs</option>
+                      {blogCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Select Blog {loadingBlogs && "(Loading...)"}
+                    </label>
+                    <select
+                      value={selectedBlog}
+                      onChange={(e) => setSelectedBlog(e.target.value)}
+                      disabled={
+                        !selectedBlogCategory ||
+                        loadingBlogs ||
+                        blogsByCategory.length === 0
+                      }
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 disabled:opacity-50"
+                    >
+                      <option value="">
+                        {!selectedBlogCategory
+                          ? "Select category first..."
+                          : blogsByCategory.length === 0 && !loadingBlogs
+                            ? "No published blogs"
+                            : "Choose blog..."}
+                      </option>
+                      {blogsByCategory.map((blog) => (
+                        <option key={blog.id} value={blog.id}>
+                          {blog.title || `Blog ${blog.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={addBlogHighlightFromSelectedBlog}
+                    disabled={!selectedBlog || addingFeatureSlide}
+                    className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-sm rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Blog Highlight
+                  </button>
+                </div>
+
+                {/* Fallback: Manual Blog ID Entry */}
+                <details className="mt-3">
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
+                    Or enter Blog ID manually
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">
+                          Blog ID
+                        </label>
+                        <input
+                          type="text"
+                          value={featureBlogId}
+                          onChange={(e) => setFeatureBlogId(e.target.value)}
+                          placeholder="e.g. 105"
+                          className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={addBlogHighlightSlide}
+                          disabled={addingFeatureSlide}
+                          className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded disabled:opacity-50"
+                        >
+                          Add Blog Highlight
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            {/* Add New Slide Form */}
+            <div className="space-y-3 mb-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700">
+              <h3 className="text-sm font-medium text-white">Add New Slide</h3>
+
+              {/* Input Method Toggle */}
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => {
+                    setInputMethod("url");
+                    setNewSlideFile(null);
+                    setNewSlideFilePreview(null);
+                  }}
+                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                    inputMethod === "url"
+                      ? "bg-red-500 text-white"
+                      : "bg-zinc-700 text-gray-300 hover:bg-zinc-600"
+                  }`}
+                >
+                  Enter URL
+                </button>
+                <button
+                  onClick={() => {
+                    setInputMethod("file");
+                    setNewSlideUrl("");
+                  }}
+                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                    inputMethod === "file"
+                      ? "bg-red-500 text-white"
+                      : "bg-zinc-700 text-gray-300 hover:bg-zinc-600"
+                  }`}
+                >
+                  Upload File
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">
+                    Type
+                  </label>
+                  <select
+                    value={newSlideType}
+                    onChange={(e) => setNewSlideType(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
+                  >
+                    <option value="video">Video</option>
+                    <option value="image">Image</option>
+                  </select>
+                </div>
+
+                {inputMethod === "url" ? (
+                  <div className="md:col-span-2">
+                    <label className="block text-xs text-gray-400 mb-1">
+                      {newSlideType === "video" ? "Video URL" : "Image URL"}
                     </label>
                     <input
                       type="text"
-                      value={featureBlogId}
-                      onChange={(e) => setFeatureBlogId(e.target.value)}
-                      placeholder="e.g. 105"
+                      value={newSlideUrl}
+                      onChange={(e) => setNewSlideUrl(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleAddSlide()}
+                      placeholder={
+                        newSlideType === "video"
+                          ? "/assets/video.mp4 or https://..."
+                          : "/assets/image.jpg or https://..."
+                      }
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="md:col-span-2">
+                    <label className="block text-xs text-gray-400 mb-1">
+                      {newSlideType === "video"
+                        ? "Select Video File"
+                        : "Select Image File"}
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept={
+                          newSlideType === "video" ? "video/*" : "image/*"
+                        }
+                        onChange={handleFileSelect}
+                        disabled={uploadingFile}
+                        className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-red-500 file:text-white hover:file:bg-red-600 file:cursor-pointer disabled:opacity-50"
+                      />
+                      <div className="bg-blue-950 border border-blue-800 rounded p-2 text-xs text-blue-200">
+                        <strong>ℹ️ Upload to local storage:</strong> Select a{" "}
+                        {newSlideType === "video" ? "video" : "image"} file and
+                        click "Upload & Add" to upload it to your server and add
+                        it as a slide.
+                      </div>
+                      {newSlideFilePreview && (
+                        <div className="relative inline-block">
+                          {newSlideType === "video" ? (
+                            <video
+                              src={newSlideFilePreview}
+                              className="w-32 h-20 object-cover rounded border border-zinc-600"
+                              muted
+                              playsInline
+                            />
+                          ) : (
+                            <img
+                              src={newSlideFilePreview}
+                              alt="Preview"
+                              className="w-32 h-20 object-cover rounded border border-zinc-600"
+                            />
+                          )}
+                          <button
+                            onClick={() => {
+                              setNewSlideFile(null);
+                              setNewSlideFilePreview(null);
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Duration (ms)
+                    </label>
+                    <input
+                      type="number"
+                      value={newSlideDuration}
+                      onChange={(e) =>
+                        setNewSlideDuration(parseInt(e.target.value) || 5000)
+                      }
+                      min="1000"
+                      step="1000"
                       className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={addBlogHighlightSlide}
-                      disabled={addingFeatureSlide}
-                      className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded disabled:opacity-50"
-                    >
-                      Add Blog Highlight
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        {/* Add New Slide Form */}
-        <div className="space-y-3 mb-6 p-4 bg-zinc-800 rounded-lg border border-zinc-700">
-          <h3 className="text-sm font-medium text-white">Add New Slide</h3>
-
-          {/* Input Method Toggle */}
-          <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => {
-                setInputMethod("url");
-                setNewSlideFile(null);
-                setNewSlideFilePreview(null);
-              }}
-              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                inputMethod === "url"
-                  ? "bg-red-500 text-white"
-                  : "bg-zinc-700 text-gray-300 hover:bg-zinc-600"
-              }`}
-            >
-              Enter URL
-            </button>
-            <button
-              onClick={() => {
-                setInputMethod("file");
-                setNewSlideUrl("");
-              }}
-              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                inputMethod === "file"
-                  ? "bg-red-500 text-white"
-                  : "bg-zinc-700 text-gray-300 hover:bg-zinc-600"
-              }`}
-            >
-              Upload File
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Type</label>
-              <select
-                value={newSlideType}
-                onChange={(e) => setNewSlideType(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
-              >
-                <option value="video">Video</option>
-                <option value="image">Image</option>
-              </select>
-            </div>
-
-            {inputMethod === "url" ? (
-              <div className="md:col-span-2">
-                <label className="block text-xs text-gray-400 mb-1">
-                  {newSlideType === "video" ? "Video URL" : "Image URL"}
-                </label>
-                <input
-                  type="text"
-                  value={newSlideUrl}
-                  onChange={(e) => setNewSlideUrl(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleAddSlide()}
-                  placeholder={
-                    newSlideType === "video"
-                      ? "/assets/video.mp4 or https://..."
-                      : "/assets/image.jpg or https://..."
-                  }
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
-                />
-              </div>
-            ) : (
-              <div className="md:col-span-2">
-                <label className="block text-xs text-gray-400 mb-1">
-                  {newSlideType === "video"
-                    ? "Select Video File"
-                    : "Select Image File"}
-                </label>
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept={newSlideType === "video" ? "video/*" : "image/*"}
-                    onChange={handleFileSelect}
-                    disabled={uploadingFile}
-                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-red-500 file:text-white hover:file:bg-red-600 file:cursor-pointer disabled:opacity-50"
-                  />
-                  <div className="bg-blue-950 border border-blue-800 rounded p-2 text-xs text-blue-200">
-                    <strong>ℹ️ Upload to local storage:</strong> Select a{" "}
-                    {newSlideType === "video" ? "video" : "image"} file and
-                    click "Upload & Add" to upload it to your server and add it
-                    as a slide.
-                  </div>
-                  {newSlideFilePreview && (
-                    <div className="relative inline-block">
-                      {newSlideType === "video" ? (
-                        <video
-                          src={newSlideFilePreview}
-                          className="w-32 h-20 object-cover rounded border border-zinc-600"
-                          muted
-                          playsInline
-                        />
-                      ) : (
-                        <img
-                          src={newSlideFilePreview}
-                          alt="Preview"
-                          className="w-32 h-20 object-cover rounded border border-zinc-600"
-                        />
-                      )}
+                    {inputMethod === "file" ? (
                       <button
-                        onClick={() => {
-                          setNewSlideFile(null);
-                          setNewSlideFilePreview(null);
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        onClick={handleAddSlide}
+                        disabled={!newSlideFilePreview || uploadingFile}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        ×
+                        {uploadingFile ? "Uploading..." : "Upload & Add"}
                       </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-400 mb-1">
-                  Duration (ms)
-                </label>
-                <input
-                  type="number"
-                  value={newSlideDuration}
-                  onChange={(e) =>
-                    setNewSlideDuration(parseInt(e.target.value) || 5000)
-                  }
-                  min="1000"
-                  step="1000"
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:border-red-500"
-                />
-              </div>
-              <div className="flex items-end">
-                {inputMethod === "file" ? (
-                  <button
-                    onClick={handleAddSlide}
-                    disabled={!newSlideFilePreview || uploadingFile}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploadingFile ? "Uploading..." : "Upload & Add"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleAddSlide}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm whitespace-nowrap"
-                  >
-                    Add
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            {inputMethod === "url"
-              ? "Enter file path (e.g., /assets/video.mp4) or external URL (https://...). Duration in milliseconds (1000ms = 1 second)"
-              : "Select a file to upload to local storage. Click 'Upload & Add' to upload and add it as a slide. Max file size: 100MB"}
-          </p>
-        </div>
-
-        {/* Slideshow Items List */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-blue-300 bg-blue-950 border border-blue-800 rounded p-2">
-            <svg
-              className="w-4 h-4 shrink-0"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1h2v2H7V4zm2 4H7v2h2V8zm2-4h2v2h-2V4zm2 4h-2v2h2V8z"
-              />
-            </svg>
-            <span>
-              <strong>💡 Drag & Drop:</strong> Click and drag slides by the
-              handle icon (⋮⋮) to reorder them, or use the up/down arrows.
-            </span>
-          </div>
-          {heroSlideshow.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              No slides added yet. Add your first slide above.
-            </div>
-          ) : (
-            <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-1">
-              {heroSlideshow.map((slide, index) => (
-              <div
-                key={slide.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, slide.id, index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
-                onDragEnd={handleDragEnd}
-                className={`min-w-85 md:min-w-130 max-w-130 shrink-0 snap-start flex flex-col md:flex-row md:items-start gap-3 p-3 md:p-4 rounded-lg border transition-all cursor-move ${
-                  draggedSlideId === slide.id
-                    ? "opacity-50 bg-zinc-700 border-red-500"
-                    : dragOverIndex === index
-                      ? "bg-zinc-700 border-red-400 transform scale-y-110"
-                      : "bg-zinc-800 border-zinc-700 hover:border-zinc-600"
-                }`}
-              >
-                {/* Drag Handle & Preview - Top Section */}
-                <div className="flex gap-3 w-full md:w-auto md:flex-col md:items-start">
-                  {/* Drag Handle */}
-                  <div className="shrink-0 flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing">
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M8 5a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zM8 15a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-
-                  {/* Preview */}
-                  <div className="shrink-0 w-24 h-16 bg-zinc-950 rounded border border-zinc-600 flex items-center justify-center overflow-hidden">
-                    {isVideoSlide(slide) ? (
-                      <video
-                        src={resolveMediaUrl(slide.url)}
-                        className="w-full h-full object-contain"
-                        muted
-                        playsInline
-                      />
                     ) : (
-                      <img
-                        src={resolveMediaUrl(slide.url)}
-                        alt={`Slide ${index + 1}`}
-                        className="w-full h-full object-contain"
-                      />
+                      <button
+                        onClick={handleAddSlide}
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm whitespace-nowrap"
+                      >
+                        Add
+                      </button>
                     )}
                   </div>
                 </div>
-
-                {/* Details */}
-                <div className="flex-1 min-w-0 w-full">
-                  <div className="flex items-center gap-2 mb-2 text-xs">
-                    <span className="px-2 py-0.5 bg-zinc-900 text-gray-400 rounded">
-                      {slide.type}
-                    </span>
-                    <span className="text-gray-500">Slide {index + 1}</span>
-                  </div>
-                  <p className="text-xs text-white truncate mb-2">
-                    {slide.url}
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={slide.title || ""}
-                      onChange={(e) =>
-                        handleUpdateSlideField(
-                          slide.id,
-                          "title",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="Slide title (optional)"
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                    />
-                    <input
-                      type="text"
-                      value={slide.caption || ""}
-                      onChange={(e) =>
-                        handleUpdateSlideField(
-                          slide.id,
-                          "caption",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="Slide caption (optional)"
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={slide.ctaLabel || ""}
-                      onChange={(e) =>
-                        handleUpdateSlideField(
-                          slide.id,
-                          "ctaLabel",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="CTA label (e.g. Buy Tickets)"
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                    />
-                    <input
-                      type="text"
-                      value={slide.ctaLink || ""}
-                      onChange={(e) =>
-                        handleUpdateSlideField(
-                          slide.id,
-                          "ctaLink",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="CTA link (e.g. /blog/12)"
-                      className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                    />
-                  </div>
-
-                  {/* Text Styling Options */}
-                  <details className="mb-2 border border-zinc-700 rounded p-2 text-xs">
-                    <summary className="text-xs text-gray-300 cursor-pointer hover:text-white mb-2 font-medium">
-                      🎨 Text & CTA Styling
-                    </summary>
-                    <div className="space-y-2 mt-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">
-                            Text Color
-                          </label>
-                          <div className="flex gap-1">
-                            <input
-                              type="color"
-                              value={slide.textColor || "#ffffff"}
-                              onChange={(e) =>
-                                handleUpdateSlideField(
-                                  slide.id,
-                                  "textColor",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-10 h-8 bg-zinc-900 border border-zinc-600 rounded cursor-pointer"
-                            />
-                            <input
-                              type="text"
-                              value={slide.textColor || "#ffffff"}
-                              onChange={(e) =>
-                                handleUpdateSlideField(
-                                  slide.id,
-                                  "textColor",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="#ffffff"
-                              className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">
-                            Text Size
-                          </label>
-                          <select
-                            value={slide.textSize || "normal"}
-                            onChange={(e) =>
-                              handleUpdateSlideField(
-                                slide.id,
-                                "textSize",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                          >
-                            <option value="small">Small</option>
-                            <option value="normal">Normal</option>
-                            <option value="large">Large</option>
-                            <option value="xl">Extra Large</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">
-                            Text Position
-                          </label>
-                          <select
-                            value={slide.textPosition || "bottom-left"}
-                            onChange={(e) =>
-                              handleUpdateSlideField(
-                                slide.id,
-                                "textPosition",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                          >
-                            <option value="top-left">Top Left</option>
-                            <option value="top-center">Top Center</option>
-                            <option value="top-right">Top Right</option>
-                            <option value="center-left">Center Left</option>
-                            <option value="center">Center</option>
-                            <option value="center-right">Center Right</option>
-                            <option value="bottom-left">Bottom Left</option>
-                            <option value="bottom-center">Bottom Center</option>
-                            <option value="bottom-right">Bottom Right</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">
-                            Dark Overlay %
-                          </label>
-                          <input
-                            type="range"
-                            min="0"
-                            max="80"
-                            step="5"
-                            value={slide.overlayOpacity || "30"}
-                            onChange={(e) =>
-                              handleUpdateSlideField(
-                                slide.id,
-                                "overlayOpacity",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                          <span className="text-xs text-gray-500">
-                            {slide.overlayOpacity || "30"}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">
-                            CTA Button BG
-                          </label>
-                          <div className="flex gap-1">
-                            <input
-                              type="color"
-                              value={slide.ctaBgColor || "#ef4444"}
-                              onChange={(e) =>
-                                handleUpdateSlideField(
-                                  slide.id,
-                                  "ctaBgColor",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-10 h-8 bg-zinc-900 border border-zinc-600 rounded cursor-pointer"
-                            />
-                            <input
-                              type="text"
-                              value={slide.ctaBgColor || "#ef4444"}
-                              onChange={(e) =>
-                                handleUpdateSlideField(
-                                  slide.id,
-                                  "ctaBgColor",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="#ef4444"
-                              className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">
-                            CTA Text Color
-                          </label>
-                          <div className="flex gap-1">
-                            <input
-                              type="color"
-                              value={slide.ctaTextColor || "#ffffff"}
-                              onChange={(e) =>
-                                handleUpdateSlideField(
-                                  slide.id,
-                                  "ctaTextColor",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-10 h-8 bg-zinc-900 border border-zinc-600 rounded cursor-pointer"
-                            />
-                            <input
-                              type="text"
-                              value={slide.ctaTextColor || "#ffffff"}
-                              onChange={(e) =>
-                                handleUpdateSlideField(
-                                  slide.id,
-                                  "ctaTextColor",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="#ffffff"
-                              className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </details>
-
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-400">Duration:</label>
-                    <input
-                      type="number"
-                      value={slide.duration}
-                      onChange={(e) =>
-                        handleUpdateSlideDuration(slide.id, e.target.value)
-                      }
-                      min="1000"
-                      step="1000"
-                      className="w-24 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
-                    />
-                    <span className="text-xs text-gray-500">
-                      ms ({(slide.duration / 1000).toFixed(1)}s)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Controls */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleMoveSlide(index, "up")}
-                      disabled={index === 0}
-                      className="px-2 py-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xs"
-                      title="Move up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      onClick={() => handleMoveSlide(index, "down")}
-                      disabled={index === heroSlideshow.length - 1}
-                      className="px-2 py-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xs"
-                      title="Move down"
-                    >
-                      ▼
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveSlide(slide.id)}
-                    className="px-3 py-1 text-red-400 hover:text-red-300 text-xs whitespace-nowrap"
-                  >
-                    Remove
-                  </button>
-                </div>
               </div>
-            ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Hero Overlay Text */}
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Hero Overlay Text
-        </h2>
-        <p className="text-sm text-gray-400 mb-4">
-          This text appears on top of the hero slideshow.
-        </p>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Title</label>
-            <input
-              type="text"
-              value={heroTitle}
-              onChange={(e) => setHeroTitle(e.target.value)}
-              placeholder="Enter hero title"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Subtitle</label>
-            <input
-              type="text"
-              value={heroSubtitle}
-              onChange={(e) => setHeroSubtitle(e.target.value)}
-              placeholder="Enter hero subtitle"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            />
-          </div>
-        </div>
-      </div>
-        </>
-      )}
-
-      {/* Blogs Section Appearance */}
-      {activeConfigTab === "blogs" && (
-        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Blogs Section Appearance
-        </h2>
-        <p className="text-sm text-gray-400 mb-4">
-          Configure homepage blogs block background and section title colors.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Background Color
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={blogsSectionBgColor}
-                onChange={(e) => setBlogsSectionBgColor(e.target.value)}
-                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
-              />
-              <input
-                type="text"
-                value={blogsSectionBgColor}
-                onChange={(e) => setBlogsSectionBgColor(e.target.value)}
-                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-                placeholder="#ffffff"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Headline Title Color
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={blogsHeadlineTitleColor}
-                onChange={(e) => setBlogsHeadlineTitleColor(e.target.value)}
-                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
-              />
-              <input
-                type="text"
-                value={blogsHeadlineTitleColor}
-                onChange={(e) => setBlogsHeadlineTitleColor(e.target.value)}
-                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-                placeholder="#18181b"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Latest Title Color
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={blogsLatestTitleColor}
-                onChange={(e) => setBlogsLatestTitleColor(e.target.value)}
-                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
-              />
-              <input
-                type="text"
-                value={blogsLatestTitleColor}
-                onChange={(e) => setBlogsLatestTitleColor(e.target.value)}
-                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-                placeholder="#18181b"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* Centered Banner Texts */}
-      {activeConfigTab === "banner" && (
-        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Centered Banner Texts
-        </h2>
-        <div className="mb-4">
-          <button
-            type="button"
-            onClick={() => setBannerEnabled((prev) => !prev)}
-            className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-              bannerEnabled
-                ? "bg-red-600/20 text-red-300 border-red-500"
-                : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
-            }`}
-          >
-            Centered Banner: {bannerEnabled ? "ON" : "OFF"}
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Movement Direction
-            </label>
-            <select
-              value={bannerDirection}
-              onChange={(e) => setBannerDirection(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-              disabled={bannerAnimationType !== "marquee"}
-            >
-              <option value="rtl">Right to Left</option>
-              <option value="ltr">Left to Right</option>
-            </select>
-            {bannerAnimationType !== "marquee" && (
-              <p className="text-[11px] text-zinc-500 mt-1">
-                Direction applies to marquee mode.
+              <p className="text-xs text-gray-500">
+                {inputMethod === "url"
+                  ? "Enter file path (e.g., /assets/video.mp4) or external URL (https://...). Duration in milliseconds (1000ms = 1 second)"
+                  : "Select a file to upload to local storage. Click 'Upload & Add' to upload and add it as a slide. Max file size: 100MB"}
               </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Scroll Duration (seconds)
-            </label>
-            <input
-              type="number"
-              min="2"
-              max="30"
-              value={bannerScrollDuration}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (Number.isFinite(value)) {
-                  setBannerScrollDuration(value);
-                }
-              }}
-              onBlur={() => {
-                setBannerScrollDuration((prev) => {
-                  const value = Number(prev);
-                  if (!Number.isFinite(value)) return 10;
-                  return Math.min(30, Math.max(2, value));
-                });
-              }}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Animation Style
-            </label>
-            <select
-              value={bannerAnimationType}
-              onChange={(e) => setBannerAnimationType(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            >
-              <option value="marquee">Marquee (moving text)</option>
-              <option value="fade">Fade</option>
-              <option value="pulse">Pulse</option>
-              <option value="slide">Slide Up</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Text Color</label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={bannerTextColor}
-                onChange={(e) => setBannerTextColor(e.target.value)}
-                className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
-              />
-              <input
-                type="text"
-                value={bannerTextColor}
-                onChange={(e) => setBannerTextColor(e.target.value)}
-                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-                placeholder="#ef4444"
-              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Font Family</label>
-            <select
-              value={bannerFontFamily}
-              onChange={(e) => setBannerFontFamily(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            >
-              <option value="inherit">Default</option>
-              <option value="'Georgia', serif">Georgia</option>
-              <option value="'Times New Roman', serif">Times New Roman</option>
-              <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-              <option value="'Verdana', sans-serif">Verdana</option>
-              <option value="'Courier New', monospace">Courier New</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Font Weight</label>
-            <select
-              value={bannerFontWeight}
-              onChange={(e) => setBannerFontWeight(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            >
-              <option value="400">Normal</option>
-              <option value="500">Medium</option>
-              <option value="600">Semi Bold</option>
-              <option value="700">Bold</option>
-              <option value="800">Extra Bold</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Font Size (px)
-            </label>
-            <input
-              type="number"
-              min="10"
-              max="80"
-              value={bannerFontSizePx}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (Number.isFinite(value)) {
-                  setBannerFontSizePx(value);
-                }
-              }}
-              onBlur={() => {
-                setBannerFontSizePx((prev) => {
-                  const value = Number(prev);
-                  if (!Number.isFinite(value)) return 16;
-                  return Math.min(80, Math.max(10, value));
-                });
-              }}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            />
-          </div>
-
-          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setBannerUnlimitedLoop((prev) => !prev)}
-              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                bannerUnlimitedLoop
-                  ? "bg-red-600/20 text-red-300 border-red-500"
-                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
-              }`}
-            >
-              Unlimited Loop: {bannerUnlimitedLoop ? "ON" : "OFF"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBannerPauseOnHover((prev) => !prev)}
-              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                bannerPauseOnHover
-                  ? "bg-red-600/20 text-red-300 border-red-500"
-                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
-              }`}
-            >
-              Pause On Hover: {bannerPauseOnHover ? "ON" : "OFF"}
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-zinc-950/80 border border-zinc-800 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <h3 className="text-sm font-medium text-white">Live Preview</h3>
-            <span className="text-[11px] text-zinc-500">Unsaved changes preview</span>
-          </div>
-          <CenteredBanner
-            texts={bannerTexts}
-            direction={bannerDirection}
-            textColor={bannerTextColor}
-            fontFamily={bannerFontFamily}
-            fontWeight={bannerFontWeight}
-            fontSizePx={bannerFontSizePx}
-            scrollDuration={bannerScrollDuration}
-            animationType={bannerAnimationType}
-            unlimitedLoop={bannerUnlimitedLoop}
-            pauseOnHover={bannerPauseOnHover}
-          />
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newBannerText}
-              onChange={(e) => setNewBannerText(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleAddBannerText()}
-              placeholder="Add new banner text"
-              className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-            />
-            <button
-              onClick={handleAddBannerText}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-            >
-              Add
-            </button>
-          </div>
-
-          <div className="space-y-2 mt-4">
-            {bannerTexts.map((text, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 p-3 bg-zinc-800 rounded-lg border border-zinc-700"
-              >
-                <div className="flex flex-col gap-1">
-                  <button
-                    onClick={() => handleMoveBannerText(index, "up")}
-                    disabled={index === 0}
-                    className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    onClick={() => handleMoveBannerText(index, "down")}
-                    disabled={index === bannerTexts.length - 1}
-                    className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    ▼
-                  </button>
-                </div>
-                <span className="flex-1 text-white italic text-sm">{text}</span>
-                <button
-                  onClick={() => handleRemoveBannerText(index)}
-                  className="px-3 py-1 text-red-400 hover:text-red-300 text-sm"
+            {/* Slideshow Items List */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs text-blue-300 bg-blue-950 border border-blue-800 rounded p-2">
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  Remove
-                </button>
+                  <path
+                    fillRule="evenodd"
+                    d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1h2v2H7V4zm2 4H7v2h2V8zm2-4h2v2h-2V4zm2 4h-2v2h2V8z"
+                  />
+                </svg>
+                <span>
+                  <strong>💡 Drag & Drop:</strong> Click and drag slides by the
+                  handle icon (⋮⋮) to reorder them, or use the up/down arrows.
+                </span>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* Block Order */}
-      {activeConfigTab === "order" && (
-        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          HomePage Block Order
-        </h2>
-        <p className="text-sm text-gray-400 mb-4">
-          Drag and drop to reorder homepage sections
-        </p>
-        <HomePageBlockManager
-          blocks={blockOrder}
-          onChange={(newOrder) => setBlockOrder(newOrder)}
-        />
-      </div>
-      )}
-
-      {/* Partners Section Control */}
-      {activeConfigTab === "partners" && (
-        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="text-xl font-semibold text-white">
-            Partners Block Content
-          </h2>
-          <div className="text-right text-xs text-zinc-400">
-            <div>Selected: {selectedPartnerIds.length}</div>
-            <div>Manual: {manualPartners.length}</div>
-          </div>
-        </div>
-        <p className="text-sm text-gray-400 mb-4">
-          Choose partners from the directory or add manual brand entries with a name and logo URL.
-        </p>
-
-        {(() => {
-          const selectedPartnersById = new Map(
-            allPartners.map((partner) => [String(partner.id), partner]),
-          );
-          const manualPartnersById = new Map(
-            manualPartners.map((partner) => [String(partner.id), partner]),
-          );
-          const orderedItems = partnerDisplayOrder
-            .map((token) => {
-              if (token.startsWith("partner:")) {
-                const partnerId = token.slice("partner:".length);
-                const partner = selectedPartnersById.get(partnerId);
-                if (!partner) return null;
-
-                return {
-                  token,
-                  kind: "partner",
-                  id: partnerId,
-                  name: partner.name || `Partner ${partnerId}`,
-                  subtitle: partner.contactEmail || partner.email || "Directory partner",
-                };
-              }
-
-              if (token.startsWith("manual:")) {
-                const manualId = token.slice("manual:".length);
-                const partner = manualPartnersById.get(manualId);
-                if (!partner) return null;
-
-                return {
-                  token,
-                  kind: "manual",
-                  id: manualId,
-                  name: partner.name || "Untitled manual brand",
-                  subtitle: partner.logoUrl || "Manual brand entry",
-                };
-              }
-
-              return null;
-            })
-            .filter(Boolean);
-
-          return (
-            <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
-              <div className="mb-3">
-                <h3 className="text-sm font-semibold text-white">Showcase Order</h3>
-                <p className="mt-1 text-xs text-zinc-400">
-                  Drag the selected partners and manual brands to control homepage display order.
-                </p>
-              </div>
-
-              {orderedItems.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-zinc-700 px-4 py-5 text-sm text-zinc-400">
-                  Add manual brands or select partners to build the showcase list.
+              {heroSlideshow.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  No slides added yet. Add your first slide above.
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {orderedItems.map((item, index) => (
+                <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-1">
+                  {heroSlideshow.map((slide, index) => (
                     <div
-                      key={item.token}
+                      key={slide.id}
                       draggable
-                      onDragStart={(event) =>
-                        handleFeaturedPartnerDragStart(event, item.token)
-                      }
-                      onDragOver={(event) =>
-                        handleFeaturedPartnerDragOver(event, index)
-                      }
-                      onDragLeave={handleFeaturedPartnerDragLeave}
-                      onDrop={(event) => handleFeaturedPartnerDrop(event, index)}
-                      onDragEnd={handleFeaturedPartnerDragEnd}
-                      className={`flex items-center gap-3 rounded-lg border px-3 py-3 transition ${
-                        draggedFeaturedPartnerToken === item.token
-                          ? "border-red-500/60 bg-red-500/10 opacity-70"
-                          : dragOverFeaturedPartnerIndex === index
-                            ? "border-[#c0f24d]/50 bg-[#c0f24d]/10"
-                            : "border-zinc-800 bg-zinc-900/80"
+                      onDragStart={(e) => handleDragStart(e, slide.id, index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, index)}
+                      onDragEnd={handleDragEnd}
+                      className={`min-w-85 md:min-w-130 max-w-130 shrink-0 snap-start flex flex-col md:flex-row md:items-start gap-3 p-3 md:p-4 rounded-lg border transition-all cursor-move ${
+                        draggedSlideId === slide.id
+                          ? "opacity-50 bg-zinc-700 border-red-500"
+                          : dragOverIndex === index
+                            ? "bg-zinc-700 border-red-400 transform scale-y-110"
+                            : "bg-zinc-800 border-zinc-700 hover:border-zinc-600"
                       }`}
                     >
-                      <div className="cursor-grab select-none text-zinc-500">⋮⋮</div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                            item.kind === "manual"
-                              ? "bg-red-500/15 text-red-300"
-                              : "bg-[#c0f24d]/15 text-[#c0f24d]"
-                          }`}>
-                            {item.kind === "manual" ? "Manual" : "Partner"}
-                          </span>
-                          <p className="truncate text-sm font-semibold text-white">{item.name}</p>
+                      {/* Drag Handle & Preview - Top Section */}
+                      <div className="flex gap-3 w-full md:w-auto md:flex-col md:items-start">
+                        {/* Drag Handle */}
+                        <div className="shrink-0 flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing">
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M8 5a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zM8 15a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0zm3 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
                         </div>
-                        <p className="mt-1 truncate text-xs text-zinc-400">{item.subtitle}</p>
+
+                        {/* Preview */}
+                        <div className="shrink-0 w-24 h-16 bg-zinc-950 rounded border border-zinc-600 flex items-center justify-center overflow-hidden">
+                          {isVideoSlide(slide) ? (
+                            <video
+                              src={resolveMediaUrl(slide.url)}
+                              className="w-full h-full object-contain"
+                              muted
+                              playsInline
+                            />
+                          ) : (
+                            <img
+                              src={resolveMediaUrl(slide.url)}
+                              alt={`Slide ${index + 1}`}
+                              className="w-full h-full object-contain"
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="flex items-center gap-2 mb-2 text-xs">
+                          <span className="px-2 py-0.5 bg-zinc-900 text-gray-400 rounded">
+                            {slide.type}
+                          </span>
+                          <span className="text-gray-500">
+                            Slide {index + 1}
+                          </span>
+                        </div>
+                        <p className="text-xs text-white truncate mb-2">
+                          {slide.url}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={slide.title || ""}
+                            onChange={(e) =>
+                              handleUpdateSlideField(
+                                slide.id,
+                                "title",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Slide title (optional)"
+                            className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                          />
+                          <input
+                            type="text"
+                            value={slide.caption || ""}
+                            onChange={(e) =>
+                              handleUpdateSlideField(
+                                slide.id,
+                                "caption",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Slide caption (optional)"
+                            className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-2 gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={slide.ctaLabel || ""}
+                            onChange={(e) =>
+                              handleUpdateSlideField(
+                                slide.id,
+                                "ctaLabel",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="CTA label (e.g. Buy Tickets)"
+                            className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                          />
+                          <input
+                            type="text"
+                            value={slide.ctaLink || ""}
+                            onChange={(e) =>
+                              handleUpdateSlideField(
+                                slide.id,
+                                "ctaLink",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="CTA link (e.g. /blog/12)"
+                            className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                          />
+                        </div>
+
+                        {/* Text Styling Options */}
+                        <details className="mb-2 border border-zinc-700 rounded p-2 text-xs">
+                          <summary className="text-xs text-gray-300 cursor-pointer hover:text-white mb-2 font-medium">
+                            🎨 Text & CTA Styling
+                          </summary>
+                          <div className="space-y-2 mt-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs text-gray-400 block mb-1">
+                                  Text Color
+                                </label>
+                                <div className="flex gap-1">
+                                  <input
+                                    type="color"
+                                    value={slide.textColor || "#ffffff"}
+                                    onChange={(e) =>
+                                      handleUpdateSlideField(
+                                        slide.id,
+                                        "textColor",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-10 h-8 bg-zinc-900 border border-zinc-600 rounded cursor-pointer"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={slide.textColor || "#ffffff"}
+                                    onChange={(e) =>
+                                      handleUpdateSlideField(
+                                        slide.id,
+                                        "textColor",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="#ffffff"
+                                    className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 block mb-1">
+                                  Text Size
+                                </label>
+                                <select
+                                  value={slide.textSize || "normal"}
+                                  onChange={(e) =>
+                                    handleUpdateSlideField(
+                                      slide.id,
+                                      "textSize",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                                >
+                                  <option value="small">Small</option>
+                                  <option value="normal">Normal</option>
+                                  <option value="large">Large</option>
+                                  <option value="xl">Extra Large</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs text-gray-400 block mb-1">
+                                  Text Position
+                                </label>
+                                <select
+                                  value={slide.textPosition || "bottom-left"}
+                                  onChange={(e) =>
+                                    handleUpdateSlideField(
+                                      slide.id,
+                                      "textPosition",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                                >
+                                  <option value="top-left">Top Left</option>
+                                  <option value="top-center">Top Center</option>
+                                  <option value="top-right">Top Right</option>
+                                  <option value="center-left">
+                                    Center Left
+                                  </option>
+                                  <option value="center">Center</option>
+                                  <option value="center-right">
+                                    Center Right
+                                  </option>
+                                  <option value="bottom-left">
+                                    Bottom Left
+                                  </option>
+                                  <option value="bottom-center">
+                                    Bottom Center
+                                  </option>
+                                  <option value="bottom-right">
+                                    Bottom Right
+                                  </option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 block mb-1">
+                                  Dark Overlay %
+                                </label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="80"
+                                  step="5"
+                                  value={slide.overlayOpacity || "30"}
+                                  onChange={(e) =>
+                                    handleUpdateSlideField(
+                                      slide.id,
+                                      "overlayOpacity",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full"
+                                />
+                                <span className="text-xs text-gray-500">
+                                  {slide.overlayOpacity || "30"}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs text-gray-400 block mb-1">
+                                  CTA Button BG
+                                </label>
+                                <div className="flex gap-1">
+                                  <input
+                                    type="color"
+                                    value={slide.ctaBgColor || "#ef4444"}
+                                    onChange={(e) =>
+                                      handleUpdateSlideField(
+                                        slide.id,
+                                        "ctaBgColor",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-10 h-8 bg-zinc-900 border border-zinc-600 rounded cursor-pointer"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={slide.ctaBgColor || "#ef4444"}
+                                    onChange={(e) =>
+                                      handleUpdateSlideField(
+                                        slide.id,
+                                        "ctaBgColor",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="#ef4444"
+                                    className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 block mb-1">
+                                  CTA Text Color
+                                </label>
+                                <div className="flex gap-1">
+                                  <input
+                                    type="color"
+                                    value={slide.ctaTextColor || "#ffffff"}
+                                    onChange={(e) =>
+                                      handleUpdateSlideField(
+                                        slide.id,
+                                        "ctaTextColor",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-10 h-8 bg-zinc-900 border border-zinc-600 rounded cursor-pointer"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={slide.ctaTextColor || "#ffffff"}
+                                    onChange={(e) =>
+                                      handleUpdateSlideField(
+                                        slide.id,
+                                        "ctaTextColor",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="#ffffff"
+                                    className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-gray-400">
+                            Duration:
+                          </label>
+                          <input
+                            type="number"
+                            value={slide.duration}
+                            onChange={(e) =>
+                              handleUpdateSlideDuration(
+                                slide.id,
+                                e.target.value,
+                              )
+                            }
+                            min="1000"
+                            step="1000"
+                            className="w-24 px-2 py-1 bg-zinc-900 border border-zinc-600 rounded text-white text-xs focus:outline-none focus:border-red-500"
+                          />
+                          <span className="text-xs text-gray-500">
+                            ms ({(slide.duration / 1000).toFixed(1)}s)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleMoveSlide(index, "up")}
+                            disabled={index === 0}
+                            className="px-2 py-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+                            title="Move up"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => handleMoveSlide(index, "down")}
+                            disabled={index === heroSlideshow.length - 1}
+                            className="px-2 py-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+                            title="Move down"
+                          >
+                            ▼
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveSlide(slide.id)}
+                          className="px-3 py-1 text-red-400 hover:text-red-300 text-xs whitespace-nowrap"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          );
-        })()}
-
-        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold text-white">Manual Brand Entries</h3>
-              <p className="mt-1 text-xs text-zinc-400">
-                Use this for sponsors or brands that are not in the partner directory.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleAddManualPartner}
-              className="rounded-lg border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400 hover:text-red-200"
-            >
-              + Add Manual Brand
-            </button>
           </div>
 
-          {manualPartners.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-zinc-700 px-4 py-5 text-sm text-zinc-400">
-              No manual brands added yet.
-            </div>
-          ) : (
+          {/* Hero Overlay Text */}
+          <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Hero Overlay Text
+            </h2>
+            <p className="text-sm text-gray-400 mb-4">
+              This text appears on top of the hero slideshow.
+            </p>
             <div className="space-y-3">
-              {manualPartners.map((partner, index) => (
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={heroTitle}
+                  onChange={(e) => setHeroTitle(e.target.value)}
+                  placeholder="Enter hero title"
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">
+                  Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={heroSubtitle}
+                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                  placeholder="Enter hero subtitle"
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Blogs Section Appearance */}
+      {activeConfigTab === "blogs" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+          <h2 className="text-xl font-semibold text-white mb-4">
+            Blogs Section Appearance
+          </h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Configure homepage blogs block background and section title colors.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Background Color
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={blogsSectionBgColor}
+                  onChange={(e) => setBlogsSectionBgColor(e.target.value)}
+                  className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={blogsSectionBgColor}
+                  onChange={(e) => setBlogsSectionBgColor(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Headline Title Color
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={blogsHeadlineTitleColor}
+                  onChange={(e) => setBlogsHeadlineTitleColor(e.target.value)}
+                  className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={blogsHeadlineTitleColor}
+                  onChange={(e) => setBlogsHeadlineTitleColor(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                  placeholder="#18181b"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Latest Title Color
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={blogsLatestTitleColor}
+                  onChange={(e) => setBlogsLatestTitleColor(e.target.value)}
+                  className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={blogsLatestTitleColor}
+                  onChange={(e) => setBlogsLatestTitleColor(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                  placeholder="#18181b"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Centered Banner Texts */}
+      {activeConfigTab === "banner" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+          <h2 className="text-xl font-semibold text-white mb-4">
+            Centered Banner Texts
+          </h2>
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setBannerEnabled((prev) => !prev)}
+              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                bannerEnabled
+                  ? "bg-red-600/20 text-red-300 border-red-500"
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+              }`}
+            >
+              Centered Banner: {bannerEnabled ? "ON" : "OFF"}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Movement Direction
+              </label>
+              <select
+                value={bannerDirection}
+                onChange={(e) => setBannerDirection(e.target.value)}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                disabled={bannerAnimationType !== "marquee"}
+              >
+                <option value="rtl">Right to Left</option>
+                <option value="ltr">Left to Right</option>
+              </select>
+              {bannerAnimationType !== "marquee" && (
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Direction applies to marquee mode.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Scroll Duration (seconds)
+              </label>
+              <input
+                type="number"
+                min="2"
+                max="30"
+                value={bannerScrollDuration}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (Number.isFinite(value)) {
+                    setBannerScrollDuration(value);
+                  }
+                }}
+                onBlur={() => {
+                  setBannerScrollDuration((prev) => {
+                    const value = Number(prev);
+                    if (!Number.isFinite(value)) return 10;
+                    return Math.min(30, Math.max(2, value));
+                  });
+                }}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Animation Style
+              </label>
+              <select
+                value={bannerAnimationType}
+                onChange={(e) => setBannerAnimationType(e.target.value)}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              >
+                <option value="marquee">Marquee (moving text)</option>
+                <option value="fade">Fade</option>
+                <option value="pulse">Pulse</option>
+                <option value="slide">Slide Up</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Text Color
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={bannerTextColor}
+                  onChange={(e) => setBannerTextColor(e.target.value)}
+                  className="h-10 w-14 p-1 bg-zinc-800 border border-zinc-700 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={bannerTextColor}
+                  onChange={(e) => setBannerTextColor(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                  placeholder="#ef4444"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Font Family
+              </label>
+              <select
+                value={bannerFontFamily}
+                onChange={(e) => setBannerFontFamily(e.target.value)}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              >
+                <option value="inherit">Default</option>
+                <option value="'Georgia', serif">Georgia</option>
+                <option value="'Times New Roman', serif">
+                  Times New Roman
+                </option>
+                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                <option value="'Verdana', sans-serif">Verdana</option>
+                <option value="'Courier New', monospace">Courier New</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Font Weight
+              </label>
+              <select
+                value={bannerFontWeight}
+                onChange={(e) => setBannerFontWeight(e.target.value)}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              >
+                <option value="400">Normal</option>
+                <option value="500">Medium</option>
+                <option value="600">Semi Bold</option>
+                <option value="700">Bold</option>
+                <option value="800">Extra Bold</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Font Size (px)
+              </label>
+              <input
+                type="number"
+                min="10"
+                max="80"
+                value={bannerFontSizePx}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (Number.isFinite(value)) {
+                    setBannerFontSizePx(value);
+                  }
+                }}
+                onBlur={() => {
+                  setBannerFontSizePx((prev) => {
+                    const value = Number(prev);
+                    if (!Number.isFinite(value)) return 16;
+                    return Math.min(80, Math.max(10, value));
+                  });
+                }}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              />
+            </div>
+
+            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setBannerUnlimitedLoop((prev) => !prev)}
+                className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                  bannerUnlimitedLoop
+                    ? "bg-red-600/20 text-red-300 border-red-500"
+                    : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+                }`}
+              >
+                Unlimited Loop: {bannerUnlimitedLoop ? "ON" : "OFF"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBannerPauseOnHover((prev) => !prev)}
+                className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                  bannerPauseOnHover
+                    ? "bg-red-600/20 text-red-300 border-red-500"
+                    : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
+                }`}
+              >
+                Pause On Hover: {bannerPauseOnHover ? "ON" : "OFF"}
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-zinc-950/80 border border-zinc-800 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h3 className="text-sm font-medium text-white">Live Preview</h3>
+              <span className="text-[11px] text-zinc-500">
+                Unsaved changes preview
+              </span>
+            </div>
+            <CenteredBanner
+              texts={bannerTexts}
+              direction={bannerDirection}
+              textColor={bannerTextColor}
+              fontFamily={bannerFontFamily}
+              fontWeight={bannerFontWeight}
+              fontSizePx={bannerFontSizePx}
+              scrollDuration={bannerScrollDuration}
+              animationType={bannerAnimationType}
+              unlimitedLoop={bannerUnlimitedLoop}
+              pauseOnHover={bannerPauseOnHover}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newBannerText}
+                onChange={(e) => setNewBannerText(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleAddBannerText()}
+                placeholder="Add new banner text"
+                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+              />
+              <button
+                onClick={handleAddBannerText}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Add
+              </button>
+            </div>
+
+            <div className="space-y-2 mt-4">
+              {bannerTexts.map((text, index) => (
                 <div
-                  key={partner.id}
-                  className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(220px,0.8fr)_auto]"
+                  key={index}
+                  className="flex items-center gap-2 p-3 bg-zinc-800 rounded-lg border border-zinc-700"
                 >
-                  <div>
-                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
-                      Brand Name
-                    </label>
-                    <input
-                      type="text"
-                      value={partner.name}
-                      onChange={(e) =>
-                        handleManualPartnerChange(partner.id, "name", e.target.value)
-                      }
-                      placeholder={`Manual brand ${index + 1}`}
-                      className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
-                      Logo URL
-                    </label>
-                    <input
-                      type="text"
-                      value={partner.logoUrl}
-                      onChange={(e) =>
-                        handleManualPartnerChange(partner.id, "logoUrl", e.target.value)
-                      }
-                      placeholder="https://example.com/logo.png"
-                      className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
-                      Logo Upload
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <label className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) =>
-                            handleManualPartnerFileSelect(partner.id, event)
-                          }
-                        />
-                        {uploadingManualPartnerId === partner.id ? "Uploading..." : "Upload Image"}
-                      </label>
-                      {partner.logoUrl ? (
-                        <img
-                          src={partner.logoUrl}
-                          alt={partner.name || `Manual brand ${index + 1}`}
-                          className="h-12 w-20 rounded border border-zinc-700 bg-white/5 object-contain p-1"
-                        />
-                      ) : (
-                        <div className="flex h-12 w-20 items-center justify-center rounded border border-dashed border-zinc-700 text-[10px] uppercase tracking-wide text-zinc-500">
-                          No logo
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-end">
+                  <div className="flex flex-col gap-1">
                     <button
-                      type="button"
-                      onClick={() => handleRemoveManualPartner(partner.id)}
-                      className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+                      onClick={() => handleMoveBannerText(index, "up")}
+                      disabled={index === 0}
+                      className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      Remove
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleMoveBannerText(index, "down")}
+                      disabled={index === bannerTexts.length - 1}
+                      className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      ▼
                     </button>
                   </div>
+                  <span className="flex-1 text-white italic text-sm">
+                    {text}
+                  </span>
+                  <button
+                    onClick={() => handleRemoveBannerText(index)}
+                    className="px-3 py-1 text-red-400 hover:text-red-300 text-sm"
+                  >
+                    Remove
+                  </button>
                 </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
+      )}
 
+      {/* Block Order */}
+      {activeConfigTab === "order" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+          <h2 className="text-xl font-semibold text-white mb-4">
+            HomePage Block Order
+          </h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Drag and drop to reorder homepage sections
+          </p>
+          <HomePageBlockManager
+            blocks={blockOrder}
+            onChange={(newOrder) => setBlockOrder(newOrder)}
+          />
+        </div>
+      )}
 
-        {(() => {
-          const filteredPartners = allPartners.filter((partner) => {
-            const id = String(partner?.id ?? "");
-            const location = String(partner?.location || partner?.city || partner?.country || "").trim();
-            const industry = String(partner?.industry || partner?.category || "").trim();
-            const logoUploaded = Boolean(partner?.logoUrl || partner?.logo || partner?.profilePhotoUrl || partner?.profilePicture || partner?.photoUrl || partner?.image || partner?.avatar);
-            const selected = selectedPartnerIds.includes(id);
-            const name = String(partner?.name || "").toLowerCase();
-            const email = String(partner?.contactEmail || partner?.email || "").toLowerCase();
-            const query = partnerFilters.query.trim().toLowerCase();
+      {/* Partners Section Control */}
+      {activeConfigTab === "partners" && (
+        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-xl font-semibold text-white">
+              Partners Block Content
+            </h2>
+            <div className="text-right text-xs text-zinc-400">
+              <div>Selected: {selectedPartnerIds.length}</div>
+              <div>Manual: {manualPartners.length}</div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-400 mb-4">
+            Choose partners from the directory or add manual brand entries with
+            a name and logo URL.
+          </p>
 
-            const matchesQuery = !query || name.includes(query) || email.includes(query) || location.toLowerCase().includes(query) || industry.toLowerCase().includes(query);
-            const matchesLocation = partnerFilters.location === "all" || location === partnerFilters.location;
-            const matchesIndustry = partnerFilters.industry === "all" || industry === partnerFilters.industry;
-            const matchesLogo = partnerFilters.logoUpload === "all" || (partnerFilters.logoUpload === "yes" && logoUploaded) || (partnerFilters.logoUpload === "no" && !logoUploaded);
-            const matchesSelected = !partnerFilters.selectedOnly || selected;
+          {(() => {
+            const selectedPartnersById = new Map(
+              allPartners.map((partner) => [String(partner.id), partner]),
+            );
+            const manualPartnersById = new Map(
+              manualPartners.map((partner) => [String(partner.id), partner]),
+            );
+            const orderedItems = partnerDisplayOrder
+              .map((token) => {
+                if (token.startsWith("partner:")) {
+                  const partnerId = token.slice("partner:".length);
+                  const partner = selectedPartnersById.get(partnerId);
+                  if (!partner) return null;
 
-            return matchesQuery && matchesLocation && matchesIndustry && matchesLogo && matchesSelected;
-          });
+                  return {
+                    token,
+                    kind: "partner",
+                    id: partnerId,
+                    name: partner.name || `Partner ${partnerId}`,
+                    subtitle:
+                      partner.contactEmail ||
+                      partner.email ||
+                      "Directory partner",
+                  };
+                }
 
-          const locationOptions = [...new Set(allPartners.map((p) => String(p?.location || p?.city || p?.country || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-          const industryOptions = [...new Set(allPartners.map((p) => String(p?.industry || p?.category || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+                if (token.startsWith("manual:")) {
+                  const manualId = token.slice("manual:".length);
+                  const partner = manualPartnersById.get(manualId);
+                  if (!partner) return null;
 
-          if (loadingPartners) {
-            return <div className="text-sm text-zinc-400">Loading partners...</div>;
-          }
+                  return {
+                    token,
+                    kind: "manual",
+                    id: manualId,
+                    name: partner.name || "Untitled manual brand",
+                    subtitle: partner.logoUrl || "Manual brand entry",
+                  };
+                }
 
-          if (allPartners.length === 0) {
-            return <div className="text-sm text-zinc-400">No partners found.</div>;
-          }
+                return null;
+              })
+              .filter(Boolean);
 
-          return (
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2 mb-4">
-                <input
-                  type="text"
-                  value={partnerFilters.query}
-                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, query: e.target.value }))}
-                  placeholder="Search name, email, location, industry"
-                  className="xl:col-span-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
-                />
-                <select
-                  value={partnerFilters.location}
-                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, location: e.target.value }))}
-                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
-                >
-                  <option value="all">All Locations</option>
-                  {locationOptions.map((location) => (
-                    <option key={location} value={location}>{location}</option>
-                  ))}
-                </select>
-                <select
-                  value={partnerFilters.industry}
-                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, industry: e.target.value }))}
-                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
-                >
-                  <option value="all">All Industries</option>
-                  {industryOptions.map((industry) => (
-                    <option key={industry} value={industry}>{industry}</option>
-                  ))}
-                </select>
-                <select
-                  value={partnerFilters.logoUpload}
-                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, logoUpload: e.target.value }))}
-                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
-                >
-                  <option value="all">Logo/Photo: All</option>
-                  <option value="yes">Logo/Photo Uploaded</option>
-                  <option value="no">No Logo/Photo</option>
-                </select>
+            return (
+              <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold text-white">
+                    Showcase Order
+                  </h3>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Drag the selected partners and manual brands to control
+                    homepage display order.
+                  </p>
+                </div>
+
+                {orderedItems.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-zinc-700 px-4 py-5 text-sm text-zinc-400">
+                    Add manual brands or select partners to build the showcase
+                    list.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {orderedItems.map((item, index) => (
+                      <div
+                        key={item.token}
+                        draggable
+                        onDragStart={(event) =>
+                          handleFeaturedPartnerDragStart(event, item.token)
+                        }
+                        onDragOver={(event) =>
+                          handleFeaturedPartnerDragOver(event, index)
+                        }
+                        onDragLeave={handleFeaturedPartnerDragLeave}
+                        onDrop={(event) =>
+                          handleFeaturedPartnerDrop(event, index)
+                        }
+                        onDragEnd={handleFeaturedPartnerDragEnd}
+                        className={`flex items-center gap-3 rounded-lg border px-3 py-3 transition ${
+                          draggedFeaturedPartnerToken === item.token
+                            ? "border-red-500/60 bg-red-500/10 opacity-70"
+                            : dragOverFeaturedPartnerIndex === index
+                              ? "border-[#c0f24d]/50 bg-[#c0f24d]/10"
+                              : "border-zinc-800 bg-zinc-900/80"
+                        }`}
+                      >
+                        <div className="cursor-grab select-none text-zinc-500">
+                          ⋮⋮
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                item.kind === "manual"
+                                  ? "bg-red-500/15 text-red-300"
+                                  : "bg-[#c0f24d]/15 text-[#c0f24d]"
+                              }`}
+                            >
+                              {item.kind === "manual" ? "Manual" : "Partner"}
+                            </span>
+                            <p className="truncate text-sm font-semibold text-white">
+                              {item.name}
+                            </p>
+                          </div>
+                          <p className="mt-1 truncate text-xs text-zinc-400">
+                            {item.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            );
+          })()}
 
-              <label className="inline-flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none mb-3">
-                <input
-                  type="checkbox"
-                  checked={partnerFilters.selectedOnly}
-                  onChange={(e) => setPartnerFilters((prev) => ({ ...prev, selectedOnly: e.target.checked }))}
-                  className="h-4 w-4 accent-[#c0f24d]"
-                />
-                Show selected only
-              </label>
+          <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-white">
+                  Manual Brand Entries
+                </h3>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Use this for sponsors or brands that are not in the partner
+                  directory.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddManualPartner}
+                className="rounded-lg border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300 transition hover:border-red-400 hover:text-red-200"
+              >
+                + Add Manual Brand
+              </button>
+            </div>
 
-              <div className="text-xs text-zinc-400 mb-2">Showing {filteredPartners.length} / {allPartners.length} partners</div>
-
-              <div className="border border-zinc-700 rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <div className={filteredPartners.length > 10 ? "max-h-130 overflow-y-auto hide-scrollbar" : ""}>
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-zinc-800">
-                        <tr className="text-left text-zinc-300 border-b border-zinc-700">
-                          <th className="px-3 py-2 w-14">Show</th>
-                          <th className="px-3 py-2 min-w-45">Partner</th>
-                          <th className="px-3 py-2 min-w-35">Location</th>
-                          <th className="px-3 py-2 min-w-35">Industry</th>
-                          <th className="px-3 py-2 w-28">Logo/Photo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredPartners.length === 0 ? (
-                          <tr><td colSpan="5" className="px-3 py-6 text-center text-zinc-400">No partners match current filters.</td></tr>
+            {manualPartners.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-zinc-700 px-4 py-5 text-sm text-zinc-400">
+                No manual brands added yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {manualPartners.map((partner, index) => (
+                  <div
+                    key={partner.id}
+                    className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/80 p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(220px,0.8fr)_auto]"
+                  >
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
+                        Brand Name
+                      </label>
+                      <input
+                        type="text"
+                        value={partner.name}
+                        onChange={(e) =>
+                          handleManualPartnerChange(
+                            partner.id,
+                            "name",
+                            e.target.value,
+                          )
+                        }
+                        placeholder={`Manual brand ${index + 1}`}
+                        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
+                        Logo URL
+                      </label>
+                      <input
+                        type="text"
+                        value={partner.logoUrl}
+                        onChange={(e) =>
+                          handleManualPartnerChange(
+                            partner.id,
+                            "logoUrl",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="https://example.com/logo.png"
+                        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">
+                        Logo Upload
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <label className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) =>
+                              handleManualPartnerFileSelect(partner.id, event)
+                            }
+                          />
+                          {uploadingManualPartnerId === partner.id
+                            ? "Uploading..."
+                            : "Upload Image"}
+                        </label>
+                        {partner.logoUrl ? (
+                          <img
+                            src={partner.logoUrl}
+                            alt={partner.name || `Manual brand ${index + 1}`}
+                            className="h-12 w-20 rounded border border-zinc-700 bg-white/5 object-contain p-1"
+                          />
                         ) : (
-                          filteredPartners.map((partner) => {
-                            const id = String(partner.id);
-                            const checked = selectedPartnerIds.includes(id);
-                            const location = String(partner?.location || partner?.city || partner?.country || "").trim() || "N/A";
-                            const industry = String(partner?.industry || partner?.category || "").trim() || "N/A";
-                            const logoUploaded = Boolean(partner?.logoUrl || partner?.logo || partner?.profilePhotoUrl || partner?.profilePicture || partner?.photoUrl || partner?.image || partner?.avatar);
-                            return (
-                              <tr key={partner.id} className={`border-b border-zinc-800/80 hover:bg-zinc-800/40 ${checked ? "bg-[#c0f24d]/10" : "bg-zinc-900"}`}>
-                                <td className="px-3 py-2"><input type="checkbox" checked={checked} onChange={() => toggleFeaturedPartner(partner.id)} className="h-4 w-4 accent-[#c0f24d]" /></td>
-                                <td className="px-3 py-2"><p className="text-white truncate">{partner.name || "N/A"}</p><p className="text-xs text-zinc-400 truncate">{partner.contactEmail || partner.email || "No email"}</p></td>
-                                <td className="px-3 py-2 text-zinc-300">{location}</td>
-                                <td className="px-3 py-2 text-zinc-300">{industry}</td>
-                                <td className="px-3 py-2 text-zinc-300">{logoUploaded ? "Uploaded" : "Missing"}</td>
-                              </tr>
-                            );
-                          })
+                          <div className="flex h-12 w-20 items-center justify-center rounded border border-dashed border-zinc-700 text-[10px] uppercase tracking-wide text-zinc-500">
+                            No logo
+                          </div>
                         )}
-                      </tbody>
-                    </table>
+                      </div>
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveManualPartner(partner.id)}
+                        className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {(() => {
+            const filteredPartners = allPartners.filter((partner) => {
+              const id = String(partner?.id ?? "");
+              const location = String(
+                partner?.location || partner?.city || partner?.country || "",
+              ).trim();
+              const industry = String(
+                partner?.industry || partner?.category || "",
+              ).trim();
+              const logoUploaded = Boolean(
+                partner?.logoUrl ||
+                partner?.logo ||
+                partner?.profilePhotoUrl ||
+                partner?.profilePicture ||
+                partner?.photoUrl ||
+                partner?.image ||
+                partner?.avatar,
+              );
+              const selected = selectedPartnerIds.includes(id);
+              const name = String(partner?.name || "").toLowerCase();
+              const email = String(
+                partner?.contactEmail || partner?.email || "",
+              ).toLowerCase();
+              const query = partnerFilters.query.trim().toLowerCase();
+
+              const matchesQuery =
+                !query ||
+                name.includes(query) ||
+                email.includes(query) ||
+                location.toLowerCase().includes(query) ||
+                industry.toLowerCase().includes(query);
+              const matchesLocation =
+                partnerFilters.location === "all" ||
+                location === partnerFilters.location;
+              const matchesIndustry =
+                partnerFilters.industry === "all" ||
+                industry === partnerFilters.industry;
+              const matchesLogo =
+                partnerFilters.logoUpload === "all" ||
+                (partnerFilters.logoUpload === "yes" && logoUploaded) ||
+                (partnerFilters.logoUpload === "no" && !logoUploaded);
+              const matchesSelected = !partnerFilters.selectedOnly || selected;
+
+              return (
+                matchesQuery &&
+                matchesLocation &&
+                matchesIndustry &&
+                matchesLogo &&
+                matchesSelected
+              );
+            });
+
+            const locationOptions = [
+              ...new Set(
+                allPartners
+                  .map((p) =>
+                    String(p?.location || p?.city || p?.country || "").trim(),
+                  )
+                  .filter(Boolean),
+              ),
+            ].sort((a, b) => a.localeCompare(b));
+            const industryOptions = [
+              ...new Set(
+                allPartners
+                  .map((p) => String(p?.industry || p?.category || "").trim())
+                  .filter(Boolean),
+              ),
+            ].sort((a, b) => a.localeCompare(b));
+
+            if (loadingPartners) {
+              return (
+                <div className="text-sm text-zinc-400">Loading partners...</div>
+              );
+            }
+
+            if (allPartners.length === 0) {
+              return (
+                <div className="text-sm text-zinc-400">No partners found.</div>
+              );
+            }
+
+            return (
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={partnerFilters.query}
+                    onChange={(e) =>
+                      setPartnerFilters((prev) => ({
+                        ...prev,
+                        query: e.target.value,
+                      }))
+                    }
+                    placeholder="Search name, email, location, industry"
+                    className="xl:col-span-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  />
+                  <select
+                    value={partnerFilters.location}
+                    onChange={(e) =>
+                      setPartnerFilters((prev) => ({
+                        ...prev,
+                        location: e.target.value,
+                      }))
+                    }
+                    className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  >
+                    <option value="all">All Locations</option>
+                    {locationOptions.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={partnerFilters.industry}
+                    onChange={(e) =>
+                      setPartnerFilters((prev) => ({
+                        ...prev,
+                        industry: e.target.value,
+                      }))
+                    }
+                    className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  >
+                    <option value="all">All Industries</option>
+                    {industryOptions.map((industry) => (
+                      <option key={industry} value={industry}>
+                        {industry}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={partnerFilters.logoUpload}
+                    onChange={(e) =>
+                      setPartnerFilters((prev) => ({
+                        ...prev,
+                        logoUpload: e.target.value,
+                      }))
+                    }
+                    className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                  >
+                    <option value="all">Logo/Photo: All</option>
+                    <option value="yes">Logo/Photo Uploaded</option>
+                    <option value="no">No Logo/Photo</option>
+                  </select>
+                </div>
+
+                <label className="inline-flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none mb-3">
+                  <input
+                    type="checkbox"
+                    checked={partnerFilters.selectedOnly}
+                    onChange={(e) =>
+                      setPartnerFilters((prev) => ({
+                        ...prev,
+                        selectedOnly: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 accent-[#c0f24d]"
+                  />
+                  Show selected only
+                </label>
+
+                <div className="text-xs text-zinc-400 mb-2">
+                  Showing {filteredPartners.length} / {allPartners.length}{" "}
+                  partners
+                </div>
+
+                <div className="border border-zinc-700 rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <div
+                      className={
+                        filteredPartners.length > 10
+                          ? "max-h-130 overflow-y-auto hide-scrollbar"
+                          : ""
+                      }
+                    >
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-zinc-800">
+                          <tr className="text-left text-zinc-300 border-b border-zinc-700">
+                            <th className="px-3 py-2 w-14">Show</th>
+                            <th className="px-3 py-2 min-w-45">Partner</th>
+                            <th className="px-3 py-2 min-w-35">Location</th>
+                            <th className="px-3 py-2 min-w-35">Industry</th>
+                            <th className="px-3 py-2 w-28">Logo/Photo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredPartners.length === 0 ? (
+                            <tr>
+                              <td
+                                colSpan="5"
+                                className="px-3 py-6 text-center text-zinc-400"
+                              >
+                                No partners match current filters.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredPartners.map((partner) => {
+                              const id = String(partner.id);
+                              const checked = selectedPartnerIds.includes(id);
+                              const location =
+                                String(
+                                  partner?.location ||
+                                    partner?.city ||
+                                    partner?.country ||
+                                    "",
+                                ).trim() || "N/A";
+                              const industry =
+                                String(
+                                  partner?.industry || partner?.category || "",
+                                ).trim() || "N/A";
+                              const logoUploaded = Boolean(
+                                partner?.logoUrl ||
+                                partner?.logo ||
+                                partner?.profilePhotoUrl ||
+                                partner?.profilePicture ||
+                                partner?.photoUrl ||
+                                partner?.image ||
+                                partner?.avatar,
+                              );
+                              return (
+                                <tr
+                                  key={partner.id}
+                                  className={`border-b border-zinc-800/80 hover:bg-zinc-800/40 ${checked ? "bg-[#c0f24d]/10" : "bg-zinc-900"}`}
+                                >
+                                  <td className="px-3 py-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() =>
+                                        toggleFeaturedPartner(partner.id)
+                                      }
+                                      className="h-4 w-4 accent-[#c0f24d]"
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <p className="text-white truncate">
+                                      {partner.name || "N/A"}
+                                    </p>
+                                    <p className="text-xs text-zinc-400 truncate">
+                                      {partner.contactEmail ||
+                                        partner.email ||
+                                        "No email"}
+                                    </p>
+                                  </td>
+                                  <td className="px-3 py-2 text-zinc-300">
+                                    {location}
+                                  </td>
+                                  <td className="px-3 py-2 text-zinc-300">
+                                    {industry}
+                                  </td>
+                                  <td className="px-3 py-2 text-zinc-300">
+                                    {logoUploaded ? "Uploaded" : "Missing"}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
-      </div>
+            );
+          })()}
+        </div>
       )}
 
       {/* Save Button at Bottom */}
@@ -2907,12 +3119,3 @@ export default function AdminHomeBlocksPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-

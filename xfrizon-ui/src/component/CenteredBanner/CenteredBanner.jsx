@@ -67,9 +67,7 @@ const CenteredBanner = ({
     <div
       className={`w-full my-0 py-0 overflow-hidden ${
         pauseOnHover ? "xf-banner-pause " : ""
-      }${
-        isMarquee ? "" : "flex justify-center items-center"
-      }`}
+      }${isMarquee ? "" : "flex justify-center items-center"}`}
     >
       <style>{`
         .xf-banner-pause:hover .xf-banner-anim {

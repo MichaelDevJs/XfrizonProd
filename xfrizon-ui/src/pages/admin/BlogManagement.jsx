@@ -19,7 +19,9 @@ const BLOG_PLANNER_MAX_COMMENTS_PER_ENTRY = 20;
 const BLOG_PLANNER_MAX_COMMENT_LENGTH = 400;
 
 const normalizeBlogSection = (value) => {
-  const section = String(value || "").trim().toLowerCase();
+  const section = String(value || "")
+    .trim()
+    .toLowerCase();
   return BLOG_SECTIONS.has(section) ? section : "";
 };
 
@@ -242,7 +244,9 @@ const containsUnsafeMediaValue = (value) => {
   }
 
   if (value && typeof value === "object") {
-    return Object.values(value).some((entry) => containsUnsafeMediaValue(entry));
+    return Object.values(value).some((entry) =>
+      containsUnsafeMediaValue(entry),
+    );
   }
 
   return false;
@@ -351,7 +355,10 @@ export default function BlogManagement() {
         return;
       }
     } catch (error) {
-      console.warn("Could not load planner from API, using local backup", error);
+      console.warn(
+        "Could not load planner from API, using local backup",
+        error,
+      );
     }
 
     try {
@@ -993,7 +1000,9 @@ export default function BlogManagement() {
             )
           : blog.coverImage;
 
-      const normalizedBlocks = await normalizeDuplicateBlocks(blog.blocks || []);
+      const normalizedBlocks = await normalizeDuplicateBlocks(
+        blog.blocks || [],
+      );
 
       const fallbackImages = await uploadCollectionWithDataUrlSupport(
         blog.images || [],
@@ -1006,7 +1015,9 @@ export default function BlogManagement() {
         "blog-duplicate-video-fallback",
       );
       const fallbackAudio = await uploadCollectionWithDataUrlSupport(
-        (blog.audioTracks || []).filter((track) => !track?.type || track.type === "local"),
+        (blog.audioTracks || []).filter(
+          (track) => !track?.type || track.type === "local",
+        ),
         ["/uploads/upload"],
         "blog-duplicate-audio-fallback",
       );
@@ -1021,8 +1032,10 @@ export default function BlogManagement() {
         .filter((b) => b.type === "audio")
         .flatMap((b) => b.audioTracks || []);
 
-      const normalizedImages = blockImages.length > 0 ? blockImages : fallbackImages;
-      const normalizedVideos = blockVideos.length > 0 ? blockVideos : fallbackVideos;
+      const normalizedImages =
+        blockImages.length > 0 ? blockImages : fallbackImages;
+      const normalizedVideos =
+        blockVideos.length > 0 ? blockVideos : fallbackVideos;
       const normalizedAudio =
         blockAudio.length > 0
           ? blockAudio
@@ -1143,27 +1156,27 @@ export default function BlogManagement() {
 
       {/* Header with New Button */}
       {activeSection !== "ai" && (
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-zinc-950 text-white p-3 sm:p-4 rounded-lg">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold">
-            {activeSection === "planner" ? "Blog Planner" : "Blog Management"}
-          </h1>
-          <p className="mt-1 text-xs text-zinc-400">
-            {activeSection === "planner"
-              ? "Plan topics by date/week, assign writers, and leave editorial comments"
-              : "Create, edit, and manage your blog posts with multimedia support"}
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-zinc-950 text-white p-3 sm:p-4 rounded-lg">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-semibold">
+              {activeSection === "planner" ? "Blog Planner" : "Blog Management"}
+            </h1>
+            <p className="mt-1 text-xs text-zinc-400">
+              {activeSection === "planner"
+                ? "Plan topics by date/week, assign writers, and leave editorial comments"
+                : "Create, edit, and manage your blog posts with multimedia support"}
+            </p>
+          </div>
+          {activeSection === "posts" && (
+            <button
+              onClick={() => setIsCreating(true)}
+              disabled={isLoading}
+              className="w-full sm:w-auto px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Loading..." : "+ New Blog Post"}
+            </button>
+          )}
         </div>
-        {activeSection === "posts" && (
-          <button
-            onClick={() => setIsCreating(true)}
-            disabled={isLoading}
-            className="w-full sm:w-auto px-4 py-2 bg-[#403838] text-white rounded-lg hover:bg-[#4f4545] text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Loading..." : "+ New Blog Post"}
-          </button>
-        )}
-      </div>
       )}
 
       {activeSection === "planner" && (

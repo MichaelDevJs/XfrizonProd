@@ -6,23 +6,11 @@ import { FaArrowLeft, FaPlus, FaTrash } from "react-icons/fa";
 import TicketPreview from "../../component/organizer/TicketPreview";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { COUNTRY_CURRENCY, CITIES_BY_COUNTRY } from "../../data/countriesData";
-
-const EVENT_LOCATIONS = [
-  "Germany",
-  "Japan",
-  "Nigeria",
-  "United States",
-  "United Kingdom",
-  "France",
-  "Others",
-  "More (Coming soon)",
-];
-
-const EVENT_CITY_OPTIONS = EVENT_LOCATIONS.reduce((acc, country) => {
-  acc[country] = CITIES_BY_COUNTRY[country] || [];
-  return acc;
-}, {});
+import {
+  COUNTRY_CURRENCY,
+  EVENT_ALLOWED_COUNTRIES,
+  EVENT_CITIES_BY_COUNTRY,
+} from "../../data/countriesData";
 
 // Get unique currencies from country currency mapping
 const SUPPORTED_CURRENCIES = Array.from(
@@ -699,13 +687,11 @@ export default function CreateEvent() {
                 className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
               >
                 <option value="">Select Country *</option>
-                <option value="Germany">🇩🇪 Germany</option>
-                <option value="Japan">🇯🇵 Japan</option>
-                <option value="Nigeria">🇳🇬 Nigeria</option>
-                <option value="United States">🇺🇸 United States</option>
-                <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                <option value="France">🇫🇷 France</option>
-                <option value="Others">🌍 Others</option>
+                {EVENT_ALLOWED_COUNTRIES.map((country) => (
+                  <option key={country.name} value={country.name}>
+                    {`${country.flag} ${country.name}`}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
@@ -721,9 +707,9 @@ export default function CreateEvent() {
                 disabled={!form.country}
                 className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              {form.country && EVENT_CITY_OPTIONS[form.country] && (
+              {form.country && EVENT_CITIES_BY_COUNTRY[form.country] && (
                 <datalist id={`cities-create-${form.country}`}>
-                  {EVENT_CITY_OPTIONS[form.country].map((city) => (
+                  {EVENT_CITIES_BY_COUNTRY[form.country].map((city) => (
                     <option key={city} value={city} />
                   ))}
                 </datalist>

@@ -306,7 +306,8 @@ const OrganizerFinance = () => {
         setEventPayoutLoading(true);
       }
       const response = await organizerApi.getEventPayoutPreview();
-      const rows = response?.success && Array.isArray(response?.data) ? response.data : [];
+      const rows =
+        response?.success && Array.isArray(response?.data) ? response.data : [];
       setEventPayoutPreview(rows);
 
       const storageKey = user?.id
@@ -316,7 +317,9 @@ const OrganizerFinance = () => {
       if (storageKey) {
         let previousSnapshot = {};
         try {
-          previousSnapshot = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          previousSnapshot = JSON.parse(
+            localStorage.getItem(storageKey) || "{}",
+          );
         } catch {
           previousSnapshot = {};
         }
@@ -326,7 +329,8 @@ const OrganizerFinance = () => {
 
         rows.forEach((item) => {
           const rowKey = String(
-            item?.payoutId ?? `${item?.eventId || "event"}-${item?.currency || "USD"}`,
+            item?.payoutId ??
+              `${item?.eventId || "event"}-${item?.currency || "USD"}`,
           );
 
           nextSnapshot[rowKey] = {
@@ -808,8 +812,8 @@ const OrganizerFinance = () => {
                                 className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-56 p-2 bg-zinc-900 border border-zinc-600 rounded text-xs text-gray-300 font-normal shadow-xl"
                                 style={{ zIndex: 9999 }}
                               >
-                                Total amount collected from customers,
-                                including ticket subtotal and XF service fee
+                                Total amount collected from customers, including
+                                ticket subtotal and XF service fee
                               </div>
                             </div>
                           </div>

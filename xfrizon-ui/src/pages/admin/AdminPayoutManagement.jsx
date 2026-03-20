@@ -178,10 +178,9 @@ export default function AdminPayoutManagement() {
     try {
       setProcessing("retry-all");
       const response = await retryAllFailedEventPayouts();
-      const retriedCount =
-        Number.isFinite(Number(response?.data?.retriedCount))
-          ? Number(response.data.retriedCount)
-          : null;
+      const retriedCount = Number.isFinite(Number(response?.data?.retriedCount))
+        ? Number(response.data.retriedCount)
+        : null;
       toast.success(
         retriedCount !== null
           ? `Retried ${retriedCount} failed payout(s)`
@@ -327,7 +326,8 @@ export default function AdminPayoutManagement() {
     });
 
   const toCsvSafe = (value) => {
-    const safeValue = value === null || value === undefined ? "" : String(value);
+    const safeValue =
+      value === null || value === undefined ? "" : String(value);
     const escaped = safeValue.replace(/"/g, '""');
     return `"${escaped}"`;
   };
@@ -452,13 +452,17 @@ export default function AdminPayoutManagement() {
         <div className="bg-zinc-900/85 rounded-2xl overflow-hidden mb-8 shadow-[0_20px_45px_rgba(0,0,0,0.4)] ring-1 ring-white/5">
           <div className="px-6 py-4 bg-zinc-900/70 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-white text-lg font-semibold">Manual Payout Queue</h2>
+              <h2 className="text-white text-lg font-semibold">
+                Manual Payout Queue
+              </h2>
               <p className="text-red-100/70 text-sm">
                 Organizers on manual payout with amounts due after event end.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-zinc-400">Due now: {manualDueNowCount}</span>
+              <span className="text-xs text-zinc-400">
+                Due now: {manualDueNowCount}
+              </span>
               <select
                 value={manualQueueScope}
                 onChange={(e) => setManualQueueScope(e.target.value)}
@@ -479,12 +483,24 @@ export default function AdminPayoutManagement() {
               <table className="w-full">
                 <thead className="bg-zinc-800/50">
                   <tr>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Event</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Organizer</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Amount Due</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Bank Details</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Status</th>
-                    <th className="text-right px-6 py-3 text-gray-300 font-medium">Action</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Event
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Organizer
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Amount Due
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Bank Details
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Status
+                    </th>
+                    <th className="text-right px-6 py-3 text-gray-300 font-medium">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/70">
@@ -493,7 +509,8 @@ export default function AdminPayoutManagement() {
                       processing === `manual-complete-${item.payoutId}`;
                     const isDueNow = isReleaseTimeReached(item);
                     const canComplete =
-                      isDueNow && (item.status === "READY" || item.status === "HELD");
+                      isDueNow &&
+                      (item.status === "READY" || item.status === "HELD");
 
                     return (
                       <tr
@@ -508,7 +525,9 @@ export default function AdminPayoutManagement() {
                         </td>
                         <td className="px-6 py-4 text-gray-300 text-sm">
                           <div>{item.organizerName}</div>
-                          <div className="text-xs text-gray-500">{item.organizerEmail}</div>
+                          <div className="text-xs text-gray-500">
+                            {item.organizerEmail}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-green-400 font-semibold">
                           {formatCurrency(item.netPayout, item.currency)}
@@ -519,7 +538,9 @@ export default function AdminPayoutManagement() {
                           <div className="font-mono text-gray-400">
                             {item.iban || item.accountNumber || "-"}
                           </div>
-                          <div className="text-gray-500">{item.bankCountry || "-"}</div>
+                          <div className="text-gray-500">
+                            {item.bankCountry || "-"}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-xs px-2 py-1 rounded bg-zinc-800 text-gray-200 border border-zinc-700">
@@ -528,10 +549,16 @@ export default function AdminPayoutManagement() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
-                            onClick={() => handleCompleteManualPayout(item.payoutId)}
+                            onClick={() =>
+                              handleCompleteManualPayout(item.payoutId)
+                            }
                             disabled={!canComplete || isCompleting}
                             className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded disabled:opacity-50"
-                            title={!isDueNow ? "Available after release time" : "Mark manual payout as completed"}
+                            title={
+                              !isDueNow
+                                ? "Available after release time"
+                                : "Mark manual payout as completed"
+                            }
                           >
                             {isCompleting ? "Completing..." : "Mark Completed"}
                           </button>
@@ -744,44 +771,79 @@ export default function AdminPayoutManagement() {
 
         <div className="bg-zinc-900/85 rounded-2xl overflow-hidden mb-8 shadow-[0_20px_45px_rgba(0,0,0,0.4)] ring-1 ring-white/5">
           <div className="px-6 py-4 bg-zinc-900/65">
-            <h2 className="text-white text-lg font-semibold">Finance Audit Snapshot</h2>
+            <h2 className="text-white text-lg font-semibold">
+              Finance Audit Snapshot
+            </h2>
             <p className="text-red-100/70 text-sm">
-              Operational checks to catch failed, overdue, or inconsistent payout records.
+              Operational checks to catch failed, overdue, or inconsistent
+              payout records.
             </p>
           </div>
 
           <div className="px-6 py-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 bg-zinc-900/40">
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">SCHEDULED</div>
-              <div className="text-white text-lg font-semibold">{payoutStatusCounts.SCHEDULED || 0}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                SCHEDULED
+              </div>
+              <div className="text-white text-lg font-semibold">
+                {payoutStatusCounts.SCHEDULED || 0}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">READY</div>
-              <div className="text-white text-lg font-semibold">{payoutStatusCounts.READY || 0}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                READY
+              </div>
+              <div className="text-white text-lg font-semibold">
+                {payoutStatusCounts.READY || 0}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">HELD</div>
-              <div className="text-white text-lg font-semibold">{payoutStatusCounts.HELD || 0}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                HELD
+              </div>
+              <div className="text-white text-lg font-semibold">
+                {payoutStatusCounts.HELD || 0}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">PAID</div>
-              <div className="text-white text-lg font-semibold">{payoutStatusCounts.PAID || 0}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                PAID
+              </div>
+              <div className="text-white text-lg font-semibold">
+                {payoutStatusCounts.PAID || 0}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">FAILED</div>
-              <div className="text-amber-300 text-lg font-semibold">{payoutStatusCounts.FAILED || 0}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                FAILED
+              </div>
+              <div className="text-amber-300 text-lg font-semibold">
+                {payoutStatusCounts.FAILED || 0}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">MANUAL DUE NOW</div>
-              <div className="text-emerald-300 text-lg font-semibold">{manualDueNowCount}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                MANUAL DUE NOW
+              </div>
+              <div className="text-emerald-300 text-lg font-semibold">
+                {manualDueNowCount}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">OVERDUE AUTO</div>
-              <div className="text-orange-300 text-lg font-semibold">{overdueAutoPayoutCount}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                OVERDUE AUTO
+              </div>
+              <div className="text-orange-300 text-lg font-semibold">
+                {overdueAutoPayoutCount}
+              </div>
             </div>
             <div className="bg-zinc-800/70 rounded-xl p-3 ring-1 ring-zinc-700/70">
-              <div className="text-[11px] uppercase tracking-wide text-zinc-400">PAID W/O REF</div>
-              <div className="text-rose-300 text-lg font-semibold">{paidWithoutTransferCount}</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-400">
+                PAID W/O REF
+              </div>
+              <div className="text-rose-300 text-lg font-semibold">
+                {paidWithoutTransferCount}
+              </div>
             </div>
           </div>
 
@@ -794,13 +856,27 @@ export default function AdminPayoutManagement() {
               <table className="w-full">
                 <thead className="bg-zinc-800/50">
                   <tr>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Event</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Organizer</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Status</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Net</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Release</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Transfer Ref</th>
-                    <th className="text-left px-6 py-3 text-gray-300 font-medium">Issue</th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Event
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Organizer
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Status
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Net
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Release
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Transfer Ref
+                    </th>
+                    <th className="text-left px-6 py-3 text-gray-300 font-medium">
+                      Issue
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/70">
@@ -813,14 +889,21 @@ export default function AdminPayoutManagement() {
                           : "Auto payout overdue after release time";
 
                     return (
-                      <tr key={`audit-${item.payoutId}`} className="hover:bg-zinc-800/50 transition-colors">
+                      <tr
+                        key={`audit-${item.payoutId}`}
+                        className="hover:bg-zinc-800/50 transition-colors"
+                      >
                         <td className="px-6 py-4 text-gray-200">
                           <div className="font-medium">{item.eventTitle}</div>
-                          <div className="text-xs text-gray-500">Event #{item.eventId}</div>
+                          <div className="text-xs text-gray-500">
+                            Event #{item.eventId}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-300">
                           <div>{item.organizerName}</div>
-                          <div className="text-xs text-gray-500">{item.organizerEmail}</div>
+                          <div className="text-xs text-gray-500">
+                            {item.organizerEmail}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-xs px-2 py-1 rounded bg-zinc-800 text-gray-200 border border-zinc-700">
@@ -830,11 +913,15 @@ export default function AdminPayoutManagement() {
                         <td className="px-6 py-4 text-gray-200 font-semibold">
                           {formatCurrency(item.netPayout, item.currency)}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-400">{formatDate(item.releaseAt)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {formatDate(item.releaseAt)}
+                        </td>
                         <td className="px-6 py-4 text-xs text-gray-300 font-mono">
                           {item.stripeTransferId || "-"}
                         </td>
-                        <td className="px-6 py-4 text-sm text-amber-300">{issue}</td>
+                        <td className="px-6 py-4 text-sm text-amber-300">
+                          {issue}
+                        </td>
                       </tr>
                     );
                   })}

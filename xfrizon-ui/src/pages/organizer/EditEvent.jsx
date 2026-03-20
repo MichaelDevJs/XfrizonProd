@@ -6,7 +6,11 @@ import { FaArrowLeft, FaPlus, FaTrash, FaCrop } from "react-icons/fa";
 import TicketPreview from "../../component/organizer/TicketPreview";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { COUNTRY_CURRENCY, CITIES_BY_COUNTRY } from "../../data/countriesData";
+import {
+  COUNTRY_CURRENCY,
+  EVENT_ALLOWED_COUNTRIES,
+  EVENT_CITIES_BY_COUNTRY,
+} from "../../data/countriesData";
 
 // Get unique currencies from country currency mapping
 const SUPPORTED_CURRENCIES = Array.from(
@@ -386,7 +390,8 @@ export default function EditEvent() {
           quantity: parseInt(ticket.quantity) || 1,
           maxPerPerson: parseInt(ticket.maxPerPerson) || 1,
           saleStart: ticket.saleStart || ticket.saleStartsAt || null,
-          saleEnd: ticket.saleEnd || ticket.saleEndsAt || ticket.priceEnds || null,
+          saleEnd:
+            ticket.saleEnd || ticket.saleEndsAt || ticket.priceEnds || null,
           description: ticket.description || "",
         })),
       };
@@ -754,8 +759,8 @@ export default function EditEvent() {
                 className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500"
               />
               <datalist id="countries-edit">
-                {Object.keys(COUNTRY_CURRENCY).map((country) => (
-                  <option key={country} value={country} />
+                {EVENT_ALLOWED_COUNTRIES.map((country) => (
+                  <option key={country.name} value={country.name} />
                 ))}
               </datalist>
             </div>
@@ -772,9 +777,9 @@ export default function EditEvent() {
                 disabled={!form.country}
                 className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              {form.country && CITIES_BY_COUNTRY[form.country] && (
+              {form.country && EVENT_CITIES_BY_COUNTRY[form.country] && (
                 <datalist id={`cities-edit-${form.country}`}>
-                  {CITIES_BY_COUNTRY[form.country].map((city) => (
+                  {EVENT_CITIES_BY_COUNTRY[form.country].map((city) => (
                     <option key={city} value={city} />
                   ))}
                 </datalist>

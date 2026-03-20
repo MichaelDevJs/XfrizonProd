@@ -394,7 +394,10 @@ export default function BlogDetailPage() {
           if (!existingImage) {
             const authorName = (blogData.author || "").toLowerCase().trim();
             if (authorName && authorImageMap[authorName]) {
-              blogData = { ...blogData, authorProfileImage: authorImageMap[authorName] };
+              blogData = {
+                ...blogData,
+                authorProfileImage: authorImageMap[authorName],
+              };
             }
           }
         }
@@ -1516,21 +1519,27 @@ export default function BlogDetailPage() {
                     {shareStatus}
                   </p>
                 )}
-
               </div>
             </div>
           </div>
         </section>
       )}
-      {showHero && (safeTitleStyle.coverImageCaption || safeTitleStyle.coverImageCredit) && (
-        <div className="text-center py-2 bg-[#1e1e1e]">
-          <p className="text-[10px] text-black">
-            {safeTitleStyle.coverImageCaption || ""}
-            {safeTitleStyle.coverImageCaption && safeTitleStyle.coverImageCredit ? " " : ""}
-            {safeTitleStyle.coverImageCredit ? `(${safeTitleStyle.coverImageCredit})` : ""}
-          </p>
-        </div>
-      )}
+      {showHero &&
+        (safeTitleStyle.coverImageCaption ||
+          safeTitleStyle.coverImageCredit) && (
+          <div className="text-center py-2 bg-[#1e1e1e]">
+            <p className="text-[10px] text-black">
+              {safeTitleStyle.coverImageCaption || ""}
+              {safeTitleStyle.coverImageCaption &&
+              safeTitleStyle.coverImageCredit
+                ? " "
+                : ""}
+              {safeTitleStyle.coverImageCredit
+                ? `(${safeTitleStyle.coverImageCredit})`
+                : ""}
+            </p>
+          </div>
+        )}
 
       {/* Content - Centered */}
       <article className="max-w-3xl mx-auto px-6 py-12">
