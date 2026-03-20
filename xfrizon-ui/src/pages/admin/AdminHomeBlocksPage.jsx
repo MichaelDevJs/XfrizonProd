@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import HomePageBlockManager from "../../component/admin/HomePageBlockManager";
 import HeroSlideshow from "../../component/HeroSlideshow/HeroSlideshow";
 import CenteredBanner from "../../component/CenteredBanner/CenteredBanner";
@@ -1176,6 +1177,66 @@ export default function AdminHomeBlocksPage() {
     );
   };
 
+  const postUploadWithOriginFallback = async (endpoints, file) => {
+    const baseUrl = String(api?.defaults?.baseURL || "");
+    const origin = baseUrl.replace(/\/api\/v1\/?$/, "").replace(/\/$/, "");
+
+    const originCandidates = [];
+    if (origin && !origin.startsWith("/")) originCandidates.push(origin);
+    if (typeof window !== "undefined" && window.location?.origin) {
+      originCandidates.push(window.location.origin.replace(/\/$/, ""));
+    }
+    if (import.meta.env.DEV) originCandidates.push("http://localhost:8081");
+
+    const candidates = [];
+    endpoints.forEach((endpoint) => {
+      originCandidates.forEach((candidateOrigin) => {
+        candidates.push(`${candidateOrigin}${endpoint}`);
+      });
+    });
+
+    const uniqueCandidates = [...new Set(candidates)];
+    const token =
+      localStorage.getItem("userToken") || localStorage.getItem("adminToken");
+    let lastError = null;
+
+    for (const url of uniqueCandidates) {
+      try {
+        const payload = new FormData();
+        payload.append("file", file);
+        payload.append("type", "image");
+
+        const headers = { "Content-Type": "multipart/form-data" };
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const response = await axios.post(url, payload, {
+          headers,
+          timeout: 60000,
+        });
+
+        const uploadedUrl = response?.data?.url || response?.data?.filePath;
+        if (uploadedUrl) return uploadedUrl;
+      } catch (error) {
+        lastError = error;
+        const status = error?.response?.status;
+        const canFallback =
+          status === 400 ||
+          status === 404 ||
+          status === 405 ||
+          status === 413 ||
+          status === 415 ||
+          (typeof status === "number" && status >= 500) ||
+          String(error?.code || "").toUpperCase() === "ECONNABORTED";
+
+        if (!canFallback) {
+          throw error;
+        }
+      }
+    }
+
+    throw lastError || new Error("Upload failed");
+  };
+
   const uploadManualPartnerLogo = async (partnerId, file) => {
     if (!file) return;
 
@@ -1186,54 +1247,15 @@ export default function AdminHomeBlocksPage() {
 
     try {
       setUploadingManualPartnerId(partnerId);
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "image");
 
       const endpoints = [
+        "/admin/upload/hero-slide",
         "/uploads/cover-photo",
         "/uploads/organizer-logo",
+        "/uploads/profile-photo",
         "/uploads/media",
       ];
-
-      let uploadedUrl = "";
-      let lastError = null;
-
-      for (const endpoint of endpoints) {
-        try {
-          const response = await api.post(endpoint, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            timeout: 60000,
-          });
-
-          uploadedUrl = response?.data?.url || response?.data?.filePath || "";
-          if (uploadedUrl) {
-            break;
-          }
-        } catch (error) {
-          lastError = error;
-          const status = error?.response?.status;
-          const canFallback =
-            !status ||
-            status === 400 ||
-            status === 404 ||
-            status === 405 ||
-            status === 413 ||
-            status === 415 ||
-            (status >= 500 && status < 600) ||
-            String(error?.code || "").toUpperCase() === "ECONNABORTED";
-
-          if (!canFallback) {
-            throw error;
-          }
-        }
-      }
-
-      if (!uploadedUrl) {
-        throw lastError || new Error("Manual partner logo upload failed");
-      }
+      const uploadedUrl = await postUploadWithOriginFallback(endpoints, file);
 
       setManualPartners((prev) =>
         prev.map((partner) =>
