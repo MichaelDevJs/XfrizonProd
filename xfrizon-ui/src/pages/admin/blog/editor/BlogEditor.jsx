@@ -110,8 +110,8 @@ export default function BlogEditor({
     moveBlockHelper(blockId, direction, formData, setFormData);
   };
 
-  const handleApplyFormat = (blockId, format) => {
-    applyFormatHelper(blockId, format, formData, setFormData);
+  const handleApplyFormat = (blockId, format, options = {}) => {
+    applyFormatHelper(blockId, format, formData, setFormData, options);
   };
 
   const handleSave = () => {

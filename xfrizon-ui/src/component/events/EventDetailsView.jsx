@@ -435,13 +435,14 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
               ) : (
                 /* Tickets Section - Clean and Minimal */
                 <div className="w-full max-w-lg mx-auto mt-12 space-y-2 bg-black/20 border-r border-b border-emerald-500/70 shadow-sm shadow-black/20 p-2.5 text-xs">
-                  {(event.ticketTiers && event.ticketTiers.length > 0) ||
-                  (event.tickets && event.tickets.length > 0) ? (
+                  {(() => {
+                    const activeTiers = (event.ticketTiers && event.ticketTiers.length > 0
+                      ? event.ticketTiers
+                      : event.tickets || []
+                    ).filter((tier) => !tier.status || tier.status !== 'INACTIVE');
+                    return activeTiers.length > 0 ? (
                     <div className="space-y-2 mb-5">
-                      {(event.ticketTiers && event.ticketTiers.length > 0
-                        ? event.ticketTiers
-                        : event.tickets
-                      ).map((tier, idx) => {
+                      {activeTiers.map((tier, idx) => {
                         // Support both id and _id, name and ticketType
                         const tierId = tier.id || tier._id || idx;
                         const tierName =
@@ -563,7 +564,8 @@ export default function EventDetailsView({ event, organizer, onBuyTickets }) {
                     <div className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-center text-gray-400">
                       <p>No tickets available</p>
                     </div>
-                  )}
+                  );
+                  })()}
 
                   {/* Buy Button */}
                   <div className="flex items-center justify-between pt-3">

@@ -585,6 +585,7 @@ public class EventService {
             : event.getTicketTiers();
 
         List<TicketTierResponse> ticketTiers = sourceTiers.stream()
+            .filter(t -> t.getStatus() != TicketTier.TicketStatus.INACTIVE)
             .map(this::mapTicketTierToResponse)
             .collect(Collectors.toList());
 

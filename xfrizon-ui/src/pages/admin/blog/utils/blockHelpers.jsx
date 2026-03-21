@@ -181,6 +181,8 @@ export const renderRichText = (content, options = {}) => {
   return (
     <div className={settings.wrapperClassName} style={settings.textStyle}>
       {lines.map((line, idx) => {
+        const leadingSpaces = line.match(/^\s*/)?.[0].length || 0;
+        const indentLevel = Math.floor(leadingSpaces / 2);
         const trimmed = line.trim();
 
         if (!trimmed) {
@@ -217,9 +219,28 @@ export const renderRichText = (content, options = {}) => {
           trimmed.startsWith("• ")
         ) {
           return (
-            <ul key={`line-${idx}`} className={settings.bulletClassName}>
+            <ul
+              key={`line-${idx}`}
+              className={settings.bulletClassName}
+              style={{ marginLeft: `${indentLevel * 1.25}rem` }}
+            >
               <li>{renderInlineNodes(trimmed.slice(2), settings, `li-${idx}`)}</li>
             </ul>
+          );
+        }
+
+        if (/^\d+\.\s/.test(trimmed)) {
+          const numberedText = trimmed.replace(/^\d+\.\s/, "");
+          return (
+            <ol
+              key={`line-${idx}`}
+              className={settings.bulletClassName}
+              style={{ marginLeft: `${indentLevel * 1.25}rem` }}
+            >
+              <li>
+                {renderInlineNodes(numberedText, settings, `oli-${idx}`)}
+              </li>
+            </ol>
           );
         }
 
@@ -332,7 +353,13 @@ export const moveBlock = (blockId, direction, formData, setFormData) => {
   }
 };
 
-export const applyFormat = (blockId, format, formData, setFormData) => {
+export const applyFormat = (
+  blockId,
+  format,
+  formData,
+  setFormData,
+  options = {},
+) => {
   const block = formData.blocks.find((b) => b.id === blockId);
   if (block?.type !== "text") return;
 
@@ -344,6 +371,25 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
   const end = textarea.selectionEnd;
   const selectedText = block.content.substring(start, end);
   const fallbackSelection = selectedText || "Your text";
+
+  const getCurrentLineIndent = () => {
+    const lineStart = block.content.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+    const currentLine = block.content.slice(lineStart);
+    return currentLine.match(/^[\t ]*/)?.[0] || "";
+  };
+
+  const applyListPrefix = (prefixBuilder) => {
+    const indent = getCurrentLineIndent();
+    const sourceLines = fallbackSelection.split("\n");
+    return sourceLines
+      .map((line, idx) => {
+        const normalized = line.trim();
+        const content = normalized.length > 0 ? normalized : "Your text";
+        return `${indent}${prefixBuilder(idx)} ${content}`;
+      })
+      .join("\n");
+  };
+
   let formattedText = fallbackSelection;
 
   switch (format) {
@@ -364,7 +410,10 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
       formattedText = `### ${fallbackSelection}`;
       break;
     case "bullet":
-      formattedText = `- ${fallbackSelection}`;
+      formattedText = applyListPrefix(() => "-");
+      break;
+    case "numbered":
+      formattedText = applyListPrefix((idx) => `${idx + 1}.`);
       break;
     case "link": {
       const url = window.prompt("Enter URL", "https://");
@@ -378,10 +427,10 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
       break;
     }
     case "color": {
-      const color = window.prompt(
-        "Enter text color (hex or CSS color)",
-        "#ef4444",
-      );
+      const color =
+        typeof options.color === "string" && options.color.trim()
+          ? options.color.trim()
+          : window.prompt("Enter text color (hex or CSS color)", "#ef4444");
       if (!color) return;
       formattedText = `[color=${color.trim()}]${fallbackSelection}[/color]`;
       break;
