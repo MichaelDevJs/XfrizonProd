@@ -3,6 +3,7 @@ import { FaTimes, FaLock } from "react-icons/fa";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
+  ExpressCheckoutElement,
   PaymentElement,
   useStripe,
   useElements,
@@ -143,8 +144,58 @@ function CheckoutForm({
     }
   };
 
+  const handleExpressConfirm = async () => {
+    if (!stripe || !elements || processing) {
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const result = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+        },
+        redirect: "if_required",
+      });
+
+      if (result.error) {
+        onError(result.error.message || "Wallet payment failed. Please try again.");
+        return;
+      }
+
+      if (result.paymentIntent) {
+        onSuccess(result.paymentIntent.id);
+      }
+    } catch (error) {
+      onError(error.message || "Wallet payment failed. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-3">
+        <ExpressCheckoutElement
+          onConfirm={handleExpressConfirm}
+          options={{
+            paymentMethods: {
+              applePay: "auto",
+              googlePay: "auto",
+            },
+            layout: {
+              maxColumns: 2,
+              maxRows: 2,
+            },
+          }}
+        />
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          <span className="h-px flex-1 bg-zinc-700" />
+          <span>or pay with another method</span>
+          <span className="h-px flex-1 bg-zinc-700" />
+        </div>
+      </div>
       <div>
         <PaymentElement
           options={{
