@@ -14,6 +14,7 @@ import com.xfrizon.entity.UserEvent;
 import com.xfrizon.repository.EventRepository;
 import com.xfrizon.repository.EventRsvpRepository;
 import com.xfrizon.repository.TicketTierRepository;
+import com.xfrizon.repository.UserTicketRepository;
 import com.xfrizon.repository.UserRepository;
 import com.xfrizon.repository.UserEventRepository;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventRsvpRepository eventRsvpRepository;
     private final TicketTierRepository ticketTierRepository;
+    private final UserTicketRepository userTicketRepository;
     private final UserRepository userRepository;
     private final UserEventRepository userEventRepository;
 
@@ -364,22 +366,28 @@ public class EventService {
                 ? new ArrayList<>()
                 : new ArrayList<>(event.getTicketTiers());
             
-            // Delete existing ticket tiers (only if not yet sold)
+            // Delete only tiers with no sales and no historical ticket rows.
+            // Tiers linked to user_tickets must be retained to preserve FK integrity.
             if (!existingTiers.isEmpty()) {
                 for (TicketTier tier : existingTiers) {
-                    if (tier.getQuantitySold() == null || tier.getQuantitySold() == 0) {
+                    Integer soldViaTickets = userTicketRepository.sumQuantityByTicketTierId(tier.getId());
+                    boolean hasTicketReferences = soldViaTickets != null && soldViaTickets > 0;
+                    int quantitySold = tier.getQuantitySold() != null ? tier.getQuantitySold() : 0;
+
+                    if (quantitySold == 0 && !hasTicketReferences) {
+                        if (event.getTicketTiers() != null) {
+                            event.getTicketTiers().remove(tier);
+                        }
                         ticketTierRepository.delete(tier);
                         log.debug("Deleted ticket tier: {}", tier.getId());
                     } else {
+                        tier.setStatus(TicketTier.TicketStatus.INACTIVE);
+                        if (tier.getSaleEndsAt() == null) {
+                            tier.setSaleEndsAt(LocalDateTime.now());
+                        }
                         log.warn("Cannot delete ticket tier {} - {} tickets already sold", 
-                            tier.getId(), tier.getQuantitySold());
+                            tier.getId(), quantitySold);
                     }
-                }
-                // Clear the collection reference that Hibernate is tracking
-                if (event.getTicketTiers() != null) {
-                    event.getTicketTiers().clear();
-                } else {
-                    event.setTicketTiers(new ArrayList<>());
                 }
             }
 
