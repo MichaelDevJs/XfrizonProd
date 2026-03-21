@@ -5,9 +5,12 @@ import com.stripe.exception.CardException;
 import com.stripe.exception.AuthenticationException;
 import com.stripe.exception.RateLimitException;
 import com.stripe.exception.InvalidRequestException;
+import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Account;
 import com.stripe.param.AccountUpdateParams;
+import com.stripe.param.CustomerListParams;
+import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.xfrizon.dto.CreatePaymentIntentRequest;
 import com.xfrizon.dto.PaymentIntentResponse;
@@ -192,9 +195,20 @@ public class PaymentService {
             }
 
             // Create Stripe PaymentIntent
+                String stripeCustomerId = findOrCreateStripeCustomer(user);
+
             PaymentIntentCreateParams.Builder paramsBuilder = PaymentIntentCreateParams.builder()
                     .setAmount(amountInSmallestUnit)
                     .setCurrency(currency)
+                    .setCustomer(stripeCustomerId)
+                    .setReceiptEmail(user.getEmail())
+                    .setSetupFutureUsage(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION)
+                    .setAutomaticPaymentMethods(
+                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                            .setEnabled(true)
+                            .setAllowRedirects(
+                                PaymentIntentCreateParams.AutomaticPaymentMethods.AllowRedirects.ALWAYS)
+                            .build())
                     .setDescription("Ticket purchase for: " + event.getTitle() + " - " + ticketDescription)
                     .putMetadata("user_id", userId.toString())
                     .putMetadata("event_id", request.getEventId().toString())
@@ -293,6 +307,37 @@ public class PaymentService {
             return false;
         }
         return key.startsWith("sk_test_") || key.startsWith("sk_live_");
+    }
+
+    private String findOrCreateStripeCustomer(User user) throws StripeException {
+        if (user == null) {
+            throw new IllegalArgumentException("User is required to create payment intent");
+        }
+
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("User email is required for checkout");
+        }
+
+        CustomerListParams listParams = CustomerListParams.builder()
+                .setEmail(email.trim())
+                .setLimit(1L)
+                .build();
+
+        var existing = Customer.list(listParams);
+        if (existing != null && existing.getData() != null && !existing.getData().isEmpty()) {
+            return existing.getData().get(0).getId();
+        }
+
+        CustomerCreateParams createParams = CustomerCreateParams.builder()
+                .setEmail(email.trim())
+                .setName(((user.getFirstName() != null ? user.getFirstName() : "") + " "
+                        + (user.getLastName() != null ? user.getLastName() : "")).trim())
+                .putMetadata("user_id", String.valueOf(user.getId()))
+                .build();
+
+        Customer created = Customer.create(createParams);
+        return created.getId();
     }
 
     /**

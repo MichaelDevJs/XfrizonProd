@@ -39,6 +39,7 @@ function CheckoutForm({
   quantity,
   total,
   currency,
+  billingDetails,
   onSuccess,
   onError,
 }) {
@@ -146,7 +147,21 @@ function CheckoutForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <PaymentElement
-          options={{ layout: "tabs" }}
+          options={{
+            layout: "tabs",
+            defaultValues: {
+              billingDetails: {
+                name: billingDetails?.name || "",
+                email: billingDetails?.email || "",
+              },
+            },
+            fields: {
+              billingDetails: {
+                name: "auto",
+                email: "auto",
+              },
+            },
+          }}
           onChange={handleElementChange}
         />
         {elementError && (
@@ -182,6 +197,24 @@ export default function CheckoutModal({
 }) {
   const [clientSecret, setClientSecret] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const storedUser = React.useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const billingDetails = React.useMemo(() => {
+    const first = storedUser?.firstName || "";
+    const last = storedUser?.lastName || "";
+    const fullName = `${first} ${last}`.trim();
+    return {
+      name: fullName || storedUser?.name || "",
+      email: storedUser?.email || "",
+    };
+  }, [storedUser]);
 
   const SERVICE_FEE_RATE = 0.1; // 10%
   const roundCurrency = (amount) =>
@@ -437,6 +470,7 @@ export default function CheckoutModal({
                 quantity={quantity}
                 total={total}
                 currency={event?.currency}
+                billingDetails={billingDetails}
                 onSuccess={handlePaymentSuccess}
                 onError={handlePaymentError}
               />
