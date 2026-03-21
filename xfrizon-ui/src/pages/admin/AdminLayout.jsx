@@ -188,7 +188,10 @@ export default function AdminLayout() {
           </div>
           <div className="flex items-center gap-2">
             <div className="text-xs text-zinc-400 uppercase tracking-wider">
-              Welcome, <span className="font-semibold">{adminUser?.name || adminUser?.email || "Admin"}</span>
+              Welcome,{" "}
+              <span className="font-semibold">
+                {adminUser?.name || adminUser?.email || "Admin"}
+              </span>
             </div>
             <button
               onClick={handleLogout}

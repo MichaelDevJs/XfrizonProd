@@ -235,7 +235,10 @@ function RootApp() {
 
             {/* Admin Auth Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin/auth/google/complete" element={<AdminGoogleComplete />} />
+            <Route
+              path="/admin/auth/google/complete"
+              element={<AdminGoogleComplete />}
+            />
             <Route path="/admin-signup" element={<AdminSignUp />} />
 
             {/* Admin Protected Routes */}

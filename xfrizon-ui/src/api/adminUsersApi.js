@@ -72,11 +72,17 @@ const adminUsersApi = {
     let lastError = null;
     for (const endpoint of endpoints) {
       try {
-        const response = await api[endpoint.method](endpoint.url, endpoint.body);
+        const response = await api[endpoint.method](
+          endpoint.url,
+          endpoint.body,
+        );
         return response.data;
       } catch (error) {
         lastError = error;
-        if (error?.response?.status === 404 || error?.response?.status === 405) {
+        if (
+          error?.response?.status === 404 ||
+          error?.response?.status === 405
+        ) {
           continue;
         }
         throw error;

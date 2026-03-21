@@ -35,7 +35,11 @@ export default function UsersManagement() {
       0;
 
     const amountSpentRaw =
-      row?.amountSpent ?? row?.totalSpent ?? row?.spentAmount ?? row?.totalPaid ?? 0;
+      row?.amountSpent ??
+      row?.totalSpent ??
+      row?.spentAmount ??
+      row?.totalPaid ??
+      0;
 
     const roleRaw = row?.roles || row?.role || "USER";
     const normalizedRoles = String(roleRaw)
@@ -70,7 +74,9 @@ export default function UsersManagement() {
       try {
         setLoading(true);
         const rows = await adminUsersApi.getAll();
-        const normalized = Array.isArray(rows) ? rows.map(normalizeUserRow) : [];
+        const normalized = Array.isArray(rows)
+          ? rows.map(normalizeUserRow)
+          : [];
         setUsers(normalized);
       } catch (error) {
         console.error("Failed to load users:", error);
@@ -141,7 +147,9 @@ export default function UsersManagement() {
 
   const handleAssignRole = async (user) => {
     const nextRole = roleDrafts[user.id] || user.role || "USER";
-    if (String(nextRole).toUpperCase() === String(user.role || "").toUpperCase()) {
+    if (
+      String(nextRole).toUpperCase() === String(user.role || "").toUpperCase()
+    ) {
       toast.info("Role is unchanged");
       return;
     }
@@ -244,13 +252,19 @@ export default function UsersManagement() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="13" className="px-3 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan="13"
+                        className="px-3 py-8 text-center text-zinc-400"
+                      >
                         Loading users...
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan="13" className="px-3 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan="13"
+                        className="px-3 py-8 text-center text-zinc-400"
+                      >
                         No users found
                       </td>
                     </tr>
@@ -300,7 +314,9 @@ export default function UsersManagement() {
                           <div className="flex items-center gap-1.5">
                             <select
                               value={roleDrafts[user.id] || user.role || "USER"}
-                              onChange={(e) => handleRoleDraftChange(user.id, e.target.value)}
+                              onChange={(e) =>
+                                handleRoleDraftChange(user.id, e.target.value)
+                              }
                               className="bg-[#1e1e1e] border border-zinc-700/60 px-2 py-1 rounded text-white text-[10px] sm:text-xs focus:outline-none"
                             >
                               {ASSIGNABLE_ROLES.map((role) => (

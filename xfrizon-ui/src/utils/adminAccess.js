@@ -28,7 +28,9 @@ const ROLE_ALIAS = {
 const normalizeTokenList = (value) => {
   if (!value) return [];
   if (Array.isArray(value)) {
-    return value.map((token) => String(token).trim().toUpperCase()).filter(Boolean);
+    return value
+      .map((token) => String(token).trim().toUpperCase())
+      .filter(Boolean);
   }
   return String(value)
     .split(",")
@@ -37,7 +39,9 @@ const normalizeTokenList = (value) => {
 };
 
 export const normalizeRole = (role) => {
-  const normalized = String(role || "").trim().toUpperCase();
+  const normalized = String(role || "")
+    .trim()
+    .toUpperCase();
   return ROLE_ALIAS[normalized] || normalized;
 };
 
@@ -50,11 +54,13 @@ export const getUserRoles = (adminUser) => {
 };
 
 export const getUserPermissions = (adminUser) => {
-  const directPermissions = normalizeTokenList(adminUser?.permissions).map((p) =>
-    p.toLowerCase(),
+  const directPermissions = normalizeTokenList(adminUser?.permissions).map(
+    (p) => p.toLowerCase(),
   );
 
-  const inherited = getUserRoles(adminUser).flatMap((role) => ROLE_PERMISSIONS[role] || []);
+  const inherited = getUserRoles(adminUser).flatMap(
+    (role) => ROLE_PERMISSIONS[role] || [],
+  );
 
   const all = new Set([...inherited, ...directPermissions]);
   return [...all];
@@ -67,7 +73,9 @@ export const hasPermission = (adminUser, permission) => {
 };
 
 export const getRoutePermission = (pathname) => {
-  const entry = ROUTE_PERMISSIONS.find((item) => pathname.startsWith(item.path));
+  const entry = ROUTE_PERMISSIONS.find((item) =>
+    pathname.startsWith(item.path),
+  );
   return entry?.permission || null;
 };
 
@@ -83,7 +91,9 @@ export const getDefaultAdminPath = (adminUser) => {
     "/admin/blog-hero-blocks",
     "/admin/users",
   ];
-  const firstAllowed = candidates.find((path) => canAccessRoute(adminUser, path));
+  const firstAllowed = candidates.find((path) =>
+    canAccessRoute(adminUser, path),
+  );
   return firstAllowed || "/admin-login";
 };
 

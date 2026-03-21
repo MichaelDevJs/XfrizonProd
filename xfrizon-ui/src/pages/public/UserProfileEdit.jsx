@@ -108,7 +108,9 @@ export default function UserProfileEdit() {
     }
     if (import.meta.env.DEV) originCandidates.push("http://localhost:8081");
 
-    const candidates = [...new Set(originCandidates.map((o) => `${o}${endpoint}`))];
+    const candidates = [
+      ...new Set(originCandidates.map((o) => `${o}${endpoint}`)),
+    ];
     const token =
       localStorage.getItem("userToken") || localStorage.getItem("adminToken");
     let lastError = null;
@@ -119,12 +121,21 @@ export default function UserProfileEdit() {
         formDataToSend.append("file", file);
         const headers = { "Content-Type": "multipart/form-data" };
         if (token) headers.Authorization = `Bearer ${token}`;
-        const response = await axios.post(url, formDataToSend, { headers, timeout: 30000 });
+        const response = await axios.post(url, formDataToSend, {
+          headers,
+          timeout: 30000,
+        });
         if (response?.data?.url) return response.data.url;
       } catch (error) {
         lastError = error;
         const status = error?.response?.status;
-        if (status === 400 || status === 404 || status === 405 || (typeof status === "number" && status >= 500)) continue;
+        if (
+          status === 400 ||
+          status === 404 ||
+          status === 405 ||
+          (typeof status === "number" && status >= 500)
+        )
+          continue;
         throw error;
       }
     }
@@ -134,7 +145,10 @@ export default function UserProfileEdit() {
   const uploadProfilePhoto = async () => {
     if (!profilePhoto) return null;
     try {
-      return await postUploadWithFallback("/uploads/profile-photo", profilePhoto);
+      return await postUploadWithFallback(
+        "/uploads/profile-photo",
+        profilePhoto,
+      );
     } catch (error) {
       console.error("Photo upload failed:", error);
       throw new Error("Failed to upload profile photo");

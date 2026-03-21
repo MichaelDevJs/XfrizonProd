@@ -52,8 +52,8 @@ export default function CreateEvent() {
 
   const [flyer, setFlyer] = useState(null);
   const [flyerPreview, setFlyerPreview] = useState(null);
-  const [flyerInputMethod, setFlyerInputMethod] = useState('upload'); // 'upload' or 'url'
-  const [flyerUrl, setFlyerUrl] = useState('');
+  const [flyerInputMethod, setFlyerInputMethod] = useState("upload"); // 'upload' or 'url'
+  const [flyerUrl, setFlyerUrl] = useState("");
   const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
@@ -92,7 +92,10 @@ export default function CreateEvent() {
   const [genreInput, setGenreInput] = useState("");
 
   const getMinSaleEndTime = () => {
-    if (ticketInput.saleStart && isSameDay(ticketInput.saleStart, ticketInput.saleEnd)) {
+    if (
+      ticketInput.saleStart &&
+      isSameDay(ticketInput.saleStart, ticketInput.saleEnd)
+    ) {
       return ticketInput.saleStart;
     }
 
@@ -116,9 +119,10 @@ export default function CreateEvent() {
     setFlyerUrl(url);
     if (url) {
       // Update preview - add https:// if no protocol provided
-      const displayUrl = url.startsWith('http://') || url.startsWith('https://')
-        ? url
-        : `https://${url}`;
+      const displayUrl =
+        url.startsWith("http://") || url.startsWith("https://")
+          ? url
+          : `https://${url}`;
       setFlyerPreview(displayUrl);
       setFlyer(null); // Clear any uploaded file
     } else {
@@ -128,8 +132,8 @@ export default function CreateEvent() {
 
   const handleInputMethodChange = (method) => {
     setFlyerInputMethod(method);
-    if (method === 'upload') {
-      setFlyerUrl('');
+    if (method === "upload") {
+      setFlyerUrl("");
     } else {
       setFlyer(null);
     }
@@ -328,21 +332,23 @@ export default function CreateEvent() {
       };
 
       // Add flyerUrl to request if using external URL
-      const isExternalUrl = flyerUrl && flyerUrl.trim() && flyerInputMethod === 'url';
+      const isExternalUrl =
+        flyerUrl && flyerUrl.trim() && flyerInputMethod === "url";
       if (isExternalUrl) {
-        const urlToSave = flyerUrl.startsWith('http://') || flyerUrl.startsWith('https://')
-          ? flyerUrl
-          : `https://${flyerUrl}`;
+        const urlToSave =
+          flyerUrl.startsWith("http://") || flyerUrl.startsWith("https://")
+            ? flyerUrl
+            : `https://${flyerUrl}`;
         createEventRequest.flyerUrl = urlToSave;
-        console.log('Adding flyerUrl to create request:', urlToSave);
+        console.log("Adding flyerUrl to create request:", urlToSave);
       }
 
-      console.log('CreateEvent Save Debug:', {
+      console.log("CreateEvent Save Debug:", {
         hasFlyer: !!flyer,
         flyerUrl,
         isExternalUrl,
         flyerInputMethod,
-        willSendFlyerUrl: !!createEventRequest.flyerUrl
+        willSendFlyerUrl: !!createEventRequest.flyerUrl,
       });
 
       // Create event
@@ -352,7 +358,7 @@ export default function CreateEvent() {
       // Handle flyer file upload separately (if new file selected)
       if (flyer) {
         try {
-          console.log('Uploading new flyer file...');
+          console.log("Uploading new flyer file...");
           const formData = new FormData();
           formData.append("file", flyer);
           const flyerRes = await api.post(
@@ -365,10 +371,13 @@ export default function CreateEvent() {
             },
           );
           const uploadedFlyerUrl = flyerRes.data.url || flyerRes.data.flyerUrl;
-          console.log('Flyer upload response:', uploadedFlyerUrl);
+          console.log("Flyer upload response:", uploadedFlyerUrl);
           // Update event with the uploaded file URL
           if (uploadedFlyerUrl) {
-            await api.put(`/events/${eventId}`, { ...createEventRequest, flyerUrl: uploadedFlyerUrl });
+            await api.put(`/events/${eventId}`, {
+              ...createEventRequest,
+              flyerUrl: uploadedFlyerUrl,
+            });
             setFlyerPreview(getImageUrl(uploadedFlyerUrl));
           }
           toast.success("✨ Event created and flyer uploaded successfully!");
@@ -383,7 +392,7 @@ export default function CreateEvent() {
         }
       } else if (isExternalUrl) {
         // Preview was already updated when user input the URL
-        console.log('External URL saved with event creation');
+        console.log("External URL saved with event creation");
         setFlyerPreview(createEventRequest.flyerUrl);
         toast.success("✨ Event created with flyer URL successfully!");
       } else {
@@ -429,27 +438,27 @@ export default function CreateEvent() {
             <label className="block mb-3 font-light text-gray-200">
               Event Flyer (Optional)
             </label>
-            
+
             {/* Toggle between Upload and URL */}
             <div className="flex gap-2 mb-4">
               <button
                 type="button"
-                onClick={() => handleInputMethodChange('upload')}
+                onClick={() => handleInputMethodChange("upload")}
                 className={`flex-1 px-4 py-2 rounded-lg font-light text-sm transition-all duration-300 ${
-                  flyerInputMethod === 'upload'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
+                  flyerInputMethod === "upload"
+                    ? "bg-red-500 text-white"
+                    : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
                 }`}
               >
                 Upload File
               </button>
               <button
                 type="button"
-                onClick={() => handleInputMethodChange('url')}
+                onClick={() => handleInputMethodChange("url")}
                 className={`flex-1 px-4 py-2 rounded-lg font-light text-sm transition-all duration-300 ${
-                  flyerInputMethod === 'url'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
+                  flyerInputMethod === "url"
+                    ? "bg-red-500 text-white"
+                    : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
                 }`}
               >
                 Use URL
@@ -469,8 +478,8 @@ export default function CreateEvent() {
                   />
                 </div>
               )}
-              
-              {flyerInputMethod === 'upload' ? (
+
+              {flyerInputMethod === "upload" ? (
                 <>
                   <input
                     type="file"
@@ -484,7 +493,7 @@ export default function CreateEvent() {
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-light text-sm transition-all duration-300"
                   >
-                    {flyerPreview ? 'Change Flyer' : 'Upload Flyer'}
+                    {flyerPreview ? "Change Flyer" : "Upload Flyer"}
                   </button>
                 </>
               ) : (
@@ -797,7 +806,9 @@ export default function CreateEvent() {
               </div>
               <button
                 type="button"
-                onClick={() => setForm({ ...form, rsvpEnabled: !form.rsvpEnabled })}
+                onClick={() =>
+                  setForm({ ...form, rsvpEnabled: !form.rsvpEnabled })
+                }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
                   form.rsvpEnabled ? "bg-red-500" : "bg-zinc-700"
                 }`}
@@ -820,7 +831,9 @@ export default function CreateEvent() {
                     type="number"
                     min="1"
                     value={form.rsvpCapacity}
-                    onChange={(e) => setForm({ ...form, rsvpCapacity: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, rsvpCapacity: e.target.value })
+                    }
                     placeholder="e.g. 200"
                     className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-light focus:outline-none focus:border-red-500 text-sm"
                   />
@@ -835,22 +848,32 @@ export default function CreateEvent() {
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {["phone", "note"].map((field) => {
-                      const labels = { phone: "Phone number", note: "Message / note" };
+                      const labels = {
+                        phone: "Phone number",
+                        note: "Message / note",
+                      };
                       const checked = form.rsvpRequiredFields.includes(field);
                       return (
-                        <label key={field} className="flex items-center gap-2 cursor-pointer">
+                        <label
+                          key={field}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => {
                               const next = checked
-                                ? form.rsvpRequiredFields.filter((f) => f !== field)
+                                ? form.rsvpRequiredFields.filter(
+                                    (f) => f !== field,
+                                  )
                                 : [...form.rsvpRequiredFields, field];
                               setForm({ ...form, rsvpRequiredFields: next });
                             }}
                             className="accent-red-500 w-4 h-4"
                           />
-                          <span className="text-sm text-gray-300 font-light">{labels[field]}</span>
+                          <span className="text-sm text-gray-300 font-light">
+                            {labels[field]}
+                          </span>
                         </label>
                       );
                     })}
@@ -952,7 +975,7 @@ export default function CreateEvent() {
                 Sale end must be later than the selected sale start.
               </p>
             </div>
-            
+
             <button
               onClick={handleAddTicket}
               className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-light text-sm transition-all duration-300 flex items-center justify-center gap-2"
@@ -981,14 +1004,20 @@ export default function CreateEvent() {
                         {ticket.saleStart && (
                           <span>
                             Starts:{" "}
-                            {new Date(ticket.saleStart).toLocaleString("en-US", saleWindowDateFormat)}
+                            {new Date(ticket.saleStart).toLocaleString(
+                              "en-US",
+                              saleWindowDateFormat,
+                            )}
                           </span>
                         )}
                         {ticket.saleStart && ticket.saleEnd && " | "}
                         {ticket.saleEnd && (
                           <span>
                             Ends:{" "}
-                            {new Date(ticket.saleEnd).toLocaleString("en-US", saleWindowDateFormat)}
+                            {new Date(ticket.saleEnd).toLocaleString(
+                              "en-US",
+                              saleWindowDateFormat,
+                            )}
                           </span>
                         )}
                       </p>

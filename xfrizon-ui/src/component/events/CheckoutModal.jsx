@@ -10,10 +10,9 @@ import {
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLIC_KEY ||
-    "pk_test_51SIEM471m723f2Mbwbqt1GNNjqA4QLADkRVKVyVNembV7oR3m4LRTRs2lWaP4BlTO1HTosLkElXQZ7JkcqalcOkW00OEkhJxsB",
-);
+const STRIPE_PUBLIC_KEY =
+  (import.meta.env.VITE_STRIPE_PUBLIC_KEY || "").trim();
+const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) : null;
 
 // Currency symbol mapping
 const CURRENCY_SYMBOLS = {
@@ -71,6 +70,14 @@ function CheckoutForm({
       console.error("Stripe or elements not loaded");
       onError(
         "Payment system not ready. Please refresh the page and try again.",
+      );
+      return;
+    }
+
+    const paymentElement = elements.getElement(PaymentElement);
+    if (!paymentElement) {
+      onError(
+        "Payment form failed to load. Please refresh the page. If this persists, Stripe key configuration is likely mismatched.",
       );
       return;
     }
@@ -210,6 +217,21 @@ export default function CheckoutModal({
   const createPaymentIntent = async () => {
     try {
       setLoading(true);
+
+      if (!STRIPE_PUBLIC_KEY) {
+        throw new Error(
+          "Stripe is not configured. Missing VITE_STRIPE_PUBLIC_KEY.",
+        );
+      }
+
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      if (!isLocalhost && STRIPE_PUBLIC_KEY.startsWith("pk_test_")) {
+        throw new Error(
+          "Stripe publishable key is set to test mode in production. Set VITE_STRIPE_PUBLIC_KEY to your pk_live key and redeploy.",
+        );
+      }
 
       const userToken = localStorage.getItem("userToken");
       if (!userToken) {
@@ -407,7 +429,7 @@ export default function CheckoutModal({
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-400">Initializing payment...</div>
             </div>
-          ) : clientSecret ? (
+          ) : clientSecret && stripePromise ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
               <CheckoutForm
                 clientSecret={clientSecret}
@@ -419,6 +441,10 @@ export default function CheckoutModal({
                 onError={handlePaymentError}
               />
             </Elements>
+          ) : !stripePromise ? (
+            <div className="text-center py-8 text-red-500">
+              Stripe is not configured. Please contact support.
+            </div>
           ) : (
             <div className="text-center py-8 text-red-500">
               Failed to load payment form

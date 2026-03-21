@@ -54,7 +54,10 @@ export default function AdminRoute({ children }) {
         localStorage.setItem("adminUser", JSON.stringify(refreshedAdminUser));
 
         if (!cancelled) {
-          const hasAccess = canAccessRoute(refreshedAdminUser, location.pathname);
+          const hasAccess = canAccessRoute(
+            refreshedAdminUser,
+            location.pathname,
+          );
           setStatus(hasAccess ? "valid" : "invalid");
         }
       } catch {

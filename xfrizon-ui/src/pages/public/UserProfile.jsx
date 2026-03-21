@@ -77,7 +77,8 @@ export default function UserProfile() {
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       setError(
-        error?.response?.data?.message || "Unable to load this profile right now.",
+        error?.response?.data?.message ||
+          "Unable to load this profile right now.",
       );
       setUser(null);
     } finally {
@@ -131,7 +132,10 @@ export default function UserProfile() {
             <div className="h-24 w-24 overflow-hidden rounded-full bg-black shadow-2xl sm:h-28 sm:w-28 md:h-32 md:w-32">
               <img
                 src={userProfilePicture}
-                alt={`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Profile"}
+                alt={
+                  `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+                  "Profile"
+                }
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.src = "/assets/african-panther-dark.svg";
@@ -139,7 +143,8 @@ export default function UserProfile() {
               />
             </div>
             <p className="mt-2 text-xs sm:text-sm font-medium text-white text-center drop-shadow-md max-w-32 truncate">
-              {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "User"}
+              {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+                "User"}
             </p>
           </div>
         </div>
@@ -186,23 +191,37 @@ export default function UserProfile() {
             {activeTab === "overview" && (
               <div className="max-w-2xl mx-auto text-left border border-zinc-800 bg-zinc-950/60 px-4 py-4 sm:px-5 sm:py-5 space-y-3">
                 <div>
-                  <p className="text-[10px] text-zinc-500 tracking-[0.08em]">Name</p>
+                  <p className="text-[10px] text-zinc-500 tracking-[0.08em]">
+                    Name
+                  </p>
                   <p className="text-sm text-zinc-200 font-light">
-                    {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "User"}
+                    {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+                      "User"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-[10px] text-zinc-500 tracking-[0.08em]">Location</p>
+                  <p className="text-[10px] text-zinc-500 tracking-[0.08em]">
+                    Location
+                  </p>
                   <p className="text-sm text-zinc-200 font-light inline-flex items-center gap-2">
                     {countryText ? (
-                      <><span className="text-base leading-none">{countryToFlag(countryText)}</span> {countryText}</>
-                    ) : "- -"}
+                      <>
+                        <span className="text-base leading-none">
+                          {countryToFlag(countryText)}
+                        </span>{" "}
+                        {countryText}
+                      </>
+                    ) : (
+                      "- -"
+                    )}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-[10px] text-zinc-500 tracking-[0.08em]">Bio</p>
+                  <p className="text-[10px] text-zinc-500 tracking-[0.08em]">
+                    Bio
+                  </p>
                   <p className="text-sm text-zinc-200 font-light whitespace-pre-wrap leading-6">
                     {user?.bio || "No bio yet."}
                   </p>
@@ -214,11 +233,15 @@ export default function UserProfile() {
               <div className="mt-2 max-w-2xl mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-light tracking-[0.02em] text-gray-200/90">
                 {socialLinks.map(({ id, href, Icon, label }, index) => (
                   <span key={id} className="inline-flex items-center gap-2">
-                    {index > 0 ? <span className="text-gray-500">|</span> : null}
+                    {index > 0 ? (
+                      <span className="text-gray-500">|</span>
+                    ) : null}
                     <a
                       href={href}
                       target={href.startsWith("mailto:") ? undefined : "_blank"}
-                      rel={href.startsWith("mailto:") ? undefined : "noreferrer"}
+                      rel={
+                        href.startsWith("mailto:") ? undefined : "noreferrer"
+                      }
                       className="inline-flex items-center gap-1 hover:text-white transition-colors"
                     >
                       <Icon size={12} /> {label}
@@ -253,48 +276,187 @@ export default function UserProfile() {
 // Extract the last comma-separated segment as country from a "City, Country" string
 function extractCountry(locationStr) {
   if (!locationStr) return null;
-  const parts = String(locationStr).split(",").map((s) => s.trim()).filter(Boolean);
+  const parts = String(locationStr)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   return parts.length > 1 ? parts[parts.length - 1] : parts[0] || null;
 }
 
 // Map country name to flag emoji via ISO 3166-1 alpha-2 regional indicators
 const COUNTRY_CODES = {
-  Afghanistan:"AF",Albania:"AL",Algeria:"DZ",Andorra:"AD",Angola:"AO",
-  Argentina:"AR",Armenia:"AM",Australia:"AU",Austria:"AT",Azerbaijan:"AZ",
-  Bahamas:"BS",Bahrain:"BH",Bangladesh:"BD",Belarus:"BY",Belgium:"BE",
-  Belize:"BZ",Benin:"BJ",Bhutan:"BT",Bolivia:"BO","Bosnia and Herzegovina":"BA",
-  Botswana:"BW",Brazil:"BR",Brunei:"BN",Bulgaria:"BG","Burkina Faso":"BF",
-  Burundi:"BI",Cambodia:"KH",Cameroon:"CM",Canada:"CA","Cape Verde":"CV",
-  Chad:"TD",Chile:"CL",China:"CN",Colombia:"CO",Comoros:"KM",
-  Congo:"CG","Costa Rica":"CR",Croatia:"HR",Cuba:"CU",Cyprus:"CY",
-  Czechia:"CZ","Czech Republic":"CZ",Denmark:"DK",Djibouti:"DJ",
-  "Dominican Republic":"DO",Ecuador:"EC",Egypt:"EG","El Salvador":"SV",
-  Eritrea:"ER",Estonia:"EE",Eswatini:"SZ",Ethiopia:"ET",Fiji:"FJ",
-  Finland:"FI",France:"FR",Gabon:"GA",Gambia:"GM",Georgia:"GE",
-  Germany:"DE",Ghana:"GH",Greece:"GR",Guatemala:"GT",Guinea:"GN",
-  Guyana:"GY",Haiti:"HT",Honduras:"HN",Hungary:"HU",Iceland:"IS",
-  India:"IN",Indonesia:"ID",Iran:"IR",Iraq:"IQ",Ireland:"IE",
-  Israel:"IL",Italy:"IT",Jamaica:"JM",Japan:"JP",Jordan:"JO",
-  Kazakhstan:"KZ",Kenya:"KE",Kosovo:"XK",Kuwait:"KW",Kyrgyzstan:"KG",
-  Laos:"LA",Latvia:"LV",Lebanon:"LB",Lesotho:"LS",Liberia:"LR",
-  Libya:"LY",Liechtenstein:"LI",Lithuania:"LT",Luxembourg:"LU",
-  Madagascar:"MG",Malawi:"MW",Malaysia:"MY",Maldives:"MV",Mali:"ML",
-  Malta:"MT",Mauritania:"MR",Mauritius:"MU",Mexico:"MX",Moldova:"MD",
-  Monaco:"MC",Mongolia:"MN",Montenegro:"ME",Morocco:"MA",Mozambique:"MZ",
-  Myanmar:"MM",Namibia:"NA",Nepal:"NP",Netherlands:"NL","New Zealand":"NZ",
-  Nicaragua:"NI",Niger:"NE",Nigeria:"NG","North Korea":"KP","North Macedonia":"MK",
-  Norway:"NO",Oman:"OM",Pakistan:"PK",Panama:"PA",Paraguay:"PY",
-  Peru:"PE",Philippines:"PH",Poland:"PL",Portugal:"PT",Qatar:"QA",
-  Romania:"RO",Russia:"RU",Rwanda:"RW","Saudi Arabia":"SA",Senegal:"SN",
-  Serbia:"RS","Sierra Leone":"SL",Singapore:"SG",Slovakia:"SK",Slovenia:"SI",
-  Somalia:"SO","South Africa":"ZA","South Korea":"KR","South Sudan":"SS",
-  Spain:"ES","Sri Lanka":"LK",Sudan:"SD",Suriname:"SR",Sweden:"SE",
-  Switzerland:"CH",Syria:"SY",Taiwan:"TW",Tajikistan:"TJ",Tanzania:"TZ",
-  Thailand:"TH",Togo:"TG","Trinidad and Tobago":"TT",Tunisia:"TN",
-  Turkey:"TR",Turkmenistan:"TM",Uganda:"UG",Ukraine:"UA",
-  "United Arab Emirates":"AE",UAE:"AE","United Kingdom":"GB",UK:"GB",
-  "United States":"US",USA:"US",Uruguay:"UY",Uzbekistan:"UZ",
-  Venezuela:"VE",Vietnam:"VN",Yemen:"YE",Zambia:"ZM",Zimbabwe:"ZW",
+  Afghanistan: "AF",
+  Albania: "AL",
+  Algeria: "DZ",
+  Andorra: "AD",
+  Angola: "AO",
+  Argentina: "AR",
+  Armenia: "AM",
+  Australia: "AU",
+  Austria: "AT",
+  Azerbaijan: "AZ",
+  Bahamas: "BS",
+  Bahrain: "BH",
+  Bangladesh: "BD",
+  Belarus: "BY",
+  Belgium: "BE",
+  Belize: "BZ",
+  Benin: "BJ",
+  Bhutan: "BT",
+  Bolivia: "BO",
+  "Bosnia and Herzegovina": "BA",
+  Botswana: "BW",
+  Brazil: "BR",
+  Brunei: "BN",
+  Bulgaria: "BG",
+  "Burkina Faso": "BF",
+  Burundi: "BI",
+  Cambodia: "KH",
+  Cameroon: "CM",
+  Canada: "CA",
+  "Cape Verde": "CV",
+  Chad: "TD",
+  Chile: "CL",
+  China: "CN",
+  Colombia: "CO",
+  Comoros: "KM",
+  Congo: "CG",
+  "Costa Rica": "CR",
+  Croatia: "HR",
+  Cuba: "CU",
+  Cyprus: "CY",
+  Czechia: "CZ",
+  "Czech Republic": "CZ",
+  Denmark: "DK",
+  Djibouti: "DJ",
+  "Dominican Republic": "DO",
+  Ecuador: "EC",
+  Egypt: "EG",
+  "El Salvador": "SV",
+  Eritrea: "ER",
+  Estonia: "EE",
+  Eswatini: "SZ",
+  Ethiopia: "ET",
+  Fiji: "FJ",
+  Finland: "FI",
+  France: "FR",
+  Gabon: "GA",
+  Gambia: "GM",
+  Georgia: "GE",
+  Germany: "DE",
+  Ghana: "GH",
+  Greece: "GR",
+  Guatemala: "GT",
+  Guinea: "GN",
+  Guyana: "GY",
+  Haiti: "HT",
+  Honduras: "HN",
+  Hungary: "HU",
+  Iceland: "IS",
+  India: "IN",
+  Indonesia: "ID",
+  Iran: "IR",
+  Iraq: "IQ",
+  Ireland: "IE",
+  Israel: "IL",
+  Italy: "IT",
+  Jamaica: "JM",
+  Japan: "JP",
+  Jordan: "JO",
+  Kazakhstan: "KZ",
+  Kenya: "KE",
+  Kosovo: "XK",
+  Kuwait: "KW",
+  Kyrgyzstan: "KG",
+  Laos: "LA",
+  Latvia: "LV",
+  Lebanon: "LB",
+  Lesotho: "LS",
+  Liberia: "LR",
+  Libya: "LY",
+  Liechtenstein: "LI",
+  Lithuania: "LT",
+  Luxembourg: "LU",
+  Madagascar: "MG",
+  Malawi: "MW",
+  Malaysia: "MY",
+  Maldives: "MV",
+  Mali: "ML",
+  Malta: "MT",
+  Mauritania: "MR",
+  Mauritius: "MU",
+  Mexico: "MX",
+  Moldova: "MD",
+  Monaco: "MC",
+  Mongolia: "MN",
+  Montenegro: "ME",
+  Morocco: "MA",
+  Mozambique: "MZ",
+  Myanmar: "MM",
+  Namibia: "NA",
+  Nepal: "NP",
+  Netherlands: "NL",
+  "New Zealand": "NZ",
+  Nicaragua: "NI",
+  Niger: "NE",
+  Nigeria: "NG",
+  "North Korea": "KP",
+  "North Macedonia": "MK",
+  Norway: "NO",
+  Oman: "OM",
+  Pakistan: "PK",
+  Panama: "PA",
+  Paraguay: "PY",
+  Peru: "PE",
+  Philippines: "PH",
+  Poland: "PL",
+  Portugal: "PT",
+  Qatar: "QA",
+  Romania: "RO",
+  Russia: "RU",
+  Rwanda: "RW",
+  "Saudi Arabia": "SA",
+  Senegal: "SN",
+  Serbia: "RS",
+  "Sierra Leone": "SL",
+  Singapore: "SG",
+  Slovakia: "SK",
+  Slovenia: "SI",
+  Somalia: "SO",
+  "South Africa": "ZA",
+  "South Korea": "KR",
+  "South Sudan": "SS",
+  Spain: "ES",
+  "Sri Lanka": "LK",
+  Sudan: "SD",
+  Suriname: "SR",
+  Sweden: "SE",
+  Switzerland: "CH",
+  Syria: "SY",
+  Taiwan: "TW",
+  Tajikistan: "TJ",
+  Tanzania: "TZ",
+  Thailand: "TH",
+  Togo: "TG",
+  "Trinidad and Tobago": "TT",
+  Tunisia: "TN",
+  Turkey: "TR",
+  Turkmenistan: "TM",
+  Uganda: "UG",
+  Ukraine: "UA",
+  "United Arab Emirates": "AE",
+  UAE: "AE",
+  "United Kingdom": "GB",
+  UK: "GB",
+  "United States": "US",
+  USA: "US",
+  Uruguay: "UY",
+  Uzbekistan: "UZ",
+  Venezuela: "VE",
+  Vietnam: "VN",
+  Yemen: "YE",
+  Zambia: "ZM",
+  Zimbabwe: "ZW",
 };
 
 function countryToFlag(country) {

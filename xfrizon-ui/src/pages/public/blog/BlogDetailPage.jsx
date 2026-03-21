@@ -16,6 +16,7 @@ import { LuSendHorizontal } from "react-icons/lu";
 import blogApi from "../../../api/blogApi";
 import useSeo from "../../../hooks/useSeo";
 import { getSiteBaseUrl, toAbsoluteSiteUrl } from "../../../utils/siteUrl";
+import { renderRichText } from "../../admin/blog/utils/blockHelpers";
 
 function ReplyBlock({
   commentId,
@@ -124,71 +125,6 @@ export default function BlogDetailPage() {
     typeof safeBlog.titleStyle === "object" && safeBlog.titleStyle !== null
       ? safeBlog.titleStyle
       : {};
-
-  const renderTextWithLinks = (text) => {
-    const content = String(text || "");
-    const nodes = [];
-    const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-    let cursor = 0;
-    let match;
-
-    while ((match = markdownLinkRegex.exec(content)) !== null) {
-      const [raw, label, url] = match;
-      const start = match.index;
-
-      if (start > cursor) {
-        nodes.push(content.slice(cursor, start));
-      }
-
-      nodes.push(
-        <a
-          key={`md-link-${start}-${url}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-red-300 hover:text-red-200 underline underline-offset-2"
-        >
-          {label}
-        </a>,
-      );
-
-      cursor = start + raw.length;
-    }
-
-    const remainder = content.slice(cursor);
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    let remainderCursor = 0;
-    let urlMatch;
-
-    while ((urlMatch = urlRegex.exec(remainder)) !== null) {
-      const [url] = urlMatch;
-      const start = urlMatch.index;
-
-      if (start > remainderCursor) {
-        nodes.push(remainder.slice(remainderCursor, start));
-      }
-
-      nodes.push(
-        <a
-          key={`url-link-${start}-${url}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-red-300 hover:text-red-200 underline underline-offset-2"
-        >
-          {url}
-        </a>,
-      );
-
-      remainderCursor = start + url.length;
-    }
-
-    if (remainderCursor < remainder.length) {
-      nodes.push(remainder.slice(remainderCursor));
-    }
-
-    return nodes.length > 0 ? nodes : content;
-  };
 
   // Log blog data for debugging
   if (
@@ -1034,9 +970,18 @@ export default function BlogDetailPage() {
         case "text":
           return (
             <div key={`text-${index}`} className="mb-6">
-              <p
-                className="text-gray-300 leading-relaxed whitespace-pre-wrap"
-                style={{
+              {renderRichText(block.content, {
+                paragraphClassName: "mb-4 leading-relaxed text-gray-300",
+                heading1ClassName:
+                  "mt-8 mb-4 text-4xl font-semibold tracking-tight text-white",
+                heading2ClassName:
+                  "mt-7 mb-4 text-3xl font-semibold tracking-tight text-white",
+                heading3ClassName:
+                  "mt-6 mb-3 text-2xl font-semibold tracking-tight text-zinc-100",
+                bulletClassName: "ml-6 list-disc text-gray-300 leading-relaxed",
+                linkClassName:
+                  "text-red-300 hover:text-red-200 underline underline-offset-2",
+                textStyle: {
                   fontFamily:
                     block.style?.fontFamily ||
                     "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
@@ -1048,10 +993,8 @@ export default function BlogDetailPage() {
                     block.style?.opacity !== undefined
                       ? block.style.opacity
                       : 1,
-                }}
-              >
-                {renderTextWithLinks(block.content)}
-              </p>
+                },
+              })}
             </div>
           );
         case "image":

@@ -76,7 +76,9 @@ export default function AdminLogin() {
           ? `${from.pathname}${from.search || ""}${from.hash || ""}`
           : null;
         const isFromLogin = from?.pathname === "/admin-login";
-        const isAdminFromPath = String(from?.pathname || "").startsWith("/admin");
+        const isAdminFromPath = String(from?.pathname || "").startsWith(
+          "/admin",
+        );
 
         const defaultPath = getDefaultAdminPath(adminUserData);
         navigate(
@@ -173,7 +175,9 @@ export default function AdminLogin() {
 
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 border-t border-zinc-800" />
-            <span className="text-[10px] text-zinc-500 uppercase tracking-[0.16em]">or</span>
+            <span className="text-[10px] text-zinc-500 uppercase tracking-[0.16em]">
+              or
+            </span>
             <div className="flex-1 border-t border-zinc-800" />
           </div>
 

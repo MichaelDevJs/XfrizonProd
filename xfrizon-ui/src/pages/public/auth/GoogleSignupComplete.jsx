@@ -26,13 +26,18 @@ export default function GoogleSignupComplete() {
   const location = useLocation();
   const { applyAuthSession } = useContext(AuthContext);
 
-  const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const query = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
 
   const [formData, setFormData] = useState({
     firstName: query.get("firstName") || "",
     lastName: query.get("lastName") || "",
     email: query.get("email") || "",
-    accountType: normalizeAccountType(query.get("accountType") || query.get("role")),
+    accountType: normalizeAccountType(
+      query.get("accountType") || query.get("role"),
+    ),
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -67,7 +72,8 @@ export default function GoogleSignupComplete() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    const nextValue = name === "accountType" ? normalizeAccountType(value) : value;
+    const nextValue =
+      name === "accountType" ? normalizeAccountType(value) : value;
 
     setFormData((prev) => ({
       ...prev,
@@ -151,7 +157,9 @@ export default function GoogleSignupComplete() {
         localStorage.removeItem("pendingAdminGoogleLogin");
         localStorage.removeItem("userToken");
         localStorage.removeItem("user");
-        toast.error("Admin Google sign-in requires an existing role-assigned account.");
+        toast.error(
+          "Admin Google sign-in requires an existing role-assigned account.",
+        );
         navigate("/admin-login", { replace: true });
         return;
       }
@@ -262,7 +270,9 @@ export default function GoogleSignupComplete() {
     <div className="bg-black text-white min-h-screen flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-light text-gray-300">Complete Sign Up</h2>
+          <h2 className="text-2xl font-light text-gray-300">
+            Complete Sign Up
+          </h2>
           <p className="text-sm text-gray-500 font-light mt-2">
             Confirm your details to finish creating your Google account.
           </p>
@@ -270,7 +280,10 @@ export default function GoogleSignupComplete() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="accountType" className="block text-xs font-light text-gray-400 mb-2">
+            <label
+              htmlFor="accountType"
+              className="block text-xs font-light text-gray-400 mb-2"
+            >
               Account Type
             </label>
             <select
@@ -286,7 +299,10 @@ export default function GoogleSignupComplete() {
           </div>
 
           <div>
-            <label htmlFor="firstName" className="block text-xs font-light text-gray-400 mb-2">
+            <label
+              htmlFor="firstName"
+              className="block text-xs font-light text-gray-400 mb-2"
+            >
               First Name
             </label>
             <input
@@ -297,11 +313,16 @@ export default function GoogleSignupComplete() {
               onChange={handleChange}
               className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
             />
-            {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
+            {errors.firstName && (
+              <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="lastName" className="block text-xs font-light text-gray-400 mb-2">
+            <label
+              htmlFor="lastName"
+              className="block text-xs font-light text-gray-400 mb-2"
+            >
               Last Name
             </label>
             <input
@@ -312,11 +333,16 @@ export default function GoogleSignupComplete() {
               onChange={handleChange}
               className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
             />
-            {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
+            {errors.lastName && (
+              <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-xs font-light text-gray-400 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-xs font-light text-gray-400 mb-2"
+            >
               Email Address
             </label>
             <input
@@ -327,7 +353,9 @@ export default function GoogleSignupComplete() {
               onChange={handleChange}
               className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white font-light text-sm focus:outline-none focus:border-red-500"
             />
-            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+            )}
           </div>
 
           <button
@@ -340,7 +368,10 @@ export default function GoogleSignupComplete() {
         </form>
 
         <div className="text-center mt-5">
-          <Link to="/auth/login" className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+          <Link
+            to="/auth/login"
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+          >
             Back to Login
           </Link>
         </div>

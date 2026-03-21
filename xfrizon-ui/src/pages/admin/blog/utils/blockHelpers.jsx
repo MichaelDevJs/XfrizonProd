@@ -1,5 +1,237 @@
+import React from "react";
+
 // Block helper functions for blog editor
 import { toast } from "react-toastify";
+
+const INLINE_COLOR_REGEX = /\[color=([^\]]+)\]([\s\S]+?)\[\/color\]/;
+const MARKDOWN_LINK_REGEX = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/;
+const BOLD_REGEX = /\*\*([^*][\s\S]*?)\*\*/;
+const ITALIC_UNDERSCORE_REGEX = /_([^_][\s\S]*?)_/;
+const ITALIC_ASTERISK_REGEX = /\*([^*][\s\S]*?)\*/;
+const BARE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
+const isSafeColorValue = (value) => {
+  const candidate = String(value || "").trim();
+  return (
+    /^#[0-9a-f]{3,8}$/i.test(candidate) ||
+    /^rgb(a)?\([^)]*\)$/i.test(candidate) ||
+    /^[a-z]+$/i.test(candidate)
+  );
+};
+
+const wrapPlainTextUrls = (text, linkClassName, keyPrefix) => {
+  const content = String(text || "");
+  if (!content) return "";
+
+  const nodes = [];
+  let cursor = 0;
+  let match;
+
+  while ((match = BARE_URL_REGEX.exec(content)) !== null) {
+    const [url] = match;
+    const start = match.index;
+
+    if (start > cursor) {
+      nodes.push(content.slice(cursor, start));
+    }
+
+    nodes.push(
+      <a
+        key={`${keyPrefix}-url-${start}`}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClassName}
+      >
+        {url}
+      </a>,
+    );
+
+    cursor = start + url.length;
+  }
+
+  if (cursor < content.length) {
+    nodes.push(content.slice(cursor));
+  }
+
+  return nodes.length > 0 ? nodes : content;
+};
+
+const renderInlineNodes = (text, options, keyPrefix = "inline") => {
+  const content = String(text || "");
+  if (!content) return "";
+
+  const patterns = [
+    {
+      regex: INLINE_COLOR_REGEX,
+      render: (match, children, key) => {
+        const colorValue = String(match[1] || "").trim();
+        return (
+          <span
+            key={key}
+            style={isSafeColorValue(colorValue) ? { color: colorValue } : {}}
+          >
+            {children}
+          </span>
+        );
+      },
+    },
+    {
+      regex: MARKDOWN_LINK_REGEX,
+      render: (match, _children, key) => (
+        <a
+          key={key}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={options.linkClassName}
+        >
+          {match[1]}
+        </a>
+      ),
+    },
+    {
+      regex: BOLD_REGEX,
+      render: (_match, children, key) => <strong key={key}>{children}</strong>,
+    },
+    {
+      regex: ITALIC_UNDERSCORE_REGEX,
+      render: (_match, children, key) => <em key={key}>{children}</em>,
+    },
+    {
+      regex: ITALIC_ASTERISK_REGEX,
+      render: (_match, children, key) => <em key={key}>{children}</em>,
+    },
+  ];
+
+  let earliestMatch = null;
+  let selectedPattern = null;
+
+  patterns.forEach((pattern) => {
+    const match = pattern.regex.exec(content);
+    if (!match) return;
+
+    if (!earliestMatch || match.index < earliestMatch.index) {
+      earliestMatch = match;
+      selectedPattern = pattern;
+    }
+  });
+
+  if (!earliestMatch || !selectedPattern) {
+    return wrapPlainTextUrls(content, options.linkClassName, keyPrefix);
+  }
+
+  const before = content.slice(0, earliestMatch.index);
+  const raw = earliestMatch[0];
+  const innerText =
+    selectedPattern.regex === MARKDOWN_LINK_REGEX
+      ? ""
+      : selectedPattern.regex === INLINE_COLOR_REGEX
+        ? earliestMatch[2]
+        : earliestMatch[1];
+  const after = content.slice(earliestMatch.index + raw.length);
+  const nodes = [];
+
+  if (before) {
+    nodes.push(
+      <React.Fragment key={`${keyPrefix}-before-${earliestMatch.index}`}>
+        {renderInlineNodes(before, options, `${keyPrefix}-before`)}
+      </React.Fragment>,
+    );
+  }
+
+  const children = innerText
+    ? renderInlineNodes(innerText, options, `${keyPrefix}-inner-${earliestMatch.index}`)
+    : null;
+
+  nodes.push(
+    selectedPattern.render(
+      earliestMatch,
+      children,
+      `${keyPrefix}-match-${earliestMatch.index}`,
+    ),
+  );
+
+  if (after) {
+    nodes.push(
+      <React.Fragment key={`${keyPrefix}-after-${earliestMatch.index}`}>
+        {renderInlineNodes(after, options, `${keyPrefix}-after`)}
+      </React.Fragment>,
+    );
+  }
+
+  return nodes;
+};
+
+export const renderRichText = (content, options = {}) => {
+  const settings = {
+    paragraphClassName: "mb-2",
+    heading1ClassName: "text-3xl font-bold mt-6 mb-3",
+    heading2ClassName: "text-2xl font-bold mt-5 mb-3",
+    heading3ClassName: "text-xl font-semibold mt-4 mb-2",
+    bulletClassName: "ml-5 list-disc",
+    linkClassName: "text-blue-400 underline underline-offset-2",
+    wrapperClassName: "",
+    textStyle: {},
+    ...options,
+  };
+
+  const lines = String(content || "").split("\n");
+
+  return (
+    <div className={settings.wrapperClassName} style={settings.textStyle}>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          return <div key={`line-${idx}`} className="h-4" />;
+        }
+
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h3 key={`line-${idx}`} className={settings.heading3ClassName}>
+              {renderInlineNodes(trimmed.slice(4), settings, `h3-${idx}`)}
+            </h3>
+          );
+        }
+
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h2 key={`line-${idx}`} className={settings.heading2ClassName}>
+              {renderInlineNodes(trimmed.slice(3), settings, `h2-${idx}`)}
+            </h2>
+          );
+        }
+
+        if (trimmed.startsWith("# ")) {
+          return (
+            <h1 key={`line-${idx}`} className={settings.heading1ClassName}>
+              {renderInlineNodes(trimmed.slice(2), settings, `h1-${idx}`)}
+            </h1>
+          );
+        }
+
+        if (
+          trimmed.startsWith("- ") ||
+          trimmed.startsWith("* ") ||
+          trimmed.startsWith("• ")
+        ) {
+          return (
+            <ul key={`line-${idx}`} className={settings.bulletClassName}>
+              <li>{renderInlineNodes(trimmed.slice(2), settings, `li-${idx}`)}</li>
+            </ul>
+          );
+        }
+
+        return (
+          <p key={`line-${idx}`} className={settings.paragraphClassName}>
+            {renderInlineNodes(line, settings, `p-${idx}`)}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
 
 export const initializeBlocks = (blog) => {
   if (blog?.blocks) {
@@ -111,20 +343,28 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
   const start = textarea.selectionStart;
   const end = textarea.selectionEnd;
   const selectedText = block.content.substring(start, end);
-  let formattedText = selectedText;
+  const fallbackSelection = selectedText || "Your text";
+  let formattedText = fallbackSelection;
 
   switch (format) {
     case "bold":
-      formattedText = `**${selectedText}**`;
+      formattedText = `**${fallbackSelection}**`;
       break;
     case "italic":
-      formattedText = `_${selectedText}_`;
+      formattedText = `_${fallbackSelection}_`;
       break;
     case "heading":
-      formattedText = `\n# ${selectedText}\n`;
+    case "heading1":
+      formattedText = `# ${fallbackSelection}`;
+      break;
+    case "heading2":
+      formattedText = `## ${fallbackSelection}`;
+      break;
+    case "heading3":
+      formattedText = `### ${fallbackSelection}`;
       break;
     case "bullet":
-      formattedText = `\n• ${selectedText}\n`;
+      formattedText = `- ${fallbackSelection}`;
       break;
     case "link": {
       const url = window.prompt("Enter URL", "https://");
@@ -135,6 +375,15 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
         window.prompt("Enter link text (display name)", "") ||
         "Link";
       formattedText = `[${linkLabel}](${url.trim()})`;
+      break;
+    }
+    case "color": {
+      const color = window.prompt(
+        "Enter text color (hex or CSS color)",
+        "#ef4444",
+      );
+      if (!color) return;
+      formattedText = `[color=${color.trim()}]${fallbackSelection}[/color]`;
       break;
     }
     default:
@@ -149,103 +398,22 @@ export const applyFormat = (blockId, format, formData, setFormData) => {
 };
 
 export const renderBlockPreview = (block) => {
-  const renderLineWithLinks = (line) => {
-    const nodes = [];
-    const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-    let cursor = 0;
-    let match;
-
-    while ((match = markdownLinkRegex.exec(line)) !== null) {
-      const [raw, label, url] = match;
-      const start = match.index;
-
-      if (start > cursor) {
-        nodes.push(line.slice(cursor, start));
-      }
-
-      nodes.push(
-        <a
-          key={`md-link-${start}-${url}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-400 underline underline-offset-2"
-        >
-          {label}
-        </a>,
-      );
-
-      cursor = start + raw.length;
-    }
-
-    const remainder = line.slice(cursor);
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    let remainderCursor = 0;
-    let urlMatch;
-
-    while ((urlMatch = urlRegex.exec(remainder)) !== null) {
-      const [url] = urlMatch;
-      const start = urlMatch.index;
-
-      if (start > remainderCursor) {
-        nodes.push(remainder.slice(remainderCursor, start));
-      }
-
-      nodes.push(
-        <a
-          key={`url-link-${start}-${url}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-400 underline underline-offset-2"
-        >
-          {url}
-        </a>,
-      );
-
-      remainderCursor = start + url.length;
-    }
-
-    if (remainderCursor < remainder.length) {
-      nodes.push(remainder.slice(remainderCursor));
-    }
-
-    return nodes.length > 0 ? nodes : line;
-  };
-
   if (block.type === "text") {
-    return block.content.split("\n").map((line, idx) => {
-      if (line.startsWith("# "))
-        return (
-          <h2 key={idx} className="text-2xl font-bold mt-4 mb-2">
-            {line.substring(2)}
-          </h2>
-        );
-      if (line.startsWith("• "))
-        return (
-          <li key={idx} className="ml-4 list-disc">
-            {line.substring(2)}
-          </li>
-        );
-      if (line.startsWith("**") && line.endsWith("**"))
-        return (
-          <p key={idx} className="font-bold">
-            {line.substring(2, line.length - 2)}
-          </p>
-        );
-      if (line.startsWith("_") && line.endsWith("_"))
-        return (
-          <p key={idx} className="italic">
-            {line.substring(1, line.length - 1)}
-          </p>
-        );
-      if (line.trim())
-        return (
-          <p key={idx} className="mb-2">
-            {renderLineWithLinks(line)}
-          </p>
-        );
-      return <br key={idx} />;
+    return renderRichText(block.content, {
+      paragraphClassName: "mb-2",
+      heading1ClassName: "text-3xl font-bold mt-5 mb-3",
+      heading2ClassName: "text-2xl font-bold mt-4 mb-2",
+      heading3ClassName: "text-xl font-semibold mt-4 mb-2",
+      bulletClassName: "ml-4 list-disc",
+      linkClassName: "text-blue-400 underline underline-offset-2",
+      textStyle: {
+        fontFamily: block.style?.fontFamily || "inherit",
+        fontSize: block.style?.fontSize
+          ? `${block.style.fontSize}px`
+          : undefined,
+        color: block.style?.color || undefined,
+        opacity: block.style?.opacity !== undefined ? block.style.opacity : 1,
+      },
     });
   } else if (block.type === "image") {
     return (

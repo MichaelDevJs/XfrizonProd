@@ -30,7 +30,10 @@ export default function AdminGoogleComplete() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const query = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
 
   useEffect(() => {
     const finalizeAdminGoogleLogin = async () => {
@@ -45,7 +48,9 @@ export default function AdminGoogleComplete() {
         clearPendingMarkers();
         clearAdminSession();
         clearUserSession();
-        toast.error("Admin Google sign-in requires an existing role-assigned account.");
+        toast.error(
+          "Admin Google sign-in requires an existing role-assigned account.",
+        );
         navigate("/admin-login", { replace: true });
         return;
       }

@@ -26,11 +26,25 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
           I
         </button>
         <button
-          onClick={() => applyFormat(block.id, "heading")}
+          onClick={() => applyFormat(block.id, "heading1")}
           className="px-3 py-2 bg-[#444] border border-[#555] rounded hover:bg-[#555] font-bold text-sm text-gray-200 transition"
-          title="Heading"
+          title="Heading 1"
         >
-          H#
+          H1
+        </button>
+        <button
+          onClick={() => applyFormat(block.id, "heading2")}
+          className="px-3 py-2 bg-[#444] border border-[#555] rounded hover:bg-[#555] font-bold text-sm text-gray-200 transition"
+          title="Heading 2"
+        >
+          H2
+        </button>
+        <button
+          onClick={() => applyFormat(block.id, "heading3")}
+          className="px-3 py-2 bg-[#444] border border-[#555] rounded hover:bg-[#555] font-bold text-sm text-gray-200 transition"
+          title="Heading 3"
+        >
+          H3
         </button>
         <button
           onClick={() => applyFormat(block.id, "bullet")}
@@ -46,6 +60,17 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
         >
           Link
         </button>
+        <button
+          onClick={() => applyFormat(block.id, "color")}
+          className="px-3 py-2 bg-[#444] border border-[#555] rounded hover:bg-[#555] text-sm text-gray-200 transition"
+          title="Apply color to selected text"
+        >
+          Color
+        </button>
+      </div>
+
+      <div className="rounded-lg border border-zinc-800 bg-[#262626] px-3 py-2 text-[11px] text-zinc-400">
+        Select text, then apply formatting. Supported styles include inline bold, italic, links, H1-H3 headings, bullets, and color tags.
       </div>
 
       <textarea

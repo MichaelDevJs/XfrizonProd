@@ -407,10 +407,13 @@ const Header = () => {
                               organizer?.firstName?.charAt(0)?.toUpperCase()
                             : isPartnerUser
                               ? organizer?.name?.charAt(0)?.toUpperCase() ||
-                                organizer?.firstName?.charAt(0)?.toUpperCase() ||
+                                organizer?.firstName
+                                  ?.charAt(0)
+                                  ?.toUpperCase() ||
                                 "P"
-                              : organizer?.firstName?.charAt(0)?.toUpperCase() ||
-                                "U"}
+                              : organizer?.firstName
+                                  ?.charAt(0)
+                                  ?.toUpperCase() || "U"}
                         </div>
                       )}
                     </div>
@@ -418,7 +421,11 @@ const Header = () => {
                       {organizer?.role === "ORGANIZER"
                         ? (organizer?.name || "Organizer").split(" ")[0]
                         : isPartnerUser
-                          ? (organizer?.name || organizer?.firstName || "Partner").split(" ")[0]
+                          ? (
+                              organizer?.name ||
+                              organizer?.firstName ||
+                              "Partner"
+                            ).split(" ")[0]
                           : organizer?.firstName}
                     </span>
                   </button>
@@ -447,7 +454,9 @@ const Header = () => {
                                   organizer?.firstName?.charAt(0)?.toUpperCase()
                                 : isPartnerUser
                                   ? organizer?.name?.charAt(0)?.toUpperCase() ||
-                                    organizer?.firstName?.charAt(0)?.toUpperCase() ||
+                                    organizer?.firstName
+                                      ?.charAt(0)
+                                      ?.toUpperCase() ||
                                     "P"
                                   : organizer?.firstName
                                       ?.charAt(0)
@@ -588,7 +597,11 @@ const Header = () => {
                           <button
                             onClick={() => {
                               setDropdownOpen(false);
-                              navigate(organizer?.id ? `/user/${organizer.id}` : "/profile");
+                              navigate(
+                                organizer?.id
+                                  ? `/user/${organizer.id}`
+                                  : "/profile",
+                              );
                             }}
                             className="w-full text-left px-4 py-2.5 text-gray-400 hover:text-xf-accent hover:bg-zinc-800 transition-all duration-200 border-b border-zinc-800 text-xs font-light cursor-pointer uppercase tracking-widest"
                           >
@@ -684,4 +697,3 @@ const Header = () => {
 };
 
 export default Header;
-
