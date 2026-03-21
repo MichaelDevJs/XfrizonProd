@@ -32,6 +32,8 @@ const TIER_CONFIG = {
   },
 };
 
+const XF_DEBIT_LOGO_SRC = "/assets/Xfrizon%20Logo%20(5).png";
+
 export default function PointsWallet() {
   const [wallet, setWallet] = useState(null);
   const [ledger, setLedger] = useState(null);
@@ -92,6 +94,13 @@ export default function PointsWallet() {
   const progress = tier.next
     ? Math.min((wallet.availableBalance / tier.next) * 100, 100)
     : 100;
+
+  const isDebitTransaction = (tx) => {
+    if (typeof tx?.points === "number") {
+      return tx.points < 0;
+    }
+    return false;
+  };
 
   return (
     <div className="bg-[#111] rounded-2xl border border-gray-800 p-6 max-w-lg mx-auto w-full">
@@ -246,8 +255,18 @@ export default function PointsWallet() {
                   key={tx.id}
                   className="flex items-center justify-between text-sm bg-[#1a1a1a] rounded-lg px-3 py-2"
                 >
-                  <div>
-                    <p className="text-white text-xs">{tx.description}</p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {isDebitTransaction(tx) && (
+                        <img
+                          src={XF_DEBIT_LOGO_SRC}
+                          alt="Xfrizon debit"
+                          title="XF debit"
+                          className="h-5 w-5 rounded-full object-cover ring-1 ring-[#c0f24d]/50"
+                        />
+                      )}
+                      <p className="text-white text-xs truncate">{tx.description}</p>
+                    </div>
                     <p className="text-gray-600 text-xs">
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </p>
