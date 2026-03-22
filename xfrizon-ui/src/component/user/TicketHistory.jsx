@@ -225,7 +225,8 @@ export default function TicketHistory() {
                       alt={eventTitle}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = "/assets/african-panther-dark.svg";
+                        e.currentTarget.src =
+                          "/assets/african-panther-dark.svg";
                       }}
                     />
                   </div>

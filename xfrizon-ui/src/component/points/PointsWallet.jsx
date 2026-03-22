@@ -265,7 +265,9 @@ export default function PointsWallet() {
                           className="h-5 w-5 rounded-full object-cover ring-1 ring-[#c0f24d]/50"
                         />
                       )}
-                      <p className="text-white text-xs truncate">{tx.description}</p>
+                      <p className="text-white text-xs truncate">
+                        {tx.description}
+                      </p>
                     </div>
                     <p className="text-gray-600 text-xs">
                       {new Date(tx.createdAt).toLocaleDateString()}

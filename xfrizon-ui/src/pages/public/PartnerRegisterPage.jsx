@@ -63,7 +63,8 @@ export default function PartnerRegisterPage() {
       }
 
       setMessage(
-        res?.message || "Registration submitted. You can now browse the partner area.",
+        res?.message ||
+          "Registration submitted. You can now browse the partner area.",
       );
 
       setForm((prev) => ({
@@ -79,7 +80,11 @@ export default function PartnerRegisterPage() {
         loginPassword: "",
       }));
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || "Could not submit partner registration");
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Could not submit partner registration",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +106,8 @@ export default function PartnerRegisterPage() {
             and users can redeem points with you.
           </p>
           <p className="text-xs text-[#c0f24d] mb-4">
-            Use your account password. If no user account exists yet, this partner signup will create it.
+            Use your account password. If no user account exists yet, this
+            partner signup will create it.
           </p>
 
           <form
@@ -181,7 +187,11 @@ export default function PartnerRegisterPage() {
               />
             </Field>
 
-            <Field label="Contact Email" required={!user} className="md:col-span-1">
+            <Field
+              label="Contact Email"
+              required={!user}
+              className="md:col-span-1"
+            >
               <input
                 value={form.contactEmail}
                 onChange={(e) => update("contactEmail", e.target.value)}
@@ -255,4 +265,3 @@ function Field({ label, required, children, className = "" }) {
     </div>
   );
 }
-

@@ -10,7 +10,10 @@ export default function PartnerDashboardPage() {
   const [partner, setPartner] = useState(null);
 
   useEffect(() => {
-    partnersApi.getMine().then(setPartner).catch(() => setPartner(null));
+    partnersApi
+      .getMine()
+      .then(setPartner)
+      .catch(() => setPartner(null));
   }, []);
 
   return (
@@ -24,8 +27,9 @@ export default function PartnerDashboardPage() {
             Welcome, {user?.name || user?.firstName || "Partner"}
           </h1>
           <p className="text-sm text-zinc-400 mt-2 max-w-2xl">
-            Manage customer redemption flow and access partner tools. Your public
-            profile and offers are managed by admin approval and partner settings.
+            Manage customer redemption flow and access partner tools. Your
+            public profile and offers are managed by admin approval and partner
+            settings.
           </p>
         </div>
 

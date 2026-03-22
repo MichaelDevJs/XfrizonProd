@@ -2,6 +2,7 @@ package com.xfrizon.controller;
 
 import com.stripe.model.Event;
 import com.stripe.model.Account;
+import com.stripe.model.Charge;
 import com.stripe.net.Webhook;
 import com.xfrizon.entity.User;
 import com.xfrizon.repository.UserRepository;
@@ -69,6 +70,9 @@ public class StripeWebhookController {
                     break;
                 case "charge.dispute.closed":
                     handleDisputeClosed(event);
+                    break;
+                case "charge.refunded":
+                    handleChargeRefunded(event);
                     break;
                 default:
                     log.debug("Unhandled webhook event: {}", event.getType());
@@ -207,6 +211,42 @@ public class StripeWebhookController {
             log.info("Dispute closed");
         } catch (Exception e) {
             log.error("Error handling dispute closed webhook", e);
+        }
+    }
+
+    /**
+     * Handle charge.refunded events (manual or API refunds)
+     * Updates payment records so payout reports and transfers do not overpay organizers.
+     */
+    private void handleChargeRefunded(Event event) {
+        try {
+            Charge charge = (Charge) event.getDataObjectDeserializer().getObject().orElse(null);
+            if (charge == null) {
+                log.warn("charge.refunded webhook had no charge payload");
+                return;
+            }
+
+            String stripeChargeId = charge.getId();
+            String stripeIntentId = charge.getPaymentIntent();
+            Long refundedAmountMinor = charge.getAmountRefunded();
+            Long chargeAmountMinor = charge.getAmount();
+
+            paymentService.applyRefundFromWebhook(
+                stripeChargeId,
+                stripeIntentId,
+                refundedAmountMinor,
+                chargeAmountMinor
+            );
+
+            log.info(
+                "Processed refund webhook for charge {} (intent={}, refundedMinor={}, totalMinor={})",
+                stripeChargeId,
+                stripeIntentId,
+                refundedAmountMinor,
+                chargeAmountMinor
+            );
+        } catch (Exception e) {
+            log.error("Error handling charge.refunded webhook", e);
         }
     }
 

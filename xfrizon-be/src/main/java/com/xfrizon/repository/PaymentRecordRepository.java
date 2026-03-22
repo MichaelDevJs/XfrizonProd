@@ -18,6 +18,8 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
 
     Optional<PaymentRecord> findByStripeIntentId(String stripeIntentId);
 
+    Optional<PaymentRecord> findByStripeChargeId(String stripeChargeId);
+
     Page<PaymentRecord> findByUserId(Long userId, Pageable pageable);
 
     List<PaymentRecord> findByUserIdOrderByCreatedAtDesc(Long userId);

@@ -54,18 +54,26 @@ export default function PartnerProfilePage() {
       }));
     }
     if (partner?.coverPhoto) {
-      return [{ id: "cover-photo", url: getMediaUrl(partner.coverPhoto) || partner.coverPhoto, type: isVideoMedia(partner.coverPhoto) ? "video" : "image" }];
+      return [
+        {
+          id: "cover-photo",
+          url: getMediaUrl(partner.coverPhoto) || partner.coverPhoto,
+          type: isVideoMedia(partner.coverPhoto) ? "video" : "image",
+        },
+      ];
     }
     return [];
   }, [partner]);
 
   const galleryItems = useMemo(() => {
-    return (Array.isArray(partner?.gallery) ? partner.gallery : []).map((item, index) => ({
-      id: item?.url || `gallery-${index}`,
-      url: getMediaUrl(item?.url) || item?.url,
-      type: item?.type || (isVideoMedia(item?.url) ? "video" : "image"),
-      caption: item?.caption || "",
-    }));
+    return (Array.isArray(partner?.gallery) ? partner.gallery : []).map(
+      (item, index) => ({
+        id: item?.url || `gallery-${index}`,
+        url: getMediaUrl(item?.url) || item?.url,
+        type: item?.type || (isVideoMedia(item?.url) ? "video" : "image"),
+        caption: item?.caption || "",
+      }),
+    );
   }, [partner]);
 
   const offers = useMemo(() => {
@@ -80,7 +88,10 @@ export default function PartnerProfilePage() {
     return offers
       .filter((offer) => {
         return Boolean(
-          offer?.couponCode || offer?.promoCode || offer?.code || offer?.voucherCode,
+          offer?.couponCode ||
+          offer?.promoCode ||
+          offer?.code ||
+          offer?.voucherCode,
         );
       })
       .map((offer) => ({
@@ -88,7 +99,10 @@ export default function PartnerProfilePage() {
         title: offer?.title,
         description: offer?.description,
         code:
-          offer?.couponCode || offer?.promoCode || offer?.code || offer?.voucherCode,
+          offer?.couponCode ||
+          offer?.promoCode ||
+          offer?.code ||
+          offer?.voucherCode,
       }));
   }, [partner, offers]);
 
@@ -159,7 +173,6 @@ export default function PartnerProfilePage() {
 
       <div className="px-4 sm:px-6 pb-12">
         <div className="mx-auto max-w-5xl space-y-8">
-
           {activeTab === "overview" ? (
             <>
               <div className="w-full max-w-4xl mx-auto mt-8">
@@ -210,7 +223,11 @@ export default function PartnerProfilePage() {
                 </div>
               ) : null}
 
-              <PartnerAboutBlockOne partner={partner} showDescription showPartnerIcon />
+              <PartnerAboutBlockOne
+                partner={partner}
+                showDescription
+                showPartnerIcon
+              />
             </>
           ) : null}
 
@@ -231,13 +248,17 @@ export default function PartnerProfilePage() {
                   >
                     <div>
                       <p className="text-sm font-semibold">{offer.title}</p>
-                      <p className="text-xs text-gray-500">{offer.description}</p>
+                      <p className="text-xs text-gray-500">
+                        {offer.description}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-[#c0f24d]">
                         {offer.discountPercent}% OFF
                       </p>
-                      <p className="text-xs text-gray-500">{offer.pointsCost} pts</p>
+                      <p className="text-xs text-gray-500">
+                        {offer.pointsCost} pts
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -260,12 +281,19 @@ export default function PartnerProfilePage() {
                     key={coupon.id || coupon.code || `coupon-${index}`}
                     className="rounded-lg border border-gray-800 bg-[#0f0f0f] p-3"
                   >
-                    <p className="text-sm font-semibold">{coupon.title || "Coupon"}</p>
+                    <p className="text-sm font-semibold">
+                      {coupon.title || "Coupon"}
+                    </p>
                     {coupon.description ? (
-                      <p className="mt-1 text-xs text-gray-500">{coupon.description}</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {coupon.description}
+                      </p>
                     ) : null}
                     <p className="mt-2 inline-flex rounded-md border border-[#c0f24d]/40 px-2.5 py-1 text-xs font-medium text-[#c0f24d]">
-                      {coupon.code || coupon.couponCode || coupon.promoCode || "N/A"}
+                      {coupon.code ||
+                        coupon.couponCode ||
+                        coupon.promoCode ||
+                        "N/A"}
                     </p>
                   </div>
                 ))}
@@ -279,24 +307,35 @@ export default function PartnerProfilePage() {
 }
 
 function isVideoMedia(value) {
-  return /(\.mp4|\.webm|\.ogg|\.mov|\.m4v|\.avi|\.mkv)(\?|$)/i.test(String(value || ""));
+  return /(\.mp4|\.webm|\.ogg|\.mov|\.m4v|\.avi|\.mkv)(\?|$)/i.test(
+    String(value || ""),
+  );
 }
 
-function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIcon = false }) {
-  const locationText = partner?.location || [partner?.city, partner?.country].filter(Boolean).join(", ");
+function PartnerAboutBlockOne({
+  partner,
+  showDescription = false,
+  showPartnerIcon = false,
+}) {
+  const locationText =
+    partner?.location ||
+    [partner?.city, partner?.country].filter(Boolean).join(", ");
   const joinedText = partner?.createdAt
     ? new Date(partner.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-    })
+        year: "numeric",
+        month: "short",
+      })
     : null;
 
   const websiteLink = normalizeUrl(partner?.website);
   const instagramLink = normalizeUrl(partner?.instagram);
-  const emailLink = partner?.contactEmail ? `mailto:${partner.contactEmail}` : null;
+  const emailLink = partner?.contactEmail
+    ? `mailto:${partner.contactEmail}`
+    : null;
   const phoneValue = String(partner?.contactPhone || "").trim();
   const phoneLink = phoneValue ? `tel:${phoneValue}` : null;
-  const hasMeta = locationText || joinedText || partner?.industry || partner?.type;
+  const hasMeta =
+    locationText || joinedText || partner?.industry || partner?.type;
   const hasContact = websiteLink || emailLink || phoneValue;
 
   return (
@@ -307,7 +346,11 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
             <div className="mx-auto mb-4 h-20 w-20 overflow-hidden bg-black sm:h-24 sm:w-24">
               {partner?.profilePhotoUrl || partner?.logoUrl ? (
                 <img
-                  src={getMediaUrl(partner.profilePhotoUrl || partner.logoUrl) || partner.profilePhotoUrl || partner.logoUrl}
+                  src={
+                    getMediaUrl(partner.profilePhotoUrl || partner.logoUrl) ||
+                    partner.profilePhotoUrl ||
+                    partner.logoUrl
+                  }
                   alt={partner?.name || "Partner logo"}
                   className="h-full w-full object-cover"
                   onError={(e) => {
@@ -334,11 +377,20 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
                   <FiMapPin size={12} /> {locationText}
                 </span>
               ) : null}
-              {locationText && (joinedText || partner?.industry || partner?.type) ? <span className="text-gray-500">|</span> : null}
+              {locationText &&
+              (joinedText || partner?.industry || partner?.type) ? (
+                <span className="text-gray-500">|</span>
+              ) : null}
               {joinedText ? <span>Joined {joinedText}</span> : null}
-              {joinedText && (partner?.industry || partner?.type) ? <span className="text-gray-500">|</span> : null}
-              {partner?.industry ? <span>Industry: {partner.industry}</span> : null}
-              {partner?.industry && partner?.type ? <span className="text-gray-500">|</span> : null}
+              {joinedText && (partner?.industry || partner?.type) ? (
+                <span className="text-gray-500">|</span>
+              ) : null}
+              {partner?.industry ? (
+                <span>Industry: {partner.industry}</span>
+              ) : null}
+              {partner?.industry && partner?.type ? (
+                <span className="text-gray-500">|</span>
+              ) : null}
               {partner?.type ? <span>Type: {partner.type}</span> : null}
             </div>
           ) : null}
@@ -355,7 +407,9 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
                   <FaGlobe size={12} /> Website
                 </a>
               ) : null}
-              {websiteLink && (emailLink || phoneValue) ? <span className="text-gray-500">|</span> : null}
+              {websiteLink && (emailLink || phoneValue) ? (
+                <span className="text-gray-500">|</span>
+              ) : null}
               {emailLink ? (
                 <a
                   href={emailLink}
@@ -364,7 +418,9 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
                   <FiMail size={12} /> Email
                 </a>
               ) : null}
-              {emailLink && phoneValue ? <span className="text-gray-500">|</span> : null}
+              {emailLink && phoneValue ? (
+                <span className="text-gray-500">|</span>
+              ) : null}
               {phoneLink ? (
                 <a
                   href={phoneLink}
@@ -376,7 +432,8 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
             </div>
           ) : null}
 
-          {showDescription && (partner?.aboutPrimaryBody || partner?.description) ? (
+          {showDescription &&
+          (partner?.aboutPrimaryBody || partner?.description) ? (
             <div className="mt-3 max-w-2xl mx-auto max-h-30 overflow-y-auto hide-scrollbar">
               <p className="whitespace-pre-wrap text-[11px] font-light leading-6 tracking-[0.02em] text-gray-200/90">
                 {partner.aboutPrimaryBody || partner.description}
@@ -405,7 +462,11 @@ function PartnerAboutBlockOne({ partner, showDescription = false, showPartnerIco
 function getMediaUrl(path) {
   if (!path) return null;
   const value = String(path).trim();
-  if (value.startsWith("http") || value.startsWith("data:") || value.startsWith("blob:")) {
+  if (
+    value.startsWith("http") ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:")
+  ) {
     return value;
   }
   if (/^:\d+\//.test(value)) {
@@ -435,6 +496,3 @@ function normalizeUrl(value) {
   }
   return `https://${trimmed.replace(/^\/+/, "")}`;
 }
-
-
-

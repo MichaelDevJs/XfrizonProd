@@ -167,12 +167,14 @@ public class EventPayoutService {
 
     public void syncEventPayouts() {
         List<Object[]> rows = paymentRecordRepository.summarizeSucceededPaymentsByEventAndCurrency();
+        java.util.Set<String> activeKeys = new java.util.HashSet<>();
 
         for (Object[] row : rows) {
             try {
                 Long eventId = (Long) row[0];
                 Long organizerId = (Long) row[1];
                 String currency = ((String) row[2]).toUpperCase(Locale.ROOT);
+                activeKeys.add(eventId + "::" + currency);
                 BigDecimal grossRevenue = nvl((BigDecimal) row[3]);
                 BigDecimal serviceFeeTotal = nvl((BigDecimal) row[4]);
                 BigDecimal netPayout = nvl((BigDecimal) row[5]);
@@ -217,10 +219,50 @@ public class EventPayoutService {
                     payout.setStatus(resolveCurrentStatus(payout));
                 }
 
+                if (payout.getStatus() != EventPayout.PayoutStatus.FAILED) {
+                    payout.setFailureReason(null);
+                }
+
                 eventPayoutRepository.save(payout);
             } catch (Exception ex) {
                 log.error("Skipping payout sync row due to error: {}", ex.getMessage(), ex);
             }
+        }
+
+        // If a payout exists but no longer has successful payments (e.g., fully refunded),
+        // zero it out so admins do not overpay organizers.
+        List<EventPayout> existing = eventPayoutRepository.findAll();
+        for (EventPayout payout : existing) {
+            if (payout.getStatus() == EventPayout.PayoutStatus.PAID) {
+                continue;
+            }
+
+            Long eventId = payout.getEvent() != null ? payout.getEvent().getId() : null;
+            String currency = payout.getCurrency() != null ? payout.getCurrency().toUpperCase(Locale.ROOT) : null;
+            if (eventId == null || currency == null) {
+                continue;
+            }
+
+            String key = eventId + "::" + currency;
+            if (activeKeys.contains(key)) {
+                continue;
+            }
+
+            payout.setGrossRevenue(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            payout.setServiceFeeTotal(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            payout.setNetPayout(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            payout.setSuccessfulPaymentsCount(0L);
+            payout.setLastPaymentAt(null);
+            payout.setFailureReason("No successful payments available for payout (likely refunded)");
+
+            if (Boolean.TRUE.equals(payout.getAdminHold())) {
+                payout.setStatus(EventPayout.PayoutStatus.HELD);
+            } else {
+                payout.setStatus(EventPayout.PayoutStatus.HELD);
+                payout.setHoldReason("Auto-held: payout balance is zero after refund reconciliation");
+            }
+
+            eventPayoutRepository.save(payout);
         }
     }
 

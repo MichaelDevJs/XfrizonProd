@@ -62,7 +62,8 @@ export default function PartnersShowcaseSection({ partners = [] }) {
           <div className="partners-marquee-track flex min-w-max gap-3 sm:gap-4">
             {partners.map((partner) => {
               const logoSrc = getPartnerLogo(partner);
-              const isManualPartner = !partner?.id || String(partner.id).startsWith("manual-");
+              const isManualPartner =
+                !partner?.id || String(partner.id).startsWith("manual-");
               const cardClassName =
                 "group flex w-40 shrink-0 flex-col p-3 transition-colors sm:w-44";
               const content = (
@@ -91,7 +92,10 @@ export default function PartnersShowcaseSection({ partners = [] }) {
 
               if (isManualPartner) {
                 return (
-                  <div key={partner.id || partner.name} className={cardClassName}>
+                  <div
+                    key={partner.id || partner.name}
+                    className={cardClassName}
+                  >
                     {content}
                   </div>
                 );
@@ -111,10 +115,10 @@ export default function PartnersShowcaseSection({ partners = [] }) {
         </div>
       ) : (
         <div className="p-5 text-sm text-zinc-400">
-          No featured partners yet. This area updates when partners are selected in admin.
+          No featured partners yet. This area updates when partners are selected
+          in admin.
         </div>
       )}
     </section>
   );
 }
-

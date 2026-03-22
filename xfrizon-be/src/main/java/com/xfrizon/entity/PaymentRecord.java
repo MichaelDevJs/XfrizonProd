@@ -50,6 +50,10 @@ public class PaymentRecord {
     @Column(name = "organizer_amount", columnDefinition = "DECIMAL(19,2)")
     private BigDecimal organizerAmount;
 
+    // Cumulative refunded amount in major units (e.g., USD), updated from Stripe webhooks
+    @Column(name = "refunded_amount", columnDefinition = "DECIMAL(19,2)")
+    private BigDecimal refundedAmount;
+
     @Column(nullable = false, length = 3)
     private String currency;
 

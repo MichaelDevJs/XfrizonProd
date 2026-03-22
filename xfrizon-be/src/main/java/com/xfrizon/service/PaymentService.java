@@ -269,6 +269,7 @@ public class PaymentService {
                     .subtotalAmount(subtotalMajor)
                     .serviceFeeAmount(serviceFeeMajor)
                     .organizerAmount(organizerMajor)
+                    .refundedAmount(BigDecimal.ZERO)
                     .currency(currency.toUpperCase())
                     .status(PaymentRecord.PaymentStatus.PENDING)
                     .paymentMethod(PaymentRecord.PaymentMethod.CARD)
@@ -369,8 +370,12 @@ public class PaymentService {
             // Update payment record status based on Stripe status
             if ("succeeded".equals(paymentIntent.getStatus())) {
                 paymentRecord.setStatus(PaymentRecord.PaymentStatus.SUCCEEDED);
-                // Store the payment intent ID as reference (charge details available via Stripe API)
-                paymentRecord.setStripeChargeId(paymentIntent.getId());
+                String latestChargeId = paymentIntent.getLatestCharge();
+                paymentRecord.setStripeChargeId(
+                        (latestChargeId != null && !latestChargeId.isBlank())
+                                ? latestChargeId
+                                : paymentIntent.getId()
+                );
             } else if ("failed".equals(paymentIntent.getStatus())) {
                 paymentRecord.setStatus(PaymentRecord.PaymentStatus.FAILED);
                 paymentRecord.setFailureReason(paymentIntent.getLastPaymentError() != null ? 
@@ -402,6 +407,122 @@ public class PaymentService {
             log.error("Unexpected error confirming payment status", e);
             throw new RuntimeException("Error confirming payment: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Apply Stripe refund updates to a payment record.
+     * Supports cumulative refund amounts from charge.refunded webhooks.
+     */
+    public PaymentRecord applyRefundFromWebhook(
+            String stripeChargeId,
+            String stripeIntentId,
+            Long refundedAmountMinor,
+            Long chargeAmountMinor
+    ) {
+        try {
+            PaymentRecord paymentRecord = null;
+
+            if (stripeIntentId != null && !stripeIntentId.isBlank()) {
+                paymentRecord = paymentRecordRepository.findByStripeIntentId(stripeIntentId).orElse(null);
+            }
+
+            if (paymentRecord == null && stripeChargeId != null && !stripeChargeId.isBlank()) {
+                paymentRecord = paymentRecordRepository.findByStripeChargeId(stripeChargeId).orElse(null);
+            }
+
+            if (paymentRecord == null) {
+                log.warn(
+                        "Refund webhook received for unknown payment (chargeId={}, intentId={})",
+                        stripeChargeId,
+                        stripeIntentId
+                );
+                return null;
+            }
+
+            if (stripeChargeId != null && !stripeChargeId.isBlank()
+                    && (paymentRecord.getStripeChargeId() == null || paymentRecord.getStripeChargeId().isBlank())) {
+                paymentRecord.setStripeChargeId(stripeChargeId);
+            }
+
+            if (refundedAmountMinor == null || refundedAmountMinor <= 0L) {
+                return paymentRecordRepository.save(paymentRecord);
+            }
+
+            BigDecimal previousRefunded = paymentRecord.getRefundedAmount() != null
+                    ? paymentRecord.getRefundedAmount()
+                    : BigDecimal.ZERO;
+            BigDecimal latestRefunded = BigDecimal.valueOf(refundedAmountMinor)
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            if (latestRefunded.compareTo(previousRefunded) <= 0) {
+                return paymentRecord;
+            }
+
+            BigDecimal deltaRefund = latestRefunded.subtract(previousRefunded);
+
+            BigDecimal currentAmount = safeAmount(paymentRecord.getAmount());
+            if (deltaRefund.compareTo(currentAmount) >= 0) {
+                paymentRecord.setAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+                paymentRecord.setSubtotalAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+                paymentRecord.setServiceFeeAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+                paymentRecord.setOrganizerAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+                paymentRecord.setStatus(PaymentRecord.PaymentStatus.REFUNDED);
+            } else {
+                paymentRecord.setAmount(currentAmount.subtract(deltaRefund).setScale(2, RoundingMode.HALF_UP));
+
+                BigDecimal subtotal = safeAmount(paymentRecord.getSubtotalAmount());
+                BigDecimal fee = safeAmount(paymentRecord.getServiceFeeAmount());
+                BigDecimal organizer = safeAmount(paymentRecord.getOrganizerAmount());
+
+                BigDecimal denominator = currentAmount.compareTo(BigDecimal.ZERO) > 0 ? currentAmount : BigDecimal.ONE;
+                BigDecimal subtotalRefundPart = deltaRefund.multiply(subtotal).divide(denominator, 2, RoundingMode.HALF_UP);
+                BigDecimal feeRefundPart = deltaRefund.multiply(fee).divide(denominator, 2, RoundingMode.HALF_UP);
+                BigDecimal organizerRefundPart = deltaRefund.multiply(organizer).divide(denominator, 2, RoundingMode.HALF_UP);
+
+                paymentRecord.setSubtotalAmount(clampNonNegative(subtotal.subtract(subtotalRefundPart)));
+                paymentRecord.setServiceFeeAmount(clampNonNegative(fee.subtract(feeRefundPart)));
+                paymentRecord.setOrganizerAmount(clampNonNegative(organizer.subtract(organizerRefundPart)));
+                paymentRecord.setStatus(PaymentRecord.PaymentStatus.SUCCEEDED);
+            }
+
+            paymentRecord.setRefundedAmount(latestRefunded);
+            paymentRecord.setFailureReason(
+                    chargeAmountMinor != null && chargeAmountMinor > 0
+                            ? String.format("Refund updated via Stripe webhook (%d/%d in minor units)", refundedAmountMinor, chargeAmountMinor)
+                            : "Refund updated via Stripe webhook"
+            );
+
+            PaymentRecord saved = paymentRecordRepository.save(paymentRecord);
+            log.info(
+                    "Applied refund update for payment {} (intent={}, charge={}, refundedMajor={}, remainingAmount={})",
+                    saved.getId(),
+                    saved.getStripeIntentId(),
+                    saved.getStripeChargeId(),
+                    saved.getRefundedAmount(),
+                    saved.getAmount()
+            );
+            return saved;
+        } catch (Exception ex) {
+            log.error(
+                    "Failed applying refund webhook update (chargeId={}, intentId={}, refundedMinor={})",
+                    stripeChargeId,
+                    stripeIntentId,
+                    refundedAmountMinor,
+                    ex
+            );
+            throw ex;
+        }
+    }
+
+    private BigDecimal safeAmount(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private BigDecimal clampNonNegative(BigDecimal value) {
+        if (value == null || value.compareTo(BigDecimal.ZERO) < 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 
     /**

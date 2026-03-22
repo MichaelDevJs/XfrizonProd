@@ -17,7 +17,8 @@ export const useAuth = () => {
         .map((role) => role.trim().toUpperCase())
         .filter(Boolean);
 
-  const isPartner = organizer?.role === "PARTNER" || roleTokens.includes("PARTNER");
+  const isPartner =
+    organizer?.role === "PARTNER" || roleTokens.includes("PARTNER");
 
   return {
     user: organizer,
