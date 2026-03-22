@@ -312,17 +312,17 @@
 
 @keyframes partners-marquee {
   0% {
-    transform: translateX(100vw);
+    transform: translateX(0);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(min(0px, calc(100vw - 100%)));
   }
 }
 
 .partners-marquee-track {
   width: max-content;
-  transform: translateX(100vw);
-  animation: partners-marquee 30s linear infinite;
+  transform: translateX(0);
+  animation: partners-marquee 18s ease-in-out infinite alternate;
   will-change: transform;
 }
 

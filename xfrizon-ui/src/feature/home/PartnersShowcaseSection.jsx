@@ -60,12 +60,13 @@ export default function PartnersShowcaseSection({ partners = [] }) {
       {hasPartners ? (
         <div className="overflow-hidden pb-2">
           <div className="partners-marquee-track flex min-w-max gap-3 sm:gap-4">
-            {partners.map((partner) => {
+            {partners.map((partner, index) => {
               const logoSrc = getPartnerLogo(partner);
               const isManualPartner =
                 !partner?.id || String(partner.id).startsWith("manual-");
               const cardClassName =
                 "group flex w-40 shrink-0 flex-col p-3 transition-colors sm:w-44";
+              const itemKey = `${partner.id || partner.name || "partner"}-${index}`;
               const content = (
                 <>
                   <div className="flex h-24 items-center justify-center overflow-hidden p-2">
@@ -92,10 +93,7 @@ export default function PartnersShowcaseSection({ partners = [] }) {
 
               if (isManualPartner) {
                 return (
-                  <div
-                    key={partner.id || partner.name}
-                    className={cardClassName}
-                  >
+                  <div key={itemKey} className={cardClassName}>
                     {content}
                   </div>
                 );
@@ -103,7 +101,7 @@ export default function PartnersShowcaseSection({ partners = [] }) {
 
               return (
                 <Link
-                  key={partner.id}
+                  key={itemKey}
                   to={`/partners/${partner.id}`}
                   className={cardClassName}
                 >
