@@ -141,7 +141,11 @@ const renderInlineNodes = (text, options, keyPrefix = "inline") => {
   }
 
   const children = innerText
-    ? renderInlineNodes(innerText, options, `${keyPrefix}-inner-${earliestMatch.index}`)
+    ? renderInlineNodes(
+        innerText,
+        options,
+        `${keyPrefix}-inner-${earliestMatch.index}`,
+      )
     : null;
 
   nodes.push(
@@ -224,7 +228,9 @@ export const renderRichText = (content, options = {}) => {
               className={settings.bulletClassName}
               style={{ marginLeft: `${indentLevel * 1.25}rem` }}
             >
-              <li>{renderInlineNodes(trimmed.slice(2), settings, `li-${idx}`)}</li>
+              <li>
+                {renderInlineNodes(trimmed.slice(2), settings, `li-${idx}`)}
+              </li>
             </ul>
           );
         }
@@ -237,9 +243,7 @@ export const renderRichText = (content, options = {}) => {
               className={settings.bulletClassName}
               style={{ marginLeft: `${indentLevel * 1.25}rem` }}
             >
-              <li>
-                {renderInlineNodes(numberedText, settings, `oli-${idx}`)}
-              </li>
+              <li>{renderInlineNodes(numberedText, settings, `oli-${idx}`)}</li>
             </ol>
           );
         }
@@ -377,7 +381,8 @@ export const applyFormat = (
   const fallbackSelection = selectedText || "Your text";
 
   const getCurrentLineIndent = () => {
-    const lineStart = block.content.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+    const lineStart =
+      block.content.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
     const currentLine = block.content.slice(lineStart);
     return currentLine.match(/^[\t ]*/)?.[0] || "";
   };

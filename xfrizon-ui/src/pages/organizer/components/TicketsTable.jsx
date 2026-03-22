@@ -1,3 +1,5 @@
+import { formatLocalDate, formatLocalTime } from "../../../utils/dateTime";
+
 const CURRENCY_SYMBOLS = {
   NGN: "₦",
   USD: "$",
@@ -96,10 +98,10 @@ const TicketsTable = ({ tickets, onDownload, isLoading }) => {
                 {ticket.eventName}
               </td>
               <td className="py-3 px-3 sm:px-4 text-gray-400 font-light text-xs whitespace-nowrap">
-                {new Date(ticket.purchaseDate).toLocaleDateString()}
+                {formatLocalDate(ticket.purchaseDate)}
               </td>
               <td className="py-3 px-3 sm:px-4 text-gray-400 font-light text-xs whitespace-nowrap">
-                {new Date(ticket.purchaseDate).toLocaleTimeString()}
+                {formatLocalTime(ticket.purchaseDate)}
               </td>
               <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
                 <span className="text-xs font-light text-cyan-400">

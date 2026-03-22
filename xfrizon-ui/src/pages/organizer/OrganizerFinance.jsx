@@ -218,6 +218,24 @@ const OrganizerFinance = () => {
       const formatDate = (date) => date.toISOString().split(".")[0];
 
       switch (dateRange) {
+        case "thisDay":
+          fromDate = formatDate(
+            new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+          );
+          toDate = formatDate(now);
+          break;
+        case "thisWeek": {
+          const day = now.getDay();
+          const diff = day === 0 ? -6 : 1 - day;
+          const weekStart = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() + diff,
+          );
+          fromDate = formatDate(weekStart);
+          toDate = formatDate(now);
+          break;
+        }
         case "thisMonth":
           fromDate = formatDate(new Date(now.getFullYear(), now.getMonth(), 1));
           toDate = formatDate(now);
@@ -698,6 +716,8 @@ const OrganizerFinance = () => {
                 }}
                 className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-gray-300 rounded text-xs focus:border-xf-accent focus:outline-none"
               >
+                <option value="thisDay">This Day</option>
+                <option value="thisWeek">This Week</option>
                 <option value="thisMonth">This Month</option>
                 <option value="lastMonth">Last Month</option>
                 <option value="3months">Last 3 Months</option>

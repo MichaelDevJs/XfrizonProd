@@ -3,6 +3,7 @@ import { FaArrowLeft, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
+import { parseLocalDateTime } from "../../utils/dateTime";
 
 // Components
 import TicketsTable from "./components/TicketsTable";
@@ -36,7 +37,11 @@ const OrganizerDashboard = () => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     return recentTickets.filter((ticket) => {
-      const ticketDate = new Date(ticket.purchaseDate);
+      const ticketDate = parseLocalDateTime(ticket.purchaseDate);
+      if (!ticketDate) {
+        return false;
+      }
+
       const ticketDay = new Date(
         ticketDate.getFullYear(),
         ticketDate.getMonth(),

@@ -31,7 +31,7 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
   const handleColorChange = (value) => {
     setSelectedColor(value);
 
-          const textarea = document.getElementById(`textarea-${block.id}`);
+    const textarea = document.getElementById(`textarea-${block.id}`);
     const hasSelection =
       textarea && textarea.selectionStart !== textarea.selectionEnd;
 
@@ -157,7 +157,9 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
         <div className="flex items-center gap-1 px-1 py-0.5">
           <select
             value={block.style?.fontSize || 18}
-            onChange={(e) => handleStyleChange({ fontSize: parseInt(e.target.value, 10) })}
+            onChange={(e) =>
+              handleStyleChange({ fontSize: parseInt(e.target.value, 10) })
+            }
             className="rounded-sm border border-[#444] bg-[#1a1a1a] px-1.5 py-0.5 text-[11px] text-gray-100 focus:outline-none"
             style={{ colorScheme: "dark" }}
             title="Font size in px"
@@ -192,7 +194,8 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
       </div>
 
       <div className="rounded-lg border border-zinc-800 bg-[#262626] px-3 py-2 text-[11px] text-zinc-400">
-        Select text, then apply formatting. All styling controls are now in this single toolbar to keep editing workflow compact.
+        Select text, then apply formatting. All styling controls are now in this
+        single toolbar to keep editing workflow compact.
       </div>
 
       <textarea
@@ -208,7 +211,9 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
             : undefined,
           color: block.style?.color || undefined,
           opacity:
-            block.style?.opacity !== undefined ? block.style.opacity : undefined,
+            block.style?.opacity !== undefined
+              ? block.style.opacity
+              : undefined,
         }}
         rows="8"
       />
@@ -237,7 +242,6 @@ export default function BlockTextManager({ block, updateBlock, applyFormat }) {
           })}
         </div>
       </div>
-
     </div>
   );
 }

@@ -63,7 +63,10 @@ export default function FontStyler({ blockId, style = {}, onStyleChange }) {
         Text Styling
       </h4>
 
-      <details open className="rounded border border-zinc-800 bg-[#1f1f1f] mb-2">
+      <details
+        open
+        className="rounded border border-zinc-800 bg-[#1f1f1f] mb-2"
+      >
         <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-gray-300 flex items-center gap-2">
           <FaTextHeight size={10} /> Typography
         </summary>
@@ -127,7 +130,10 @@ export default function FontStyler({ blockId, style = {}, onStyleChange }) {
             <div
               className="ml-auto h-8 w-20 rounded border border-zinc-700"
               style={{
-                backgroundColor: hexToRgba(style.color || "#d1d5db", opacity / 100),
+                backgroundColor: hexToRgba(
+                  style.color || "#d1d5db",
+                  opacity / 100,
+                ),
               }}
             />
           </div>

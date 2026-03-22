@@ -94,7 +94,7 @@ export default function BlogDetailPage() {
   const [shareStatus, setShareStatus] = useState("");
   const [shareBusy, setShareBusy] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
-  const [showFullContent, setShowFullContent] = useState(false);
+  const [currentContentPage, setCurrentContentPage] = useState(0);
   const shareMenuRef = useRef(null);
   const videoRefs = useRef({});
 
@@ -158,7 +158,7 @@ export default function BlogDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    setShowFullContent(false);
+    setCurrentContentPage(0);
   }, [id]);
 
   useEffect(() => {
@@ -953,6 +953,33 @@ export default function BlogDetailPage() {
     featuredImage = safeImages[0].src;
   }
 
+  const contentPages = React.useMemo(() => {
+    if (!Array.isArray(blog?.blocks) || blog.blocks.length === 0) {
+      return [];
+    }
+
+    const pages = [];
+    let currentPage = [];
+
+    blog.blocks.forEach((block) => {
+      if (block.type === "continue") {
+        if (currentPage.length > 0) {
+          pages.push(currentPage);
+          currentPage = [];
+        }
+        return;
+      }
+
+      currentPage.push(block);
+    });
+
+    if (currentPage.length > 0) {
+      pages.push(currentPage);
+    }
+
+    return pages;
+  }, [blog?.blocks]);
+
   // Build content from blocks
   const renderBlockContent = () => {
     if (!blog.blocks || blog.blocks.length === 0) {
@@ -970,14 +997,9 @@ export default function BlogDetailPage() {
       );
     }
 
-    const nextBreakIndex = blog.blocks.findIndex(
-      (block) => block.type === "continue",
-    );
-
     const blocksToRender =
-      nextBreakIndex >= 0 && !showFullContent
-        ? blog.blocks.slice(0, nextBreakIndex)
-        : blog.blocks.filter((block) => block.type !== "continue");
+      contentPages[currentContentPage] ||
+      blog.blocks.filter((block) => block.type !== "continue");
 
     return blocksToRender.map((block, index) => {
       switch (block.type) {
@@ -1289,10 +1311,10 @@ export default function BlogDetailPage() {
     });
   };
 
-  const nextBreakIndex = Array.isArray(blog?.blocks)
-    ? blog.blocks.findIndex((block) => block.type === "continue")
-    : -1;
-  const hasNextBreak = nextBreakIndex >= 0;
+  const hasPreviousPage = currentContentPage > 0;
+  const hasNextPage = currentContentPage < contentPages.length - 1;
+  const hasPagedContent = contentPages.length > 1;
+  const totalContentPages = contentPages.length;
 
   // Declare heroImage only once using defensive fallback
   const heroImage = safeCoverImage || featuredImage;
@@ -1571,14 +1593,55 @@ export default function BlogDetailPage() {
         {/* Article Content */}
         <div className="prose prose-lg max-w-none">{renderBlockContent()}</div>
 
-        {hasNextBreak && !showFullContent && (
-          <div className="mt-8 flex justify-center">
+        {hasPagedContent && (
+          <div className="mt-8 flex items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => setShowFullContent(true)}
-              className="rounded-sm border border-red-500/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-red-300 transition hover:border-red-400 hover:text-red-200"
+              onClick={() =>
+                setCurrentContentPage((prev) => Math.max(prev - 1, 0))
+              }
+              disabled={!hasPreviousPage}
+              className="h-9 w-9 rounded-full border border-zinc-700 text-sm font-semibold text-zinc-200 transition hover:border-zinc-400 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+              aria-label="Previous page"
             >
-              Next
+              &lt;
+            </button>
+
+            <div className="flex items-center gap-1 text-sm font-semibold text-zinc-300">
+              {contentPages.map((_, pageIndex) => {
+                const isActive = pageIndex === currentContentPage;
+
+                return (
+                  <button
+                    key={`content-page-${pageIndex}`}
+                    type="button"
+                    onClick={() => setCurrentContentPage(pageIndex)}
+                    className={`min-w-8 px-2 py-1 rounded-full transition ${
+                      isActive
+                        ? "bg-red-500 text-white"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                    aria-label={`Go to page ${pageIndex + 1} of ${totalContentPages}`}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {pageIndex + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentContentPage((prev) =>
+                  Math.min(prev + 1, contentPages.length - 1),
+                )
+              }
+              disabled={!hasNextPage}
+              className="h-9 w-9 rounded-full border border-red-500/60 text-sm font-semibold text-red-300 transition hover:border-red-400 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-35"
+              aria-label="Next page"
+            >
+              &gt;
             </button>
           </div>
         )}

@@ -10,7 +10,9 @@ export default function BlogEditorPreview({
     (block) => block.type === "continue",
   );
   const previewBlocks =
-    nextBreakIndex >= 0 ? formData.blocks.slice(0, nextBreakIndex) : formData.blocks;
+    nextBreakIndex >= 0
+      ? formData.blocks.slice(0, nextBreakIndex)
+      : formData.blocks;
 
   const authorImageSrc = formData.authorProfileImage
     ? typeof formData.authorProfileImage === "string"

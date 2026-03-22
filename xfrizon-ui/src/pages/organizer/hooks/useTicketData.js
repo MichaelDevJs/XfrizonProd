@@ -2,6 +2,11 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import api from "../../../api/axios";
 import { toast } from "react-toastify";
+import {
+  formatLocalDate,
+  formatLocalTime,
+  parseLocalDateTime,
+} from "../../../utils/dateTime";
 
 // Currency symbols mapping
 const CURRENCY_SYMBOLS = {
@@ -210,7 +215,10 @@ export const useTicketData = () => {
       else if (dateFilter === "week") filterDate.setDate(today.getDate() - 7);
       else if (dateFilter === "month")
         filterDate.setMonth(today.getMonth() - 1);
-      filtered = filtered.filter((t) => new Date(t.purchaseDate) >= filterDate);
+      filtered = filtered.filter((t) => {
+        const purchaseDate = parseLocalDateTime(t.purchaseDate);
+        return purchaseDate ? purchaseDate >= filterDate : false;
+      });
     }
 
     if (eventFilter !== "all") {
@@ -252,8 +260,8 @@ export const useTicketData = () => {
           t.buyerName,
           t.buyerEmail,
           t.eventName,
-          new Date(t.purchaseDate).toLocaleDateString(),
-          new Date(t.purchaseDate).toLocaleTimeString(),
+          formatLocalDate(t.purchaseDate),
+          formatLocalTime(t.purchaseDate),
           t.tier || "Standard",
           t.quantity || 1,
           `${currencySymbol}${t.price.toFixed(2)}`,
@@ -281,8 +289,8 @@ export const useTicketData = () => {
       buyerName: ticket.buyerName,
       buyerEmail: ticket.buyerEmail,
       eventName: ticket.eventName,
-      purchaseDate: new Date(ticket.purchaseDate).toLocaleDateString(),
-      purchaseTime: new Date(ticket.purchaseDate).toLocaleTimeString(),
+      purchaseDate: formatLocalDate(ticket.purchaseDate),
+      purchaseTime: formatLocalTime(ticket.purchaseDate),
       ticketTier: ticket.tier || "Standard",
       price: `${currencySymbol}${ticket.price.toFixed(2)}`,
       validationStatus: ticket.validated ? "Validated" : "Pending",

@@ -279,7 +279,8 @@ function BlockContentManager({ block, updateBlock, applyFormat }) {
     case "continue":
       return (
         <div className="rounded-lg border border-dashed border-amber-500/50 bg-amber-500/10 px-4 py-4 text-sm text-amber-200">
-          Readers will see a Next button here. Content after this block stays hidden until they continue.
+          Readers will see a Next button here. Content after this block stays
+          hidden until they continue.
         </div>
       );
     case "video":
