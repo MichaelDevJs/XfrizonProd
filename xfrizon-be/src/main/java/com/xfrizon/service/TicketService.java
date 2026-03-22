@@ -607,6 +607,58 @@ public class TicketService {
         return convertToResponse(saved);
     }
 
+    /**
+     * Invalidate all tickets tied to a refunded payment so they cannot be validated at entry.
+     */
+    public void invalidateTicketsForRefund(String paymentIntentId) {
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            return;
+        }
+
+        List<UserTicket> tickets = userTicketRepository.findByPaymentIntentId(paymentIntentId);
+        if (tickets == null || tickets.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Integer> tierReversalCounts = new HashMap<>();
+        int updated = 0;
+
+        for (UserTicket ticket : tickets) {
+            if (ticket == null) {
+                continue;
+            }
+
+            if (ticket.getStatus() == UserTicket.TicketStatus.REFUNDED) {
+                continue;
+            }
+
+            Long tierId = ticket.getTicketTier() != null ? ticket.getTicketTier().getId() : null;
+            if (tierId != null) {
+                int qty = ticket.getQuantity() != null ? ticket.getQuantity() : 1;
+                tierReversalCounts.merge(tierId, qty, Integer::sum);
+            }
+
+            ticket.setStatus(UserTicket.TicketStatus.REFUNDED);
+            ticket.setValidationCode(null);
+            ticket.setQrCodeData(null);
+            ticket.setQrCodeUrl(null);
+            ticket.setPdfUrl(null);
+            userTicketRepository.save(ticket);
+            updated += 1;
+        }
+
+        for (Map.Entry<Long, Integer> entry : tierReversalCounts.entrySet()) {
+            ticketTierRepository.findById(entry.getKey()).ifPresent(tier -> {
+                int sold = tier.getQuantitySold() != null ? tier.getQuantitySold() : 0;
+                int decrement = entry.getValue() != null ? entry.getValue() : 0;
+                tier.setQuantitySold(Math.max(0, sold - decrement));
+                ticketTierRepository.save(tier);
+            });
+        }
+
+        log.info("Marked {} tickets as REFUNDED for payment {}", updated, paymentIntentId);
+    }
+
     private String resolveTicketNumber(String rawTicketNumber) {
         String trimmed = rawTicketNumber.trim();
 

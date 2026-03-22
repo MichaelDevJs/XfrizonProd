@@ -205,6 +205,9 @@ export default function TicketHistory() {
             const upcoming = isUpcoming(eventDateTime);
             const past = isPast(eventDateTime);
             const ticketKey = userTicket?.id || userTicket?.ticketId || index;
+            const rawStatus = String(userTicket?.status || "").toUpperCase();
+            const isRefunded = rawStatus === "REFUNDED";
+            const canUseTicket = rawStatus === "ACTIVE";
 
             return (
               <div
@@ -244,6 +247,15 @@ export default function TicketHistory() {
                           </p>
                         </div>
                         <div className="text-right">
+                          {rawStatus && (
+                            <span
+                              className={`inline-block text-white text-xs px-3 py-1 rounded-full mb-1 ${
+                                isRefunded ? "bg-red-700" : "bg-slate-700"
+                              }`}
+                            >
+                              {rawStatus}
+                            </span>
+                          )}
                           {upcoming && (
                             <span className="inline-block bg-green-600 text-white text-xs px-3 py-1 rounded-full">
                               Upcoming
@@ -279,19 +291,21 @@ export default function TicketHistory() {
 
                   {/* Actions */}
                   <div className="px-4 py-4 md:py-4 md:px-6 flex flex-col justify-center gap-2 border-t md:border-t-0 md:border-l border-gray-800">
-                    <button
-                      onClick={() =>
-                        downloadTicket(
-                          userTicket,
-                          userTicket?.eventTitle || userTicket?.event?.title,
-                        )
-                      }
-                      className="flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md transition-colors text-xs font-semibold"
-                    >
-                      <FaDownload size={14} />
-                      Download
-                    </button>
-                    {upcoming && (
+                    {canUseTicket && (
+                      <button
+                        onClick={() =>
+                          downloadTicket(
+                            userTicket,
+                            userTicket?.eventTitle || userTicket?.event?.title,
+                          )
+                        }
+                        className="flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md transition-colors text-xs font-semibold"
+                      >
+                        <FaDownload size={14} />
+                        Download
+                      </button>
+                    )}
+                    {upcoming && canUseTicket && (
                       <button
                         onClick={() => setSelectedTicket(userTicket)}
                         className="flex items-center justify-center gap-1.5 bg-[#1e1e1e] hover:bg-[#252525] text-white px-3 py-2 rounded-md transition-colors border border-gray-700 text-xs font-semibold"
@@ -299,6 +313,11 @@ export default function TicketHistory() {
                         <FaQrcode size={14} />
                         QR Code
                       </button>
+                    )}
+                    {!canUseTicket && (
+                      <div className="text-[11px] text-gray-400 text-center px-2 py-2 border border-gray-700 rounded-md">
+                        Ticket inactive for entry
+                      </div>
                     )}
                   </div>
                 </div>

@@ -92,6 +92,7 @@ public class UserTicket {
         ACTIVE,
         USED,
         CANCELLED,
-        EXPIRED
+        EXPIRED,
+        REFUNDED
     }
 }

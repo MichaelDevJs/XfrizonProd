@@ -48,6 +48,6 @@ public interface UserTicketRepository extends JpaRepository<UserTicket, Long> {
 
     @Query("SELECT ut FROM UserTicket ut WHERE ut.event.organizer.id = ?1 ORDER BY ut.purchaseDate DESC")
     Page<UserTicket> findRecentTicketsByOrganizerId(Long organizerId, Pageable pageable);
-    @Query("SELECT COALESCE(SUM(ut.quantity), 0) FROM UserTicket ut WHERE ut.user.id = ?1 AND ut.status <> com.xfrizon.entity.UserTicket.TicketStatus.CANCELLED")
+    @Query("SELECT COALESCE(SUM(ut.quantity), 0) FROM UserTicket ut WHERE ut.user.id = ?1 AND ut.status NOT IN (com.xfrizon.entity.UserTicket.TicketStatus.CANCELLED, com.xfrizon.entity.UserTicket.TicketStatus.REFUNDED)")
     Integer sumPurchasedQuantityByUserId(Long userId);
 }

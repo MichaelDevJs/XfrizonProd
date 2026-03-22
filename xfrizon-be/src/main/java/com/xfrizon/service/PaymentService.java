@@ -497,6 +497,15 @@ public class PaymentService {
             );
 
             PaymentRecord saved = paymentRecordRepository.save(paymentRecord);
+
+            if (saved.getStripeIntentId() != null && !saved.getStripeIntentId().isBlank()) {
+                try {
+                    ticketService.invalidateTicketsForRefund(saved.getStripeIntentId());
+                } catch (Exception ticketEx) {
+                    log.error("Failed to invalidate tickets for refunded payment intent {}", saved.getStripeIntentId(), ticketEx);
+                }
+            }
+
             log.info(
                     "Applied refund update for payment {} (intent={}, charge={}, refundedMajor={}, remainingAmount={})",
                     saved.getId(),
