@@ -3,6 +3,7 @@ package com.xfrizon.controller;
 import com.stripe.model.Event;
 import com.stripe.model.Account;
 import com.stripe.model.Charge;
+import com.stripe.model.Refund;
 import com.stripe.net.Webhook;
 import com.xfrizon.entity.User;
 import com.xfrizon.repository.UserRepository;
@@ -73,6 +74,15 @@ public class StripeWebhookController {
                     break;
                 case "charge.refunded":
                     handleChargeRefunded(event);
+                    break;
+                case "charge.refund.updated":
+                    handleChargeRefunded(event);
+                    break;
+                case "refund.created":
+                    handleRefundCreatedOrUpdated(event);
+                    break;
+                case "refund.updated":
+                    handleRefundCreatedOrUpdated(event);
                     break;
                 default:
                     log.debug("Unhandled webhook event: {}", event.getType());
@@ -247,6 +257,51 @@ public class StripeWebhookController {
             );
         } catch (Exception e) {
             log.error("Error handling charge.refunded webhook", e);
+        }
+    }
+
+    /**
+     * Handle refund.created/refund.updated events.
+     * Some Stripe dashboard configurations emit these events without charge.refunded.
+     */
+    private void handleRefundCreatedOrUpdated(Event event) {
+        try {
+            Refund refund = (Refund) event.getDataObjectDeserializer().getObject().orElse(null);
+            if (refund == null) {
+                log.warn("{} webhook had no refund payload", event.getType());
+                return;
+            }
+
+            String stripeChargeId = refund.getCharge();
+            if (stripeChargeId == null || stripeChargeId.isBlank()) {
+                log.warn("{} webhook missing charge id", event.getType());
+                return;
+            }
+
+            // Retrieve charge to get current cumulative refunded amount and payment_intent id.
+            Charge charge = Charge.retrieve(stripeChargeId);
+            String stripeIntentId = charge != null ? charge.getPaymentIntent() : null;
+            Long refundedAmountMinor = charge != null ? charge.getAmountRefunded() : null;
+            Long chargeAmountMinor = charge != null ? charge.getAmount() : null;
+
+            paymentService.applyRefundFromWebhook(
+                stripeChargeId,
+                stripeIntentId,
+                refundedAmountMinor,
+                chargeAmountMinor
+            );
+
+            log.info(
+                "Processed {} webhook for refund {} (charge={}, intent={}, refundedMinor={}, totalMinor={})",
+                event.getType(),
+                refund.getId(),
+                stripeChargeId,
+                stripeIntentId,
+                refundedAmountMinor,
+                chargeAmountMinor
+            );
+        } catch (Exception e) {
+            log.error("Error handling {} webhook", event.getType(), e);
         }
     }
 

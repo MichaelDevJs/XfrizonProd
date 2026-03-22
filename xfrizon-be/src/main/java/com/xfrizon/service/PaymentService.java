@@ -455,13 +455,17 @@ public class PaymentService {
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
             if (latestRefunded.compareTo(previousRefunded) <= 0) {
-                return paymentRecord;
+                return paymentRecordRepository.save(paymentRecord);
             }
 
             BigDecimal deltaRefund = latestRefunded.subtract(previousRefunded);
 
             BigDecimal currentAmount = safeAmount(paymentRecord.getAmount());
-            if (deltaRefund.compareTo(currentAmount) >= 0) {
+                BigDecimal totalChargeAmount = chargeAmountMinor != null && chargeAmountMinor > 0
+                    ? BigDecimal.valueOf(chargeAmountMinor).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                    : safeAmount(paymentRecord.getAmount()).add(previousRefunded);
+
+                if (latestRefunded.compareTo(totalChargeAmount) >= 0 || deltaRefund.compareTo(currentAmount) >= 0) {
                 paymentRecord.setAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
                 paymentRecord.setSubtotalAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
                 paymentRecord.setServiceFeeAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));

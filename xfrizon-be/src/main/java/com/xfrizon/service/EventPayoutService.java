@@ -2,6 +2,8 @@ package com.xfrizon.service;
 
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Charge;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.Transfer;
 import com.xfrizon.dto.EventPayoutPreviewResponse;
 import com.xfrizon.entity.Event;
@@ -38,6 +40,7 @@ public class EventPayoutService {
     private final PaymentRecordRepository paymentRecordRepository;
     private final EventRepository eventRepository;
     private final EventPayoutRepository eventPayoutRepository;
+    private final PaymentService paymentService;
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
@@ -166,6 +169,8 @@ public class EventPayoutService {
     }
 
     public void syncEventPayouts() {
+        reconcileRefundsFromStripe();
+
         List<Object[]> rows = paymentRecordRepository.summarizeSucceededPaymentsByEventAndCurrency();
         java.util.Set<String> activeKeys = new java.util.HashSet<>();
 
@@ -264,6 +269,70 @@ public class EventPayoutService {
 
             eventPayoutRepository.save(payout);
         }
+    }
+
+    private void reconcileRefundsFromStripe() {
+        if (!isStripeConfigured()) {
+            return;
+        }
+
+        Stripe.apiKey = stripeApiKey;
+        List<com.xfrizon.entity.PaymentRecord> candidates = paymentRecordRepository.findByStatusIn(
+            List.of(
+                com.xfrizon.entity.PaymentRecord.PaymentStatus.SUCCEEDED,
+                com.xfrizon.entity.PaymentRecord.PaymentStatus.REFUNDED
+            )
+        );
+
+        for (com.xfrizon.entity.PaymentRecord payment : candidates) {
+            try {
+                String chargeId = payment.getStripeChargeId();
+                String intentId = payment.getStripeIntentId();
+
+                Charge charge = null;
+                if (chargeId != null && !chargeId.isBlank() && chargeId.startsWith("ch_")) {
+                    charge = Charge.retrieve(chargeId);
+                } else if (intentId != null && !intentId.isBlank()) {
+                    PaymentIntent intent = PaymentIntent.retrieve(intentId);
+                    String latestChargeId = intent != null ? intent.getLatestCharge() : null;
+                    if (latestChargeId != null && !latestChargeId.isBlank()) {
+                        charge = Charge.retrieve(latestChargeId);
+                        chargeId = latestChargeId;
+                    }
+                }
+
+                if (charge == null || charge.getAmountRefunded() == null || charge.getAmountRefunded() <= 0L) {
+                    continue;
+                }
+
+                paymentService.applyRefundFromWebhook(
+                    chargeId,
+                    charge.getPaymentIntent() != null ? charge.getPaymentIntent() : intentId,
+                    charge.getAmountRefunded(),
+                    charge.getAmount()
+                );
+            } catch (StripeException ex) {
+                log.warn(
+                    "Stripe refund reconciliation skipped for payment {} due to Stripe error: {}",
+                    payment.getId(),
+                    ex.getMessage()
+                );
+            } catch (Exception ex) {
+                log.warn(
+                    "Stripe refund reconciliation skipped for payment {} due to error: {}",
+                    payment.getId(),
+                    ex.getMessage()
+                );
+            }
+        }
+    }
+
+    private boolean isStripeConfigured() {
+        String key = stripeApiKey == null ? "" : stripeApiKey.trim();
+        if (key.isEmpty()) {
+            return false;
+        }
+        return key.startsWith("sk_test_") || key.startsWith("sk_live_");
     }
 
     private LocalDateTime resolveEventEndAt(Event event, LocalDateTime lastPaymentAt) {

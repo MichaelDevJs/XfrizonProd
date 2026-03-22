@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 @Repository
 public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Long> {
@@ -27,6 +28,8 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
     Page<PaymentRecord> findByEventId(Long eventId, Pageable pageable);
 
     Page<PaymentRecord> findByStatus(PaymentRecord.PaymentStatus status, Pageable pageable);
+
+    List<PaymentRecord> findByStatusIn(Collection<PaymentRecord.PaymentStatus> statuses);
 
     @Query("SELECT COALESCE(SUM(pr.amount), 0) FROM PaymentRecord pr WHERE pr.event.id = ?1 AND pr.status = 'SUCCEEDED'")
     BigDecimal getTotalRevenueByEvent(Long eventId);
