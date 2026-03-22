@@ -5,6 +5,9 @@ import com.xfrizon.dto.RegisterRequest;
 import com.xfrizon.dto.AuthResponse;
 import com.xfrizon.dto.GoogleSignupCompleteRequest;
 import com.xfrizon.dto.UserResponse;
+import com.xfrizon.dto.EmailVerificationRequest;
+import com.xfrizon.dto.EmailVerificationResponse;
+import com.xfrizon.dto.ResendVerificationRequest;
 import com.xfrizon.entity.Partner;
 import com.xfrizon.entity.User;
 import com.xfrizon.repository.PartnerRepository;
@@ -36,6 +39,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
     private final ReferralConversionService referralConversionService;
+    private final VerificationService verificationService;
 
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
@@ -71,20 +75,19 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
-        // Generate JWT token
-        String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getId());
+        // Send verification email
+        verificationService.sendVerificationEmail(savedUser);
 
         return AuthResponse.builder()
                 .success(true)
-                .message("User registered successfully")
-                .token(token)
-                .type("Bearer")
+                .message("User registered successfully. Please check your email to verify your account.")
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().toString())
-            .roles(savedUser.getRoles())
+                .roles(savedUser.getRoles())
+                .emailVerificationPending(true)
                 .build();
     }
 
@@ -122,20 +125,19 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
-        // Generate JWT token
-        String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getId());
+        // Send verification email
+        verificationService.sendVerificationEmail(savedUser);
 
         return AuthResponse.builder()
                 .success(true)
-                .message("Organizer registered successfully")
-                .token(token)
-                .type("Bearer")
+                .message("Organizer registered successfully. Please check your email to verify your account.")
                 .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().toString())
-            .roles(savedUser.getRoles())
+                .roles(savedUser.getRoles())
+                .emailVerificationPending(true)
                 .build();
     }
 
@@ -221,6 +223,18 @@ public class AuthService {
             return AuthResponse.builder()
                     .success(false)
                     .message("User account is inactive")
+                    .build();
+        }
+
+        // Check if email is verified (for regular users and organizers)
+        if (!Boolean.TRUE.equals(user.getIsEmailVerified()) && 
+            (user.getRole() == User.UserRole.USER || user.getRole() == User.UserRole.ORGANIZER)) {
+            return AuthResponse.builder()
+                    .success(false)
+                    .message("Email not verified. Please check your email for the verification code.")
+                    .emailVerificationPending(true)
+                    .userId(user.getId())
+                    .email(user.getEmail())
                     .build();
         }
 
@@ -612,6 +626,44 @@ public class AuthService {
 
         return roleTokens.contains("ADMIN") || roleTokens.contains("BLOG_WRITER");
     }
+
+    /**
+     * Verify email with verification code
+     */
+    public EmailVerificationResponse verifyEmail(EmailVerificationRequest request) {
+        EmailVerificationResponse response = verificationService.verifyEmail(request.getEmail(), request.getVerificationCode());
+        
+        if (response.getSuccess()) {
+            // Email verified successfully, user can now login
+            return response;
+        }
+        
+        return response;
+    }
+
+    /**
+     * Resend verification email
+     */
+    public EmailVerificationResponse resendVerificationEmail(ResendVerificationRequest request) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        
+        if (user == null) {
+            return EmailVerificationResponse.builder()
+                    .success(false)
+                    .message("User not found")
+                    .build();
+        }
+
+        if (Boolean.TRUE.equals(user.getIsEmailVerified())) {
+            return EmailVerificationResponse.builder()
+                    .success(false)
+                    .message("Email is already verified")
+                    .build();
+        }
+
+        return verificationService.resendVerificationCode(request.getEmail(), user);
+    }
 }
+
 
 

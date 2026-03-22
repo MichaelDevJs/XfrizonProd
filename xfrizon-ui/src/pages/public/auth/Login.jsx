@@ -122,6 +122,15 @@ export default function Login() {
             });
             setLoading(false);
           }, 300);
+        } else if (response?.emailVerificationPending) {
+          // Email not verified - redirect to verification page
+          setLoading(false);
+          toast.warning("Please verify your email to continue");
+          setTimeout(() => {
+            navigate("/verify-email", { 
+              state: { email: formData.email } 
+            });
+          }, 500);
         } else {
           setLoading(false);
           toast.error(response?.message || "Login failed");

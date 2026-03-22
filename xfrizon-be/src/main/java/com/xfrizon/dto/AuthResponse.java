@@ -46,4 +46,6 @@ public class AuthResponse {
     private String bio;
 
     private String coverPhoto;
+
+    private Boolean emailVerificationPending;
 }

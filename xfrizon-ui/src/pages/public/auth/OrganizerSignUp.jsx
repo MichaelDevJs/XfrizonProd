@@ -134,30 +134,41 @@ export default function OrganizerSignUp() {
       );
 
       if (response?.success) {
-        // Store token and user info
-        localStorage.setItem("userToken", response.token);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: response.userId,
-            email: response.email,
-            firstName: response.firstName,
-            lastName: response.lastName,
-            role: response.role,
-          }),
-        );
+        // Check if email verification is pending
+        if (response?.emailVerificationPending) {
+          // Redirect to email verification page
+          toast.success("Organizer account created! Please verify your email.");
+          setTimeout(() => {
+            navigate("/verify-email", { 
+              state: { email: formData.email } 
+            });
+          }, 500);
+        } else {
+          // Store token and user info (for already verified users, shouldn't happen for new registrations)
+          localStorage.setItem("userToken", response.token);
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              id: response.userId,
+              email: response.email,
+              firstName: response.firstName,
+              lastName: response.lastName,
+              role: response.role,
+            }),
+          );
 
-        const referralCode = (
-          localStorage.getItem("xfrizon_referral") || ""
-        ).trim();
-        if (referralCode) {
-          localStorage.removeItem("xfrizon_referral");
+          const referralCode = (
+            localStorage.getItem("xfrizon_referral") || ""
+          ).trim();
+          if (referralCode) {
+            localStorage.removeItem("xfrizon_referral");
+          }
+
+          toast.success("Organizer account created successfully!");
+          setTimeout(() => {
+            navigate("/organizer/dashboard");
+          }, 500);
         }
-
-        toast.success("Organizer account created successfully!");
-        setTimeout(() => {
-          navigate("/organizer/dashboard");
-        }, 500);
       } else {
         setLoading(false);
         toast.error(getDisplayErrorMessage(response, "Registration failed"));

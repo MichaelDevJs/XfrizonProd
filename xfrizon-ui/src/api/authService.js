@@ -169,6 +169,29 @@ const authService = {
     localStorage.removeItem("userToken");
     localStorage.removeItem("user");
   },
+
+  verifyEmail: async (email, verificationCode) => {
+    try {
+      const response = await api.post("/auth/verify-email", {
+        email,
+        verificationCode,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: error.message };
+    }
+  },
+
+  resendVerification: async (email) => {
+    try {
+      const response = await api.post("/auth/resend-verification", {
+        email,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: error.message };
+    }
+  },
 };
 
 export default authService;

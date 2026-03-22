@@ -78,14 +78,14 @@ export default function PartnersShowcaseSection({ partners = [] }) {
                       />
                     ) : (
                       <div className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-[#c0f24d]">
-                        {String(partner.name || "P").charAt(0)}
+                        {partner.name ? String(partner.name).charAt(0) : ""}
                       </div>
                     )}
                   </div>
 
                   <div className="mt-1 pt-0.5">
                     <p className="line-clamp-1 text-center text-sm font-semibold text-white group-hover:text-[#c0f24d]">
-                      {partner.name || "Partner"}
+                      {partner.name || ""}
                     </p>
                   </div>
                 </>

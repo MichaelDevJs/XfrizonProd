@@ -9,6 +9,7 @@ import AuthProvider from "./context/AuthContext";
 import HomePage from "./pages/public/HomePage";
 import Login from "./pages/public/auth/Login";
 import Register from "./pages/public/auth/Register";
+import EmailVerification from "./pages/public/auth/EmailVerification";
 import OrganizerSignUp from "./pages/public/auth/OrganizerSignUp";
 import GoogleSignupComplete from "./pages/public/auth/GoogleSignupComplete";
 import EventDetailsPage from "./pages/public/EventDetailsPage";
@@ -88,6 +89,7 @@ function RootApp() {
             {/* User Auth Routes */}
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             <Route
               path="/auth/organizer-signup"
               element={<OrganizerSignUp />}

@@ -5,6 +5,9 @@ import com.xfrizon.dto.RegisterRequest;
 import com.xfrizon.dto.AuthResponse;
 import com.xfrizon.dto.GoogleSignupCompleteRequest;
 import com.xfrizon.dto.UserResponse;
+import com.xfrizon.dto.EmailVerificationRequest;
+import com.xfrizon.dto.EmailVerificationResponse;
+import com.xfrizon.dto.ResendVerificationRequest;
 import com.xfrizon.service.AuthService;
 import com.xfrizon.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -188,5 +191,23 @@ public class AuthController {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<EmailVerificationResponse> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
+        EmailVerificationResponse response = authService.verifyEmail(request);
+        if (response.getSuccess()) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<EmailVerificationResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        EmailVerificationResponse response = authService.resendVerificationEmail(request);
+        if (response.getSuccess()) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }

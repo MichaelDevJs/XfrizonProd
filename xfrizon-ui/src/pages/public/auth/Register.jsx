@@ -93,12 +93,23 @@ export default function Register() {
       );
 
       if (response?.success) {
-        toast.success("Account created successfully!");
+        toast.success("Account created! Please verify your email.");
         setLoading(false);
-        // Delay navigation to allow toast to display
-        setTimeout(() => {
-          navigate("/");
-        }, 500);
+        
+        // Check if email verification is pending
+        if (response?.emailVerificationPending) {
+          // Redirect to email verification page
+          setTimeout(() => {
+            navigate("/verify-email", { 
+              state: { email: formData.email } 
+            });
+          }, 500);
+        } else {
+          // If already verified (shouldn't happen for new users), redirect to home
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        }
       } else {
         setLoading(false);
         toast.error(response?.message || "Registration failed");
