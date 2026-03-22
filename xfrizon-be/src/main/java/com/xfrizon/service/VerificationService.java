@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.lang.Nullable;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.UUID;
@@ -24,9 +25,12 @@ public class VerificationService {
     private final EmailVerificationTokenRepository tokenRepository;
     private final JavaMailSender mailSender;
 
-    public VerificationService(EmailVerificationTokenRepository tokenRepository, JavaMailSender mailSender) {
+    public VerificationService(EmailVerificationTokenRepository tokenRepository, @Nullable JavaMailSender mailSender) {
         this.tokenRepository = tokenRepository;
         this.mailSender = mailSender;
+        if (mailSender == null) {
+            log.warn("JavaMailSender not configured - email verification will be disabled");
+        }
     }
 
     /**
@@ -155,7 +159,7 @@ public class VerificationService {
      */
     private void sendVerificationEmailConfirmation(User user, Integer verificationCode) throws MessagingException {
         if (mailSender == null) {
-            log.warn("Email sending skipped - mail sender not configured");
+            log.warn("Email sending skipped - mail sender not configured. Verification code for {} is: {}", user.getEmail(), verificationCode);
             return;
         }
 
