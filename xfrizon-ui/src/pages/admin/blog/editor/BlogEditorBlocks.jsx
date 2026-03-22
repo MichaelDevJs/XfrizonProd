@@ -276,6 +276,12 @@ function BlockContentManager({ block, updateBlock, applyFormat }) {
       );
     case "image":
       return <BlockImageManager block={block} updateBlock={updateBlock} />;
+    case "continue":
+      return (
+        <div className="rounded-lg border border-dashed border-amber-500/50 bg-amber-500/10 px-4 py-4 text-sm text-amber-200">
+          Readers will see a Next button here. Content after this block stays hidden until they continue.
+        </div>
+      );
     case "video":
       return <BlockVideoManager block={block} updateBlock={updateBlock} />;
     case "youtube":
@@ -297,6 +303,7 @@ function BlockSeparator({ block, addBlock }) {
     { type: "youtube", label: "▶️ YouTube", color: "bg-red-600" },
     { type: "audio", label: "🎵 Audio", color: "bg-indigo-600" },
     { type: "embeds", label: "🔗 Embeds", color: "bg-amber-600" },
+    { type: "continue", label: "⤵ Next", color: "bg-zinc-600" },
   ];
 
   return (

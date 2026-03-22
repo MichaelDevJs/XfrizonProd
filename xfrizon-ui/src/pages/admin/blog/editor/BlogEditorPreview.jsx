@@ -6,6 +6,12 @@ export default function BlogEditorPreview({
   isPreview,
   setIsPreview,
 }) {
+  const nextBreakIndex = formData.blocks.findIndex(
+    (block) => block.type === "continue",
+  );
+  const previewBlocks =
+    nextBreakIndex >= 0 ? formData.blocks.slice(0, nextBreakIndex) : formData.blocks;
+
   const authorImageSrc = formData.authorProfileImage
     ? typeof formData.authorProfileImage === "string"
       ? formData.authorProfileImage
@@ -121,11 +127,16 @@ export default function BlogEditorPreview({
               <p className="text-xs text-gray-500 italic">{formData.excerpt}</p>
             )}
             <div className="border-t border-zinc-800 pt-3">
-              {formData.blocks.map((block) => (
+              {previewBlocks.map((block) => (
                 <div key={block.id} className="mb-3">
                   {renderBlockPreview(block)}
                 </div>
               ))}
+              {nextBreakIndex >= 0 && (
+                <div className="mt-4 rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-amber-300">
+                  Next button will appear here in the public article
+                </div>
+              )}
             </div>
           </div>
         </div>

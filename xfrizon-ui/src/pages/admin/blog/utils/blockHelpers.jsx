@@ -301,6 +301,10 @@ export const addBlock = (formData, setFormData, type, afterBlockId = null) => {
       newBlock.type = "embeds";
       newBlock.embeds = [];
       break;
+    case "continue":
+      newBlock.type = "continue";
+      newBlock.label = "Next Break";
+      break;
     default:
       return;
   }
@@ -509,6 +513,12 @@ export const renderBlockPreview = (block) => {
         🔗 {block.embeds?.length || 0} embed(s)
       </div>
     );
+  } else if (block.type === "continue") {
+    return (
+      <div className="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-300">
+        Next button starts after this point
+      </div>
+    );
   }
 };
 
@@ -534,6 +544,11 @@ export const BLOCK_COLORS = {
     icon: "🔗",
     color: "bg-amber-600",
     hoverColor: "hover:bg-amber-700",
+  },
+  continue: {
+    icon: "⤵",
+    color: "bg-zinc-600",
+    hoverColor: "hover:bg-zinc-700",
   },
 };
 

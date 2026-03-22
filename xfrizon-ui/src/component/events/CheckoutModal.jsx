@@ -212,6 +212,9 @@ function CheckoutForm({
                 email: "auto",
               },
             },
+            wallets: {
+              amazonPay: "never",
+            },
           }}
           onChange={handleElementChange}
         />

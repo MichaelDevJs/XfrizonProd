@@ -94,6 +94,7 @@ export default function BlogDetailPage() {
   const [shareStatus, setShareStatus] = useState("");
   const [shareBusy, setShareBusy] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [showFullContent, setShowFullContent] = useState(false);
   const shareMenuRef = useRef(null);
   const videoRefs = useRef({});
 
@@ -154,6 +155,10 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     fetchBlogDetail();
+  }, [id]);
+
+  useEffect(() => {
+    setShowFullContent(false);
   }, [id]);
 
   useEffect(() => {
@@ -965,7 +970,16 @@ export default function BlogDetailPage() {
       );
     }
 
-    return blog.blocks.map((block, index) => {
+    const nextBreakIndex = blog.blocks.findIndex(
+      (block) => block.type === "continue",
+    );
+
+    const blocksToRender =
+      nextBreakIndex >= 0 && !showFullContent
+        ? blog.blocks.slice(0, nextBreakIndex)
+        : blog.blocks.filter((block) => block.type !== "continue");
+
+    return blocksToRender.map((block, index) => {
       switch (block.type) {
         case "text":
           return (
@@ -1275,6 +1289,11 @@ export default function BlogDetailPage() {
     });
   };
 
+  const nextBreakIndex = Array.isArray(blog?.blocks)
+    ? blog.blocks.findIndex((block) => block.type === "continue")
+    : -1;
+  const hasNextBreak = nextBreakIndex >= 0;
+
   // Declare heroImage only once using defensive fallback
   const heroImage = safeCoverImage || featuredImage;
   const showHero = Boolean(heroImage);
@@ -1551,6 +1570,18 @@ export default function BlogDetailPage() {
 
         {/* Article Content */}
         <div className="prose prose-lg max-w-none">{renderBlockContent()}</div>
+
+        {hasNextBreak && !showFullContent && (
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowFullContent(true)}
+              className="rounded-sm border border-red-500/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-red-300 transition hover:border-red-400 hover:text-red-200"
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Related Articles CTA */}
         <div className="mt-10">
