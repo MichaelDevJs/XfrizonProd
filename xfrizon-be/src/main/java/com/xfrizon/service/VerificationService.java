@@ -85,6 +85,15 @@ public class VerificationService {
         });
     }
 
+    public void sendVerificationCodeEmail(String email, String firstName, Integer verificationCode) {
+        try {
+            sendVerificationEmailConfirmation(email, firstName, verificationCode);
+            log.info("Verification email sent to: {}", email);
+        } catch (Exception e) {
+            log.error("Error sending verification email to: {}", email, e);
+        }
+    }
+
     /**
      * Verify email with verification code
      */
@@ -181,19 +190,23 @@ public class VerificationService {
      * Send verification email
      */
     private void sendVerificationEmailConfirmation(User user, Integer verificationCode) throws MessagingException {
+        sendVerificationEmailConfirmation(user.getEmail(), user.getFirstName(), verificationCode);
+    }
+
+    private void sendVerificationEmailConfirmation(String email, String firstName, Integer verificationCode) throws MessagingException {
         if (mailSender == null) {
-            log.warn("Email sending skipped - mail sender not configured. Verification code for {} is: {}", user.getEmail(), verificationCode);
+            log.warn("Email sending skipped - mail sender not configured. Verification code for {} is: {}", email, verificationCode);
             return;
         }
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setTo(user.getEmail());
+        helper.setTo(email);
         helper.setFrom(mailFrom);
         helper.setSubject("Verify Your Xfrizon Email Address");
 
-        String htmlContent = buildVerificationEmailContent(user.getFirstName(), verificationCode);
+        String htmlContent = buildVerificationEmailContent(firstName, verificationCode);
         helper.setText(htmlContent, true);
 
         mailSender.send(message);

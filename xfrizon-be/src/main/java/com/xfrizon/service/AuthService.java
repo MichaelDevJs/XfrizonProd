@@ -8,8 +8,10 @@ import com.xfrizon.dto.UserResponse;
 import com.xfrizon.dto.EmailVerificationRequest;
 import com.xfrizon.dto.EmailVerificationResponse;
 import com.xfrizon.dto.ResendVerificationRequest;
+import com.xfrizon.entity.PendingUserRegistration;
 import com.xfrizon.entity.Partner;
 import com.xfrizon.entity.User;
+import com.xfrizon.repository.PendingUserRegistrationRepository;
 import com.xfrizon.repository.PartnerRepository;
 import com.xfrizon.repository.UserRepository;
 import com.xfrizon.util.JwtTokenProvider;
@@ -25,8 +27,10 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Locale;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @AllArgsConstructor
@@ -40,6 +44,7 @@ public class AuthService {
     private final ObjectMapper objectMapper;
     private final ReferralConversionService referralConversionService;
     private final VerificationService verificationService;
+    private final PendingUserRegistrationRepository pendingUserRegistrationRepository;
 
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
@@ -66,6 +71,8 @@ public class AuthService {
                     .build();
         }
 
+            cleanupExpiredPendingRegistrations();
+
         // Verify passwords match
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             return AuthResponse.builder()
@@ -74,35 +81,21 @@ public class AuthService {
                     .build();
         }
 
-        // Create new user
-        User user = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .phoneNumber(request.getPhoneNumber())
-                .profilePicture(request.getProfilePicture())
-                .role(User.UserRole.USER)
-                .roles(User.UserRole.USER.name())
-                .isActive(true)
-                .isEmailVerified(false)
-                .build();
-
-        User savedUser = userRepository.save(user);
-        referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
-
-        // Send verification email in background to keep signup response fast.
-        verificationService.sendVerificationEmailAsync(savedUser);
+                PendingUserRegistration pending = upsertPendingRegistration(request, User.UserRole.USER);
+                verificationService.sendVerificationCodeEmail(
+                    pending.getEmail(),
+                    pending.getFirstName(),
+                    pending.getVerificationCode()
+                );
 
         return AuthResponse.builder()
                 .success(true)
                 .message("User registered successfully. Please check your email to verify your account.")
-                .userId(savedUser.getId())
-                .email(savedUser.getEmail())
-                .firstName(savedUser.getFirstName())
-                .lastName(savedUser.getLastName())
-                .role(savedUser.getRole().toString())
-                .roles(savedUser.getRoles())
+                    .email(pending.getEmail())
+                    .firstName(pending.getFirstName())
+                    .lastName(pending.getLastName())
+                    .role(pending.getRole())
+                    .roles(pending.getRoles())
                 .emailVerificationPending(true)
                 .build();
     }
@@ -132,6 +125,8 @@ public class AuthService {
                     .build();
         }
 
+            cleanupExpiredPendingRegistrations();
+
         // Verify passwords match
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             return AuthResponse.builder()
@@ -140,35 +135,21 @@ public class AuthService {
                     .build();
         }
 
-        // Create new organizer user
-        User user = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .phoneNumber(request.getPhoneNumber())
-                .profilePicture(request.getProfilePicture())
-                .role(User.UserRole.ORGANIZER)
-                .roles(User.UserRole.ORGANIZER.name())
-                .isActive(true)
-                .isEmailVerified(false)
-                .build();
-
-        User savedUser = userRepository.save(user);
-        referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
-
-        // Send verification email in background to keep signup response fast.
-        verificationService.sendVerificationEmailAsync(savedUser);
+                PendingUserRegistration pending = upsertPendingRegistration(request, User.UserRole.ORGANIZER);
+                verificationService.sendVerificationCodeEmail(
+                    pending.getEmail(),
+                    pending.getFirstName(),
+                    pending.getVerificationCode()
+                );
 
         return AuthResponse.builder()
                 .success(true)
                 .message("Organizer registered successfully. Please check your email to verify your account.")
-                .userId(savedUser.getId())
-                .email(savedUser.getEmail())
-                .firstName(savedUser.getFirstName())
-                .lastName(savedUser.getLastName())
-                .role(savedUser.getRole().toString())
-                .roles(savedUser.getRoles())
+                    .email(pending.getEmail())
+                    .firstName(pending.getFirstName())
+                    .lastName(pending.getLastName())
+                    .role(pending.getRole())
+                    .roles(pending.getRoles())
                 .emailVerificationPending(true)
                 .build();
     }
@@ -663,21 +644,79 @@ public class AuthService {
      * Verify email with verification code
      */
     public EmailVerificationResponse verifyEmail(EmailVerificationRequest request) {
-        EmailVerificationResponse response = verificationService.verifyEmail(request.getEmail(), request.getVerificationCode());
-        
-        if (response.getSuccess()) {
-            // Email verified successfully, user can now login
-            return response;
+        String email = safeTrim(request.getEmail());
+        PendingUserRegistration pending = pendingUserRegistrationRepository
+                .findByEmailIgnoreCaseAndVerificationCode(email, request.getVerificationCode())
+                .orElse(null);
+
+        if (pending != null) {
+            if (pending.getExpiresAt() == null || LocalDateTime.now().isAfter(pending.getExpiresAt())) {
+                return EmailVerificationResponse.builder()
+                        .success(false)
+                        .message("Verification code expired. Please request a new one.")
+                        .build();
+            }
+
+            if (userRepository.existsByEmail(email)) {
+                pendingUserRegistrationRepository.delete(pending);
+                return EmailVerificationResponse.builder()
+                        .success(false)
+                        .message("Email already registered. Please login.")
+                        .build();
+            }
+
+            User.UserRole role = User.UserRole.valueOf(pending.getRole());
+            User user = User.builder()
+                    .firstName(pending.getFirstName())
+                    .lastName(pending.getLastName())
+                    .email(pending.getEmail())
+                    .password(pending.getPasswordHash())
+                    .phoneNumber(pending.getPhoneNumber())
+                    .profilePicture(pending.getProfilePicture())
+                    .role(role)
+                    .roles(pending.getRoles())
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .build();
+
+            User savedUser = userRepository.save(user);
+            referralConversionService.trackSignupConversion(pending.getReferralCode(), savedUser);
+            pendingUserRegistrationRepository.delete(pending);
+
+            return EmailVerificationResponse.builder()
+                    .success(true)
+                    .message("Email verified successfully")
+                    .userId(savedUser.getId())
+                    .build();
         }
-        
-        return response;
+
+        return verificationService.verifyEmail(request.getEmail(), request.getVerificationCode());
     }
 
     /**
      * Resend verification email
      */
     public EmailVerificationResponse resendVerificationEmail(ResendVerificationRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        String email = safeTrim(request.getEmail());
+        PendingUserRegistration pending = pendingUserRegistrationRepository.findByEmailIgnoreCase(email).orElse(null);
+        if (pending != null) {
+            pending.setVerificationCode(generateVerificationCode());
+            pending.setExpiresAt(LocalDateTime.now().plusHours(24));
+            pendingUserRegistrationRepository.save(pending);
+
+            verificationService.sendVerificationCodeEmail(
+                pending.getEmail(),
+                pending.getFirstName(),
+                pending.getVerificationCode()
+            );
+
+            return EmailVerificationResponse.builder()
+                .success(true)
+                .message("Verification code sent to your email")
+                .build();
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
         
         if (user == null) {
             return EmailVerificationResponse.builder()
@@ -693,7 +732,36 @@ public class AuthService {
                     .build();
         }
 
-        return verificationService.resendVerificationCode(request.getEmail(), user);
+        return verificationService.resendVerificationCode(email, user);
+    }
+
+    private PendingUserRegistration upsertPendingRegistration(RegisterRequest request, User.UserRole role) {
+        String email = safeTrim(request.getEmail()).toLowerCase(Locale.ROOT);
+        PendingUserRegistration pending = pendingUserRegistrationRepository
+                .findByEmailIgnoreCase(email)
+                .orElseGet(PendingUserRegistration::new);
+
+        pending.setEmail(email);
+        pending.setFirstName(request.getFirstName());
+        pending.setLastName(request.getLastName());
+        pending.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        pending.setPhoneNumber(request.getPhoneNumber());
+        pending.setProfilePicture(request.getProfilePicture());
+        pending.setRole(role.name());
+        pending.setRoles(role.name());
+        pending.setReferralCode(safeTrim(request.getReferralCode()));
+        pending.setVerificationCode(generateVerificationCode());
+        pending.setExpiresAt(LocalDateTime.now().plusHours(24));
+
+        return pendingUserRegistrationRepository.save(pending);
+    }
+
+    private int generateVerificationCode() {
+        return ThreadLocalRandom.current().nextInt(100000, 1000000);
+    }
+
+    private void cleanupExpiredPendingRegistrations() {
+        pendingUserRegistrationRepository.deleteByExpiresAtBefore(LocalDateTime.now());
     }
 }
 
