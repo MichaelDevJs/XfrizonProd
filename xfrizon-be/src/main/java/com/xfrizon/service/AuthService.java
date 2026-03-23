@@ -82,7 +82,7 @@ public class AuthService {
         }
 
                 PendingUserRegistration pending = upsertPendingRegistration(request, User.UserRole.USER);
-                verificationService.sendVerificationCodeEmail(
+                verificationService.sendVerificationCodeEmailAsync(
                     pending.getEmail(),
                     pending.getFirstName(),
                     pending.getVerificationCode()
@@ -136,7 +136,7 @@ public class AuthService {
         }
 
                 PendingUserRegistration pending = upsertPendingRegistration(request, User.UserRole.ORGANIZER);
-                verificationService.sendVerificationCodeEmail(
+                verificationService.sendVerificationCodeEmailAsync(
                     pending.getEmail(),
                     pending.getFirstName(),
                     pending.getVerificationCode()
@@ -704,7 +704,7 @@ public class AuthService {
             pending.setExpiresAt(LocalDateTime.now().plusHours(24));
             pendingUserRegistrationRepository.save(pending);
 
-            verificationService.sendVerificationCodeEmail(
+                verificationService.sendVerificationCodeEmailAsync(
                 pending.getEmail(),
                 pending.getFirstName(),
                 pending.getVerificationCode()

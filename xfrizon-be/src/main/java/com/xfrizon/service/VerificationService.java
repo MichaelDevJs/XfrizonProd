@@ -94,6 +94,17 @@ public class VerificationService {
         }
     }
 
+    public void sendVerificationCodeEmailAsync(String email, String firstName, Integer verificationCode) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                sendVerificationEmailConfirmation(email, firstName, verificationCode);
+                log.info("Async verification email sent to: {}", email);
+            } catch (Exception e) {
+                log.error("Async verification email failed for: {}", email, e);
+            }
+        });
+    }
+
     /**
      * Verify email with verification code
      */
