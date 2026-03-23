@@ -682,15 +682,29 @@ public class AuthService {
             User savedUser = userRepository.save(user);
             referralConversionService.trackSignupConversion(pending.getReferralCode(), savedUser);
             pendingUserRegistrationRepository.delete(pending);
+            verificationService.sendWelcomeEmailAsync(savedUser.getEmail(), savedUser.getFirstName());
 
             return EmailVerificationResponse.builder()
                     .success(true)
-                    .message("Email verified successfully")
+                    .message("Email verified successfully. Welcome to Xfrizon!")
                     .userId(savedUser.getId())
                     .build();
         }
 
-        return verificationService.verifyEmail(request.getEmail(), request.getVerificationCode());
+        EmailVerificationResponse response = verificationService.verifyEmail(request.getEmail(), request.getVerificationCode());
+        if (Boolean.TRUE.equals(response.getSuccess())) {
+            User existingUser = userRepository.findByEmail(email).orElse(null);
+            if (existingUser != null) {
+                verificationService.sendWelcomeEmailAsync(existingUser.getEmail(), existingUser.getFirstName());
+            }
+            return EmailVerificationResponse.builder()
+                    .success(true)
+                    .message("Email verified successfully. Welcome to Xfrizon!")
+                    .userId(response.getUserId())
+                    .build();
+        }
+
+        return response;
     }
 
     /**

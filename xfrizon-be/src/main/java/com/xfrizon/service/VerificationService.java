@@ -36,19 +36,43 @@ public class VerificationService {
     private final ObjectMapper objectMapper;
     private final String mailFrom;
     private final String resendApiKey;
+    private final String brandName;
+    private final String logoUrl;
+    private final String verificationSubject;
+    private final String verificationHeading;
+    private final String verificationIntro;
+    private final String welcomeSubject;
+    private final String welcomeHeading;
+    private final String welcomeMessage;
 
     public VerificationService(
             EmailVerificationTokenRepository tokenRepository,
             @Nullable JavaMailSender mailSender,
             ObjectMapper objectMapper,
             @Value("${mail.from:noreply@xfrizon-ts.com}") String mailFrom,
-            @Value("${resend.api.key:}") String resendApiKey
+            @Value("${resend.api.key:}") String resendApiKey,
+            @Value("${app.email.brand-name:Xfrizon}") String brandName,
+            @Value("${app.email.logo-url:}") String logoUrl,
+            @Value("${app.email.verification.subject:Verify Your Xfrizon Email Address}") String verificationSubject,
+            @Value("${app.email.verification.heading:Verify Your Email}") String verificationHeading,
+            @Value("${app.email.verification.intro:Welcome to {brand}! Please verify your email address by entering the code below:}") String verificationIntro,
+            @Value("${app.email.welcome.subject:Welcome to Xfrizon}") String welcomeSubject,
+            @Value("${app.email.welcome.heading:Welcome to {brand}}") String welcomeHeading,
+            @Value("${app.email.welcome.message:Hi {firstName}, your email is now verified. Welcome to {brand}!}") String welcomeMessage
     ) {
         this.tokenRepository = tokenRepository;
         this.mailSender = mailSender;
         this.objectMapper = objectMapper;
         this.mailFrom = mailFrom;
         this.resendApiKey = resendApiKey;
+        this.brandName = brandName;
+        this.logoUrl = logoUrl;
+        this.verificationSubject = verificationSubject;
+        this.verificationHeading = verificationHeading;
+        this.verificationIntro = verificationIntro;
+        this.welcomeSubject = welcomeSubject;
+        this.welcomeHeading = welcomeHeading;
+        this.welcomeMessage = welcomeMessage;
         if (mailSender == null) {
             log.warn("JavaMailSender not configured - email verification will be disabled");
         }
@@ -114,6 +138,40 @@ public class VerificationService {
                 log.info("Async verification email sent to: {}", email);
             } catch (Exception e) {
                 log.error("Async verification email failed for: {}", email, e);
+            }
+        });
+    }
+
+    public void sendWelcomeEmailAsync(String email, String firstName) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String subject = renderTemplate(welcomeSubject, firstName);
+                String htmlContent = buildWelcomeEmailContent(firstName);
+
+                if (mailSender == null) {
+                    if (!sendViaResendApi(email, subject, htmlContent)) {
+                        log.warn("Welcome email skipped - no mail sender and no API fallback for {}", email);
+                    }
+                    return;
+                }
+
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setTo(email);
+                helper.setFrom(mailFrom);
+                helper.setSubject(subject);
+                helper.setText(htmlContent, true);
+
+                try {
+                    mailSender.send(message);
+                } catch (Exception smtpError) {
+                    log.error("SMTP welcome email failed for {}. Trying Resend API fallback.", email, smtpError);
+                    if (!sendViaResendApi(email, subject, htmlContent)) {
+                        log.error("Welcome email fallback also failed for {}", email);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Async welcome email failed for: {}", email, e);
             }
         });
     }
@@ -218,7 +276,7 @@ public class VerificationService {
     }
 
     private void sendVerificationEmailConfirmation(String email, String firstName, Integer verificationCode) throws MessagingException {
-        String subject = "Verify Your Xfrizon Email Address";
+        String subject = renderTemplate(verificationSubject, firstName);
         String htmlContent = buildVerificationEmailContent(firstName, verificationCode);
 
         if (mailSender == null) {
@@ -297,15 +355,12 @@ public class VerificationService {
         html.append("<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>");
 
         // Header
-        html.append("<div style='text-align: center; margin-bottom: 30px;'>");
-        html.append("<h1 style='color: #c0f24d; margin: 0; font-size: 32px;'>Xfrizon</h1>");
-        html.append("<h2 style='color: #666; margin: 15px 0; font-size: 24px;'>Verify Your Email</h2>");
-        html.append("</div>");
+        appendBrandHeader(html, renderTemplate(verificationHeading, firstName));
 
         // Body
         html.append("<div style='margin-bottom: 30px; line-height: 1.6;'>");
         html.append("<p>Hi ").append(firstName).append(",</p>");
-        html.append("<p>Welcome to Xfrizon! Please verify your email address by entering the code below:</p>");
+        html.append("<p>").append(renderTemplate(verificationIntro, firstName)).append("</p>");
         html.append("</div>");
 
         // Verification Code
@@ -320,11 +375,52 @@ public class VerificationService {
         // Footer
         html.append("<div style='border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px; font-size: 12px; color: #999;'>");
         html.append("<p>If you didn't create this account, please ignore this email.</p>");
-        html.append("<p>© 2026 Xfrizon. All rights reserved.</p>");
+        html.append("<p>© 2026 ").append(brandName).append(". All rights reserved.</p>");
         html.append("</div>");
 
         html.append("</div></body></html>");
         return html.toString();
+    }
+
+    private String buildWelcomeEmailContent(String firstName) {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
+        html.append("<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>");
+
+        appendBrandHeader(html, renderTemplate(welcomeHeading, firstName));
+
+        html.append("<div style='margin-bottom: 30px; line-height: 1.6;'>");
+        html.append("<p>").append(renderTemplate(welcomeMessage, firstName)).append("</p>");
+        html.append("</div>");
+
+        html.append("<div style='background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 30px;'>");
+        html.append("<p style='margin:0; color:#666;'>You can now sign in and explore events, tickets, and rewards.</p>");
+        html.append("</div>");
+
+        html.append("<div style='border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px; font-size: 12px; color: #999;'>");
+        html.append("<p>© 2026 ").append(brandName).append(". All rights reserved.</p>");
+        html.append("</div>");
+
+        html.append("</div></body></html>");
+        return html.toString();
+    }
+
+    private void appendBrandHeader(StringBuilder html, String heading) {
+        html.append("<div style='text-align: center; margin-bottom: 30px;'>");
+        if (logoUrl != null && !logoUrl.isBlank()) {
+            html.append("<img src='").append(logoUrl)
+                    .append("' alt='Brand logo' style='height:48px; max-width:200px; object-fit:contain; margin-bottom:12px;' />");
+        }
+        html.append("<h1 style='color: #c0f24d; margin: 0; font-size: 32px;'>").append(brandName).append("</h1>");
+        html.append("<h2 style='color: #666; margin: 15px 0; font-size: 24px;'>").append(heading).append("</h2>");
+        html.append("</div>");
+    }
+
+    private String renderTemplate(String rawText, String firstName) {
+        if (rawText == null) return "";
+        return rawText
+                .replace("{firstName}", firstName == null ? "there" : firstName)
+                .replace("{brand}", brandName == null ? "Xfrizon" : brandName);
     }
 
     /**

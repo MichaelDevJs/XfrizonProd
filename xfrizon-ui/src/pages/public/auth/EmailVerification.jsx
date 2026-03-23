@@ -44,7 +44,7 @@ export default function EmailVerification() {
       );
 
       if (response?.success) {
-        toast.success("Email verified successfully!");
+        toast.success(response?.message || "Email verified successfully!");
         localStorage.removeItem("pendingVerificationEmail");
         setTimeout(() => {
           navigate("/auth/login", { state: { email } });
