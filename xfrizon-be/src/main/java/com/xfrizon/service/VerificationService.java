@@ -4,6 +4,7 @@ import com.xfrizon.dto.EmailVerificationResponse;
 import com.xfrizon.entity.EmailVerificationToken;
 import com.xfrizon.entity.User;
 import com.xfrizon.repository.EmailVerificationTokenRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -14,7 +15,13 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.lang.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,16 +33,22 @@ public class VerificationService {
 
     private final EmailVerificationTokenRepository tokenRepository;
     private final JavaMailSender mailSender;
+    private final ObjectMapper objectMapper;
     private final String mailFrom;
+    private final String resendApiKey;
 
     public VerificationService(
             EmailVerificationTokenRepository tokenRepository,
             @Nullable JavaMailSender mailSender,
-            @Value("${mail.from:noreply@xfrizon-ts.com}") String mailFrom
+            ObjectMapper objectMapper,
+            @Value("${mail.from:noreply@xfrizon-ts.com}") String mailFrom,
+            @Value("${resend.api.key:}") String resendApiKey
     ) {
         this.tokenRepository = tokenRepository;
         this.mailSender = mailSender;
+        this.objectMapper = objectMapper;
         this.mailFrom = mailFrom;
+        this.resendApiKey = resendApiKey;
         if (mailSender == null) {
             log.warn("JavaMailSender not configured - email verification will be disabled");
         }
@@ -205,7 +218,13 @@ public class VerificationService {
     }
 
     private void sendVerificationEmailConfirmation(String email, String firstName, Integer verificationCode) throws MessagingException {
+        String subject = "Verify Your Xfrizon Email Address";
+        String htmlContent = buildVerificationEmailContent(firstName, verificationCode);
+
         if (mailSender == null) {
+            if (sendViaResendApi(email, subject, htmlContent)) {
+                return;
+            }
             log.warn("Email sending skipped - mail sender not configured. Verification code for {} is: {}", email, verificationCode);
             return;
         }
@@ -215,12 +234,58 @@ public class VerificationService {
 
         helper.setTo(email);
         helper.setFrom(mailFrom);
-        helper.setSubject("Verify Your Xfrizon Email Address");
-
-        String htmlContent = buildVerificationEmailContent(firstName, verificationCode);
+        helper.setSubject(subject);
         helper.setText(htmlContent, true);
 
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (Exception smtpError) {
+            log.error("SMTP send failed for {}. Trying Resend API fallback.", email, smtpError);
+            if (!sendViaResendApi(email, subject, htmlContent)) {
+                if (smtpError instanceof MessagingException messagingException) {
+                    throw messagingException;
+                }
+                MessagingException wrapped = new MessagingException("Failed to send email via SMTP and Resend API fallback");
+                wrapped.setNextException(new Exception(smtpError));
+                throw wrapped;
+            }
+        }
+    }
+
+    private boolean sendViaResendApi(String email, String subject, String htmlContent) {
+        if (resendApiKey == null || resendApiKey.isBlank()) {
+            return false;
+        }
+
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("from", mailFrom);
+            payload.put("to", new String[]{email});
+            payload.put("subject", subject);
+            payload.put("html", htmlContent);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            int status = response.statusCode();
+            if (status >= 200 && status < 300) {
+                log.info("Resend API email sent successfully to {}", email);
+                return true;
+            }
+
+            log.error("Resend API send failed for {} with status {} and body {}", email, status, response.body());
+            return false;
+        } catch (Exception e) {
+            log.error("Resend API fallback failed for {}", email, e);
+            return false;
+        }
     }
 
     /**
