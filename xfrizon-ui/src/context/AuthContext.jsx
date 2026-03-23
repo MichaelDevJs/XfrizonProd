@@ -237,7 +237,10 @@ const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        applyAuthSession(response.data);
+        // Do not create a local auth session when backend is waiting for email verification.
+        if (response.data.token) {
+          applyAuthSession(response.data);
+        }
 
         if (referralCode) {
           localStorage.removeItem("xfrizon_referral");

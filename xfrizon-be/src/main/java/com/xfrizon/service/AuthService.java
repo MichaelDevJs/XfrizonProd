@@ -43,7 +43,23 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
+        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (existingUser != null) {
+            if (!Boolean.TRUE.equals(existingUser.getIsEmailVerified())) {
+                verificationService.sendVerificationEmailAsync(existingUser);
+                return AuthResponse.builder()
+                        .success(true)
+                        .message("Account already exists but is not verified. We sent a new verification code to your email.")
+                        .userId(existingUser.getId())
+                        .email(existingUser.getEmail())
+                        .firstName(existingUser.getFirstName())
+                        .lastName(existingUser.getLastName())
+                        .role(existingUser.getRole().toString())
+                        .roles(existingUser.getRoles())
+                        .emailVerificationPending(true)
+                        .build();
+            }
+
             return AuthResponse.builder()
                     .success(false)
                     .message("Email already registered")
@@ -93,7 +109,23 @@ public class AuthService {
 
     public AuthResponse registerOrganizer(RegisterRequest request) {
         // Check if email already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
+        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (existingUser != null) {
+            if (!Boolean.TRUE.equals(existingUser.getIsEmailVerified())) {
+                verificationService.sendVerificationEmailAsync(existingUser);
+                return AuthResponse.builder()
+                        .success(true)
+                        .message("Organizer account exists but is not verified. We sent a new verification code to your email.")
+                        .userId(existingUser.getId())
+                        .email(existingUser.getEmail())
+                        .firstName(existingUser.getFirstName())
+                        .lastName(existingUser.getLastName())
+                        .role(existingUser.getRole().toString())
+                        .roles(existingUser.getRoles())
+                        .emailVerificationPending(true)
+                        .build();
+            }
+
             return AuthResponse.builder()
                     .success(false)
                     .message("Email already registered")
