@@ -19,7 +19,10 @@ const getBackendOrigin = () => {
     import.meta.env.VITE_OAUTH_BACKEND_ORIGIN ||
     import.meta.env.VITE_BACKEND_ORIGIN;
 
-  if (explicitOauthOrigin && !(isDeployedHost && isLocalhostUrl(explicitOauthOrigin))) {
+  if (
+    explicitOauthOrigin &&
+    !(isDeployedHost && isLocalhostUrl(explicitOauthOrigin))
+  ) {
     try {
       return new URL(explicitOauthOrigin).origin;
     } catch {
@@ -145,7 +148,10 @@ const authService = {
     const startUrl = new URL(resolveBackendUrl(oauthStartPath));
     if (redirectPath) {
       const callbackUrl = new URL(redirectPath, getSiteBaseUrl());
-      callbackUrl.searchParams.set("accountType", String(accountType).toUpperCase());
+      callbackUrl.searchParams.set(
+        "accountType",
+        String(accountType).toUpperCase(),
+      );
       startUrl.searchParams.set("redirect_uri", callbackUrl.toString());
     }
     startUrl.searchParams.set("accountType", String(accountType).toUpperCase());

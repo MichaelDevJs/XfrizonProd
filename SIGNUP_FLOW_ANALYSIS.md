@@ -1,6 +1,7 @@
 # Xfrizon User Registration/Signup Flow Analysis
 
 ## Executive Summary
+
 The Xfrizon system has a comprehensive signup flow with support for multiple user roles (USER, ORGANIZER, ADMIN, PARTNER). Email verification is partially implemented via database field but not fully utilized. The system has email service infrastructure configured but no current email sending for verification.
 
 ---
@@ -8,9 +9,11 @@ The Xfrizon system has a comprehensive signup flow with support for multiple use
 ## 1. BACKEND (Java/Spring Boot) ANALYSIS
 
 ### 1.1 User Entity
+
 **Location:** [xfrizon-be/src/main/java/com/xfrizon/entity/User.java](xfrizon-be/src/main/java/com/xfrizon/entity/User.java)
 
 #### Key Fields:
+
 ```java
 @Entity
 @Table(name = "users")
@@ -33,7 +36,7 @@ public class User {
     // Role Management
     @Enumerated(EnumType.STRING)
     private UserRole role;  // Values: USER, ORGANIZER, ADMIN, PARTNER
-    
+
     private String roles;  // String representation of roles
 
     // Status
@@ -88,11 +91,13 @@ public class User {
 ```
 
 #### Email Verification Status:
+
 - ✅ **Field exists:** `isEmailVerified` (Boolean, defaults to `false`)
 - ❌ **NOT currently implemented:** No email verification workflow exists
 - **Current behavior:** All users start with `isEmailVerified = false` and are never transitioned to `true`
 
 #### User Roles Available:
+
 ```
 USER        → Regular ticket buyer
 ORGANIZER   → Event creator
@@ -103,25 +108,27 @@ PARTNER     → Reward partner
 ---
 
 ### 1.2 Registration/Signup Endpoints
+
 **Location:** [xfrizon-be/src/main/java/com/xfrizon/controller/AuthController.java](xfrizon-be/src/main/java/com/xfrizon/controller/AuthController.java)
 
 #### Available Endpoints:
 
-| Endpoint | Method | Purpose | Request | Response |
-|----------|--------|---------|---------|----------|
-| `/api/v1/auth/register` | POST | User signup | RegisterRequest | AuthResponse |
-| `/api/v1/auth/register-organizer` | POST | Organizer signup | RegisterRequest | AuthResponse |
-| `/api/v1/auth/register-admin` | POST | Admin signup (requires secret key) | RegisterRequest | AuthResponse |
-| `/api/v1/auth/login` | POST | User login | LoginRequest | AuthResponse |
-| `/api/v1/auth/admin-login` | POST | Admin login | LoginRequest | AuthResponse |
-| `/api/v1/auth/oauth/google/complete-signup` | POST | Complete Google signup | GoogleSignupCompleteRequest | AuthResponse |
-| `/api/v1/auth/user` | GET | Get current user | - | UserResponse |
+| Endpoint                                    | Method | Purpose                            | Request                     | Response     |
+| ------------------------------------------- | ------ | ---------------------------------- | --------------------------- | ------------ |
+| `/api/v1/auth/register`                     | POST   | User signup                        | RegisterRequest             | AuthResponse |
+| `/api/v1/auth/register-organizer`           | POST   | Organizer signup                   | RegisterRequest             | AuthResponse |
+| `/api/v1/auth/register-admin`               | POST   | Admin signup (requires secret key) | RegisterRequest             | AuthResponse |
+| `/api/v1/auth/login`                        | POST   | User login                         | LoginRequest                | AuthResponse |
+| `/api/v1/auth/admin-login`                  | POST   | Admin login                        | LoginRequest                | AuthResponse |
+| `/api/v1/auth/oauth/google/complete-signup` | POST   | Complete Google signup             | GoogleSignupCompleteRequest | AuthResponse |
+| `/api/v1/auth/user`                         | GET    | Get current user                   | -                           | UserResponse |
 
 #### CORS Configuration:
+
 ```java
 @CrossOrigin(origins = {
-    "http://localhost:5173", 
-    "http://localhost:5177", 
+    "http://localhost:5173",
+    "http://localhost:5177",
     "http://localhost:3000"
 }, maxAge = 3600)
 ```
@@ -131,6 +138,7 @@ PARTNER     → Reward partner
 ### 1.3 Registration Request/Response DTOs
 
 #### RegisterRequest.java
+
 ```java
 @Data
 @NoArgsConstructor
@@ -165,6 +173,7 @@ public class RegisterRequest {
 ```
 
 #### AuthResponse.java
+
 ```java
 @Data
 @NoArgsConstructor
@@ -193,6 +202,7 @@ public class AuthResponse {
 ```
 
 #### LoginRequest.java
+
 ```java
 @Data
 @NoArgsConstructor
@@ -211,6 +221,7 @@ public class LoginRequest {
 ---
 
 ### 1.4 AuthService Implementation
+
 **Location:** [xfrizon-be/src/main/java/com/xfrizon/service/AuthService.java](xfrizon-be/src/main/java/com/xfrizon/service/AuthService.java)
 
 #### Registration Logic Flow:
@@ -252,13 +263,13 @@ public AuthResponse register(RegisterRequest request) {
 
     // 5. Track referral conversion if referral code provided
     referralConversionService.trackSignupConversion(
-        request.getReferralCode(), 
+        request.getReferralCode(),
         savedUser
     );
 
     // 6. Generate JWT token
     String token = jwtTokenProvider.generateToken(
-        savedUser.getEmail(), 
+        savedUser.getEmail(),
         savedUser.getId()
     );
 
@@ -279,11 +290,13 @@ public AuthResponse register(RegisterRequest request) {
 ```
 
 #### registerOrganizer() Logic:
+
 - Similar to `register()` but sets role to `ORGANIZER`
 - Calls same referral tracking service
 - Returns organizer-specific response
 
 #### registerAdmin() Logic:
+
 - Requires `X-Admin-Secret-Key` header
 - Secret key checked against hardcoded value: `"xfrizon-admin-2026"`
 - ⚠️ **SECURITY NOTE:** Hardcoded secret should be moved to environment variables
@@ -292,9 +305,11 @@ public AuthResponse register(RegisterRequest request) {
 ---
 
 ### 1.5 Email Service
+
 **Location:** [xfrizon-be/src/main/java/com/xfrizon/service/EmailService.java](xfrizon-be/src/main/java/com/xfrizon/service/EmailService.java)
 
 #### Current Status:
+
 - ✅ **EmailService exists** with proper implementation
 - ✅ **Spring Mail configured** via `spring-boot-starter-mail`
 - ✅ **Multiple email methods available:**
@@ -302,19 +317,21 @@ public AuthResponse register(RegisterRequest request) {
   - `sendPaymentConfirmationEmail()`
 
 #### Current Usage:
+
 - Emails sent AFTER successful ticket purchase (not on signup)
 - Uses both SimpleMailMessage and MimeMessage with HTML support
 - Gracefully handles disabled mail sender (null check)
 - From address: `"noreply@xfrizon.com"`
 
 #### Email Sending Code Example:
+
 ```java
 public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
     if (mailSender == null) {
         log.debug("Email sending skipped - mail sender not configured");
         return;
     }
-    
+
     try {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -339,6 +356,7 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ```
 
 #### Email Service Features:
+
 - Null-safe (supports running without mail configured)
 - HTML email support
 - Comprehensive error logging (doesn't throw exceptions for email failures)
@@ -347,9 +365,11 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ---
 
 ### 1.6 Maven Dependencies (pom.xml)
+
 **Location:** [xfrizon-be/pom.xml](xfrizon-be/pom.xml)
 
 #### Email/Mail Related:
+
 ```xml
 <!-- Spring Boot Mail Starter -->
 <dependency>
@@ -365,6 +385,7 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ```
 
 #### Authentication/Security Related:
+
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -399,10 +420,12 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ```
 
 #### Password Encoding:
+
 - Uses Spring Security's default `PasswordEncoder` (BCrypt)
 - Configured in Spring Security configuration
 
 #### Database:
+
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -417,6 +440,7 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ```
 
 #### Other Key Dependencies:
+
 ```xml
 <dependency>
     <groupId>com.stripe</groupId>
@@ -432,6 +456,7 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ```
 
 #### Email Library Support:
+
 - ✅ JavaMail (via spring-boot-starter-mail)
 - ✅ FreeMarker (for email templates)
 - ✅ MimeMessageHelper (for HTML emails)
@@ -443,9 +468,11 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ### 2.1 Signup Components
 
 #### Regular User Signup
+
 **Location:** [src/pages/public/auth/Register.jsx](src/pages/public/auth/Register.jsx)
 
 **Form Fields:**
+
 ```javascript
 {
   firstName: "",        // Required, min 2 chars
@@ -457,6 +484,7 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 ```
 
 **Features:**
+
 - Show/hide password toggle buttons
 - Real-time form validation
 - Error messages for each field
@@ -466,11 +494,12 @@ public void sendTicketConfirmationEmail(UserTicketResponse ticket, User user) {
 - Toast notifications for success/error
 
 **API Call:**
+
 ```javascript
 POST /api/v1/auth/register
 {
   firstName: "string",
-  lastName: "string", 
+  lastName: "string",
   email: "string",
   password: "string",
   confirmPassword: "string",
@@ -479,23 +508,29 @@ POST /api/v1/auth/register
 ```
 
 **Settings Stored on Success:**
+
 ```javascript
 localStorage.setItem("userToken", response.token);
-localStorage.setItem("user", JSON.stringify({
-  id: response.userId,
-  email: response.email,
-  firstName: response.firstName,
-  lastName: response.lastName,
-  role: response.role
-}));
+localStorage.setItem(
+  "user",
+  JSON.stringify({
+    id: response.userId,
+    email: response.email,
+    firstName: response.firstName,
+    lastName: response.lastName,
+    role: response.role,
+  }),
+);
 ```
 
 ---
 
 #### Organizer Signup
+
 **Location:** [src/pages/public/auth/OrganizerSignUp.jsx](src/pages/public/auth/OrganizerSignUp.jsx)
 
 **Form Fields:**
+
 ```javascript
 {
   firstName: "",
@@ -507,6 +542,7 @@ localStorage.setItem("user", JSON.stringify({
 ```
 
 **API Call:**
+
 ```javascript
 POST /api/v1/auth/register-organizer
 {
@@ -520,15 +556,18 @@ POST /api/v1/auth/register-organizer
 ```
 
 **Post-Signup Behavior:**
+
 - Redirects to `/organizer/dashboard`
 - Same token/user storage as regular user
 
 ---
 
 #### Admin Signup
+
 **Location:** [src/pages/admin/AdminSignUp.jsx](src/pages/admin/AdminSignUp.jsx)
 
 **Form Fields:**
+
 ```javascript
 {
   firstName: "",
@@ -541,6 +580,7 @@ POST /api/v1/auth/register-organizer
 ```
 
 **API Call:**
+
 ```javascript
 POST /api/v1/auth/register-admin
 Header: X-Admin-Secret-Key: "xfrizon-admin-2026"
@@ -554,28 +594,35 @@ Header: X-Admin-Secret-Key: "xfrizon-admin-2026"
 ```
 
 **Storage on Success:**
+
 ```javascript
 localStorage.setItem("adminToken", response.token);
-localStorage.setItem("adminUser", JSON.stringify({
-  id: response.userId,
-  email: response.email,
-  firstName: response.firstName,
-  lastName: response.lastName,
-  role: response.role,
-  roles: response.roles,
-  permissions: response.permissions
-}));
+localStorage.setItem(
+  "adminUser",
+  JSON.stringify({
+    id: response.userId,
+    email: response.email,
+    firstName: response.firstName,
+    lastName: response.lastName,
+    role: response.role,
+    roles: response.roles,
+    permissions: response.permissions,
+  }),
+);
 ```
 
 **Post-Signup Behavior:**
+
 - Redirects to `/admin/dashboard`
 
 ---
 
 #### Partner Registration
+
 **Location:** [src/pages/public/PartnerRegisterPage.jsx](src/pages/public/PartnerRegisterPage.jsx)
 
 **Form Fields:**
+
 ```javascript
 {
   name: "",              // Brand name
@@ -593,11 +640,13 @@ localStorage.setItem("adminUser", JSON.stringify({
 ```
 
 **API Call:**
+
 ```javascript
-POST /api/v1/partners/register
+POST / api / v1 / partners / register;
 ```
 
 **Logic:**
+
 - If user NOT logged in: Creates new user with email + password
 - If user logged in: Registers partner with existing user
 - Auto-login after registration if new user
@@ -606,6 +655,7 @@ POST /api/v1/partners/register
 ---
 
 ### 2.2 Frontend API Service
+
 **Location:** [src/api/authService.js](src/api/authService.js)
 
 #### Available Methods:
@@ -623,6 +673,7 @@ authService = {
 ```
 
 #### Internal Logic:
+
 - Retrieves `xfrizon_referral` from localStorage
 - Sends `confirmPassword: password` (mirrors password for validation)
 - Handles errors with proper fallback messages
@@ -631,9 +682,11 @@ authService = {
 ---
 
 ### 2.3 AuthContext Integration
+
 **Location:** [src/context/AuthContext.jsx](src/context/AuthContext.jsx)
 
 #### Authentication State:
+
 ```javascript
 {
   organizer: {
@@ -656,6 +709,7 @@ authService = {
 ```
 
 #### AuthContext Methods:
+
 - `register()` - User registration with referral tracking
 - `login()` - User login
 - `logout()` - Clear session
@@ -663,6 +717,7 @@ authService = {
 - `isPartner()` - Role check helper
 
 #### Session Management:
+
 - Token stored in: `localStorage.userToken`
 - User object stored in: `localStorage.user`
 - Auto-validates token on app load
@@ -674,6 +729,7 @@ authService = {
 ### 2.4 Frontend Signup Form Structure
 
 #### Validation Rules:
+
 ```javascript
 validateForm = () => {
   // firstName: required, min 2 chars
@@ -681,17 +737,19 @@ validateForm = () => {
   // email: required, valid email format (/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
   // password: required, min 8 chars
   // confirmPassword: required, must match password
-  return errors;  // {} if valid
-}
+  return errors; // {} if valid
+};
 ```
 
 #### UI Libraries Used:
+
 - React Router for navigation
 - React Icons (FaEye, FaEyeSlash, FcGoogle)
 - React Toastify for notifications
 - Tailwind CSS for styling
 
 #### Form States:
+
 - `loading` - During API call
 - `errors` - Field validation errors
 - `showPassword` / `showConfirmPassword` - Toggle visibility
@@ -739,25 +797,26 @@ User logged in, accessible throughout app
 
 ## 3. SUMMARY TABLE
 
-| Aspect | Status | Details |
-|--------|--------|---------|
-| **Email Verification Field** | ✅ Exists | `User.isEmailVerified` (Boolean, default false) |
-| **Email Verification Flow** | ❌ Not Implemented | Field exists but never updated |
-| **Email Service** | ✅ Configured | Spring Mail configured, used for tickets only |
-| **Email Libraries** | ✅ Available | JavaMail, FreeMarker |
-| **JWT Tokens** | ✅ Implemented | JJWT 0.12.6 library |
-| **Password Encoding** | ✅ BCrypt | Spring Security default encoder |
-| **Referral Tracking** | ✅ Implemented | Automatic on signup |
-| **Google OAuth** | ✅ Implemented | OAuth2 client with completion flow |
-| **User Roles** | ✅ 4 Roles | USER, ORGANIZER, ADMIN, PARTNER |
-| **Admin Secret Key** | ⚠️ Hardcoded | Should use environment variables |
-| **CORS** | ✅ Configured | localhost:5173, 5177, 3000 |
+| Aspect                       | Status             | Details                                         |
+| ---------------------------- | ------------------ | ----------------------------------------------- |
+| **Email Verification Field** | ✅ Exists          | `User.isEmailVerified` (Boolean, default false) |
+| **Email Verification Flow**  | ❌ Not Implemented | Field exists but never updated                  |
+| **Email Service**            | ✅ Configured      | Spring Mail configured, used for tickets only   |
+| **Email Libraries**          | ✅ Available       | JavaMail, FreeMarker                            |
+| **JWT Tokens**               | ✅ Implemented     | JJWT 0.12.6 library                             |
+| **Password Encoding**        | ✅ BCrypt          | Spring Security default encoder                 |
+| **Referral Tracking**        | ✅ Implemented     | Automatic on signup                             |
+| **Google OAuth**             | ✅ Implemented     | OAuth2 client with completion flow              |
+| **User Roles**               | ✅ 4 Roles         | USER, ORGANIZER, ADMIN, PARTNER                 |
+| **Admin Secret Key**         | ⚠️ Hardcoded       | Should use environment variables                |
+| **CORS**                     | ✅ Configured      | localhost:5173, 5177, 3000                      |
 
 ---
 
 ## 4. KEY FINDINGS - EMAIL VERIFICATION
 
 ### Current State:
+
 1. **Field Exists:** `User.isEmailVerified` is a database column
 2. **Never Set True:** After signup, users remain unverified
 3. **No Workflow:** No email verification endpoint or email sending on signup
@@ -765,7 +824,9 @@ User logged in, accessible throughout app
 5. **No Enforcement:** Unverified users can access all features
 
 ### To Implement Email Verification:
+
 **Backend Required:**
+
 - Create token generation/validation service for email verification tokens
 - Add endpoint: `POST /api/v1/auth/send-verification-email`
 - Add endpoint: `GET /api/v1/auth/verify-email/{token}`
@@ -775,6 +836,7 @@ User logged in, accessible throughout app
   - Send email on first login attempt
 
 **Frontend Required:**
+
 - Add email verification modal/page after signup
 - Show "Verify your email" prompt
 - Add resend verification email button
@@ -785,6 +847,7 @@ User logged in, accessible throughout app
 ## 5. REPOSITORY REFERENCES
 
 **Backend:**
+
 - Entity: [xfrizon-be/src/main/java/com/xfrizon/entity/User.java](xfrizon-be/src/main/java/com/xfrizon/entity/User.java)
 - Controller: [xfrizon-be/src/main/java/com/xfrizon/controller/AuthController.java](xfrizon-be/src/main/java/com/xfrizon/controller/AuthController.java)
 - Service: [xfrizon-be/src/main/java/com/xfrizon/service/AuthService.java](xfrizon-be/src/main/java/com/xfrizon/service/AuthService.java)
@@ -792,6 +855,7 @@ User logged in, accessible throughout app
 - DTOs: [xfrizon-be/src/main/java/com/xfrizon/dto/](xfrizon-be/src/main/java/com/xfrizon/dto/)
 
 **Frontend:**
+
 - User Signup: [src/pages/public/auth/Register.jsx](src/pages/public/auth/Register.jsx)
 - Organizer Signup: [src/pages/public/auth/OrganizerSignUp.jsx](src/pages/public/auth/OrganizerSignUp.jsx)
 - Admin Signup: [src/pages/admin/AdminSignUp.jsx](src/pages/admin/AdminSignUp.jsx)

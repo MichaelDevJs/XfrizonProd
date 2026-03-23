@@ -6,7 +6,10 @@ import authService from "../../../api/authService";
 export default function EmailVerification() {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || localStorage.getItem("pendingVerificationEmail") || "";
+  const email =
+    location.state?.email ||
+    localStorage.getItem("pendingVerificationEmail") ||
+    "";
 
   const [verificationCode, setVerificationCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +38,10 @@ export default function EmailVerification() {
 
     setLoading(true);
     try {
-      const response = await authService.verifyEmail(email, parseInt(verificationCode));
+      const response = await authService.verifyEmail(
+        email,
+        parseInt(verificationCode),
+      );
 
       if (response?.success) {
         toast.success("Email verified successfully!");
@@ -44,7 +50,9 @@ export default function EmailVerification() {
           navigate("/auth/login", { state: { email } });
         }, 1500);
       } else {
-        setErrors(response?.message || "Verification failed. Please try again.");
+        setErrors(
+          response?.message || "Verification failed. Please try again.",
+        );
         toast.error(response?.message || "Verification failed");
       }
     } catch (error) {
@@ -86,7 +94,8 @@ export default function EmailVerification() {
               Verify Your Email
             </h1>
             <p className="text-gray-400 text-sm">
-              We sent a 6-digit code to<br />
+              We sent a 6-digit code to
+              <br />
               <span className="font-semibold text-white">{email}</span>
             </p>
           </div>
@@ -110,9 +119,7 @@ export default function EmailVerification() {
                     : "border-gray-700 focus:border-green-500"
                 }`}
               />
-              {errors && (
-                <p className="text-red-400 text-sm mt-2">{errors}</p>
-              )}
+              {errors && <p className="text-red-400 text-sm mt-2">{errors}</p>}
               <p className="text-gray-500 text-xs mt-2">
                 Enter the 6-digit code from your email
               </p>
@@ -147,7 +154,10 @@ export default function EmailVerification() {
           <div className="mt-6 text-center border-t border-gray-800 pt-6">
             <p className="text-gray-400 text-sm">
               Already verified?{" "}
-              <a href="/auth/login" className="text-green-500 hover:text-green-400 font-semibold">
+              <a
+                href="/auth/login"
+                className="text-green-500 hover:text-green-400 font-semibold"
+              >
                 Go to Login
               </a>
             </p>

@@ -128,8 +128,8 @@ export default function Login() {
           localStorage.setItem("pendingVerificationEmail", formData.email);
           toast.warning("Please verify your email to continue");
           setTimeout(() => {
-            navigate("/verify-email", { 
-              state: { email: formData.email } 
+            navigate("/verify-email", {
+              state: { email: formData.email },
             });
           }, 500);
         } else {

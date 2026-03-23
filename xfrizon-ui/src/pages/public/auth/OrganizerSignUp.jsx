@@ -140,8 +140,8 @@ export default function OrganizerSignUp() {
           toast.success("Organizer account created! Please verify your email.");
           localStorage.setItem("pendingVerificationEmail", formData.email);
           setTimeout(() => {
-            navigate("/verify-email", { 
-              state: { email: formData.email } 
+            navigate("/verify-email", {
+              state: { email: formData.email },
             });
           }, 500);
         } else {

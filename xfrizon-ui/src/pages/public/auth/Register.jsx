@@ -96,13 +96,13 @@ export default function Register() {
         toast.success("Account created! Please verify your email.");
         setLoading(false);
         localStorage.setItem("pendingVerificationEmail", formData.email);
-        
+
         // Check if email verification is pending
         if (response?.emailVerificationPending) {
           // Redirect to email verification page
           setTimeout(() => {
-            navigate("/verify-email", { 
-              state: { email: formData.email } 
+            navigate("/verify-email", {
+              state: { email: formData.email },
             });
           }, 500);
         } else {
