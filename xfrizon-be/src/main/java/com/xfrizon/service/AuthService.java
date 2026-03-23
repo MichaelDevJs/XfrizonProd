@@ -75,8 +75,8 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
-        // Send verification email
-        verificationService.sendVerificationEmail(savedUser);
+        // Send verification email in background to keep signup response fast.
+        verificationService.sendVerificationEmailAsync(savedUser);
 
         return AuthResponse.builder()
                 .success(true)
@@ -125,8 +125,8 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         referralConversionService.trackSignupConversion(request.getReferralCode(), savedUser);
 
-        // Send verification email
-        verificationService.sendVerificationEmail(savedUser);
+        // Send verification email in background to keep signup response fast.
+        verificationService.sendVerificationEmailAsync(savedUser);
 
         return AuthResponse.builder()
                 .success(true)

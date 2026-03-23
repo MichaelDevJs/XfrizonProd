@@ -13,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.lang.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -24,10 +26,16 @@ public class VerificationService {
 
     private final EmailVerificationTokenRepository tokenRepository;
     private final JavaMailSender mailSender;
+    private final String mailFrom;
 
-    public VerificationService(EmailVerificationTokenRepository tokenRepository, @Nullable JavaMailSender mailSender) {
+    public VerificationService(
+            EmailVerificationTokenRepository tokenRepository,
+            @Nullable JavaMailSender mailSender,
+            @Value("${mail.from:noreply@xfrizon-ts.com}") String mailFrom
+    ) {
         this.tokenRepository = tokenRepository;
         this.mailSender = mailSender;
+        this.mailFrom = mailFrom;
         if (mailSender == null) {
             log.warn("JavaMailSender not configured - email verification will be disabled");
         }
@@ -61,8 +69,20 @@ public class VerificationService {
             log.info("Verification email sent to: {}", user.getEmail());
         } catch (Exception e) {
             log.error("Error sending verification email to: {}", user.getEmail(), e);
-            throw new RuntimeException("Failed to send verification email", e);
         }
+    }
+
+    /**
+     * Queue verification email on a worker thread so signup API can return immediately.
+     */
+    public void sendVerificationEmailAsync(User user) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                sendVerificationEmail(user);
+            } catch (Exception e) {
+                log.error("Async verification email failed for: {}", user.getEmail(), e);
+            }
+        });
     }
 
     /**
@@ -167,7 +187,7 @@ public class VerificationService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
         helper.setTo(user.getEmail());
-        helper.setFrom("noreply@xfrizon.com");
+        helper.setFrom(mailFrom);
         helper.setSubject("Verify Your Xfrizon Email Address");
 
         String htmlContent = buildVerificationEmailContent(user.getFirstName(), verificationCode);
