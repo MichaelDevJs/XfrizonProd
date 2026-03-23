@@ -47,7 +47,7 @@ public class VerificationService {
     public void sendVerificationEmail(User user) {
         try {
             // Clean up any old unverified tokens for this email
-            tokenRepository.findByEmailAndIsUsedFalse(user.getEmail()).ifPresent(tokenRepository::delete);
+            tokenRepository.deleteByEmailAndIsUsedFalse(user.getEmail());
 
             // Generate 6-digit verification code
             int verificationCode = generateVerificationCode();
@@ -91,7 +91,10 @@ public class VerificationService {
     public EmailVerificationResponse verifyEmail(String email, Integer verificationCode) {
         try {
             // Find valid token for email
-            var tokenOpt = tokenRepository.findValidTokenByEmail(email);
+            var tokenOpt = tokenRepository.findFirstByEmailAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+                email,
+                LocalDateTime.now()
+            );
 
             if (tokenOpt.isEmpty()) {
                 return EmailVerificationResponse.builder()
@@ -150,7 +153,7 @@ public class VerificationService {
     public EmailVerificationResponse resendVerificationCode(String email, User user) {
         try {
             // Clean up old token and send new one
-            tokenRepository.findByEmailAndIsUsedFalse(email).ifPresent(tokenRepository::delete);
+            tokenRepository.deleteByEmailAndIsUsedFalse(email);
 
             sendVerificationEmail(user);
 

@@ -6,7 +6,7 @@ import authService from "../../../api/authService";
 export default function EmailVerification() {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email;
+  const email = location.state?.email || localStorage.getItem("pendingVerificationEmail") || "";
 
   const [verificationCode, setVerificationCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function EmailVerification() {
 
   // Redirect if email not provided
   if (!email) {
-    navigate("/register");
+    navigate("/auth/register");
     return null;
   }
 
@@ -39,15 +39,16 @@ export default function EmailVerification() {
 
       if (response?.success) {
         toast.success("Email verified successfully!");
+        localStorage.removeItem("pendingVerificationEmail");
         setTimeout(() => {
-          navigate("/login", { state: { email } });
+          navigate("/auth/login", { state: { email } });
         }, 1500);
       } else {
         setErrors(response?.message || "Verification failed. Please try again.");
         toast.error(response?.message || "Verification failed");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Error verifying email";
+      const errorMessage = error?.message || "Error verifying email";
       setErrors(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -68,7 +69,7 @@ export default function EmailVerification() {
         toast.error(response?.message || "Failed to resend verification code");
       }
     } catch (error) {
-      toast.error("Error resending verification code");
+      toast.error(error?.message || "Error resending verification code");
     } finally {
       setResendLoading(false);
     }
@@ -146,7 +147,7 @@ export default function EmailVerification() {
           <div className="mt-6 text-center border-t border-gray-800 pt-6">
             <p className="text-gray-400 text-sm">
               Already verified?{" "}
-              <a href="/login" className="text-green-500 hover:text-green-400 font-semibold">
+              <a href="/auth/login" className="text-green-500 hover:text-green-400 font-semibold">
                 Go to Login
               </a>
             </p>

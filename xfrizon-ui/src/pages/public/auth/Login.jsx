@@ -125,6 +125,7 @@ export default function Login() {
         } else if (response?.emailVerificationPending) {
           // Email not verified - redirect to verification page
           setLoading(false);
+          localStorage.setItem("pendingVerificationEmail", formData.email);
           toast.warning("Please verify your email to continue");
           setTimeout(() => {
             navigate("/verify-email", { 

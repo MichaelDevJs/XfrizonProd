@@ -95,6 +95,7 @@ export default function Register() {
       if (response?.success) {
         toast.success("Account created! Please verify your email.");
         setLoading(false);
+        localStorage.setItem("pendingVerificationEmail", formData.email);
         
         // Check if email verification is pending
         if (response?.emailVerificationPending) {

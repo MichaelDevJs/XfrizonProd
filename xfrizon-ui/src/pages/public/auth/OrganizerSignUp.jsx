@@ -138,6 +138,7 @@ export default function OrganizerSignUp() {
         if (response?.emailVerificationPending) {
           // Redirect to email verification page
           toast.success("Organizer account created! Please verify your email.");
+          localStorage.setItem("pendingVerificationEmail", formData.email);
           setTimeout(() => {
             navigate("/verify-email", { 
               state: { email: formData.email } 
