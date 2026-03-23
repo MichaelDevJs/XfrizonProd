@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
 
+    long deleteByUserId(Long userId);
+
     @Query("SELECT CASE WHEN COUNT(ue) > 0 THEN true ELSE false END FROM UserEvent ue WHERE ue.user.id = :userId AND ue.event.id = :eventId")
     boolean existsByUserIdAndEventId(@Param("userId") Long userId, @Param("eventId") Long eventId);
 

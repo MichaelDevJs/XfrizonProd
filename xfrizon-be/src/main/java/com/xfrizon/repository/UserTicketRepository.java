@@ -13,6 +13,8 @@ import java.util.Optional;
 @Repository
 public interface UserTicketRepository extends JpaRepository<UserTicket, Long> {
 
+    long deleteByUserId(Long userId);
+
     Page<UserTicket> findByUserId(Long userId, Pageable pageable);
 
     List<UserTicket> findByUserIdOrderByPurchaseDateDesc(Long userId);

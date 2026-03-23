@@ -10,6 +10,7 @@ export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleDrafts, setRoleDrafts] = useState({});
   const [updatingUserId, setUpdatingUserId] = useState(null);
+  const [deletingUserId, setDeletingUserId] = useState(null);
 
   const normalizeUserRow = (row) => {
     const id = row?.userId ?? row?.id ?? null;
@@ -180,6 +181,28 @@ export default function UsersManagement() {
     }
   };
 
+  const handleDeleteUser = async (user) => {
+    const confirmed = window.confirm(
+      `Delete user ${user.email}? This action cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingUserId(user.id);
+      await adminUsersApi.deleteUser(user.id);
+      setUsers((prev) => prev.filter((item) => item.id !== user.id));
+      toast.success(`User ${user.email} deleted`);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to delete user. User may have related records.",
+      );
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   return (
     <div className="admin-theme bg-[#1e1e1e] text-white min-h-screen">
       <div className="bg-linear-to-r from-[#1e1e1e] via-[#252525] to-[#1e1e1e] border-b border-zinc-800/50 p-4">
@@ -245,7 +268,7 @@ export default function UsersManagement() {
                       JOIN DATE
                     </th>
                     <th className="px-2 sm:px-3 py-2 text-left font-bold text-zinc-300 text-[10px] sm:text-xs">
-                      ASSIGN ROLE
+                      ACTIONS
                     </th>
                   </tr>
                 </thead>
@@ -332,6 +355,14 @@ export default function UsersManagement() {
                               className="px-2 py-1 rounded bg-[#403838] text-white disabled:opacity-50"
                             >
                               {updatingUserId === user.id ? "..." : "Save"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deletingUserId === user.id}
+                              onClick={() => handleDeleteUser(user)}
+                              className="px-2 py-1 rounded bg-red-700/80 hover:bg-red-700 text-white disabled:opacity-50"
+                            >
+                              {deletingUserId === user.id ? "..." : "Delete"}
                             </button>
                           </div>
                         </td>

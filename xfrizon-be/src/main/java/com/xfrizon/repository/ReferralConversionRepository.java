@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface ReferralConversionRepository extends JpaRepository<ReferralConversion, Long> {
 
+    long deleteByReferredUser_Id(Long userId);
+
+    long deleteByReferrerUser_Id(Long userId);
+
     boolean existsByConversionTypeAndReferredUser_Id(ReferralConversion.ConversionType conversionType, Long referredUserId);
 
     boolean existsByConversionTypeAndPaymentIntentId(ReferralConversion.ConversionType conversionType, String paymentIntentId);

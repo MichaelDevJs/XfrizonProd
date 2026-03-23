@@ -17,6 +17,8 @@ import java.util.Collection;
 @Repository
 public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Long> {
 
+    long deleteByUserId(Long userId);
+
     Optional<PaymentRecord> findByStripeIntentId(String stripeIntentId);
 
     Optional<PaymentRecord> findByStripeChargeId(String stripeChargeId);

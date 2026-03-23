@@ -91,6 +91,41 @@ const adminUsersApi = {
 
     throw lastError || new Error("Failed to assign role");
   },
+
+  deleteUser: async (userId) => {
+    const endpoints = [
+      {
+        method: "delete",
+        url: `/admin/users/${userId}`,
+      },
+      {
+        method: "delete",
+        url: "/admin/users",
+        body: { userId },
+      },
+    ];
+
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      try {
+        const response = endpoint.body
+          ? await api[endpoint.method](endpoint.url, { data: endpoint.body })
+          : await api[endpoint.method](endpoint.url);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (
+          error?.response?.status === 404 ||
+          error?.response?.status === 405
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw lastError || new Error("Failed to delete user");
+  },
 };
 
 export default adminUsersApi;

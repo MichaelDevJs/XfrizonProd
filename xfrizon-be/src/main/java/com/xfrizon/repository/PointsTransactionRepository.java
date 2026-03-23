@@ -6,5 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PointsTransactionRepository extends JpaRepository<PointsTransaction, Long> {
+    long deleteByUserId(Long userId);
+
     Page<PointsTransaction> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 }

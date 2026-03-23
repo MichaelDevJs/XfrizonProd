@@ -15,16 +15,18 @@ public interface EmailVerificationTokenRepository extends JpaRepository<EmailVer
 
     Optional<EmailVerificationToken> findByToken(String token);
 
-        List<EmailVerificationToken> findByEmailAndIsUsedFalse(String email);
+    List<EmailVerificationToken> findByEmailAndIsUsedFalse(String email);
 
-        long deleteByEmailAndIsUsedFalse(String email);
+    long deleteByEmailAndIsUsedFalse(String email);
+
+    long deleteByUser_Id(Long userId);
 
     List<EmailVerificationToken> findByEmailAndIsUsedTrue(String email);
 
-        Optional<EmailVerificationToken> findFirstByEmailAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+    Optional<EmailVerificationToken> findFirstByEmailAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
             String email,
             LocalDateTime now
-        );
+    );
 
     // Find all expired tokens for cleanup
     @Query("SELECT t FROM EmailVerificationToken t WHERE t.expiresAt < CURRENT_TIMESTAMP AND t.isUsed = false")

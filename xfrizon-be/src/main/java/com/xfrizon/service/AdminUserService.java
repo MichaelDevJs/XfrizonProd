@@ -2,11 +2,17 @@ package com.xfrizon.service;
 
 import com.xfrizon.dto.AdminUserManagementRow;
 import com.xfrizon.entity.User;
+import com.xfrizon.repository.EmailVerificationTokenRepository;
 import com.xfrizon.repository.PaymentRecordRepository;
+import com.xfrizon.repository.PointsTransactionRepository;
+import com.xfrizon.repository.PointsWalletRepository;
+import com.xfrizon.repository.ReferralConversionRepository;
+import com.xfrizon.repository.UserEventRepository;
 import com.xfrizon.repository.UserRepository;
 import com.xfrizon.repository.UserTicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -20,7 +26,12 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final UserTicketRepository userTicketRepository;
+    private final UserEventRepository userEventRepository;
     private final PaymentRecordRepository paymentRecordRepository;
+    private final PointsWalletRepository pointsWalletRepository;
+    private final PointsTransactionRepository pointsTransactionRepository;
+    private final ReferralConversionRepository referralConversionRepository;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     public List<AdminUserManagementRow> getAdminUserManagementRows() {
         return userRepository.findAll().stream()
@@ -59,6 +70,24 @@ public class AdminUserService {
         }
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Clean dependent records first to avoid FK constraint violations.
+        emailVerificationTokenRepository.deleteByUser_Id(userId);
+        emailVerificationTokenRepository.deleteByEmailAndIsUsedFalse(user.getEmail());
+        referralConversionRepository.deleteByReferredUser_Id(userId);
+        referralConversionRepository.deleteByReferrerUser_Id(userId);
+        pointsTransactionRepository.deleteByUserId(userId);
+        pointsWalletRepository.deleteByUserId(userId);
+        userEventRepository.deleteByUserId(userId);
+        userTicketRepository.deleteByUserId(userId);
+        paymentRecordRepository.deleteByUserId(userId);
+        userRepository.deleteById(userId);
     }
 
     private AdminUserManagementRow toRow(User user) {

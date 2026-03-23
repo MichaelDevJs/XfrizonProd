@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface PointsWalletRepository extends JpaRepository<PointsWallet, Long> {
     Optional<PointsWallet> findByUserId(Long userId);
+
+    long deleteByUserId(Long userId);
 }
